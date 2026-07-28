@@ -1,8 +1,13 @@
-import type { ElementType, HTMLAttributes, ReactNode } from 'react'
+import type {
+  CSSProperties,
+  ElementType,
+  HTMLAttributes,
+  ReactNode,
+} from 'react'
 
-import { typography } from '@/core/tokens'
+import { colors, typography } from '@/core/tokens'
 
-type TextVariant =
+export type TextVariant =
   | 'display'
   | 'h1'
   | 'h2'
@@ -11,9 +16,9 @@ type TextVariant =
   | 'bodySmall'
   | 'caption'
 
-type TextTone = 'primary' | 'secondary' | 'tertiary' | 'inverse'
+export type TextTone = 'primary' | 'secondary' | 'tertiary' | 'inverse'
 
-type TextProps = {
+export type TextProps = {
   as?: ElementType
   children: ReactNode
   variant?: TextVariant
@@ -21,7 +26,7 @@ type TextProps = {
   weight?: keyof typeof typography.fontWeight
 } & HTMLAttributes<HTMLElement>
 
-const variantStyles: Record<TextVariant, React.CSSProperties> = {
+const variantStyles: Record<TextVariant, CSSProperties> = {
   display: {
     fontSize: typography.fontSize.display,
     lineHeight: `${typography.lineHeight.display}px`,
@@ -59,6 +64,21 @@ const variantStyles: Record<TextVariant, React.CSSProperties> = {
   },
 }
 
+const toneStyles: Record<TextTone, CSSProperties> = {
+  primary: {
+    color: colors.text.primary,
+  },
+  secondary: {
+    color: colors.text.secondary,
+  },
+  tertiary: {
+    color: colors.text.tertiary,
+  },
+  inverse: {
+    color: colors.text.inverse,
+  },
+}
+
 export function Text({
   as: Component = 'p',
   children,
@@ -78,6 +98,7 @@ export function Text({
         fontFamily: typography.fontFamily.sans,
         fontWeight: typography.fontWeight[weight],
         ...variantStyles[variant],
+        ...toneStyles[tone],
         ...style,
       }}
     >
