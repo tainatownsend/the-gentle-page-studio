@@ -1,0 +1,718 @@
+]633;E;{   echo "===== PACKAGE.JSON ====="\x3b   cat package.json\x3b    echo\x3b   echo "===== PRIMITIVES INDEX ====="\x3b   cat src/design-system/primitives/index.ts\x3b    echo\x3b   echo "===== BOX ====="\x3b   find src/design-system/primitives/Box -maxdepth 2 -type f -print -exec sh -c '\x0afor file do\x0aecho\x0aecho "----- $file -----"\x0acat "$file"\x0adone\x0a' sh {} +\x3b    echo\x3b   echo "===== STACK ====="\x3b   find src/design-system/primitives/Stack -maxdepth 2 -type f -print -exec sh -c '\x0afor file do\x0aecho\x0aecho "----- $file -----"\x0acat "$file"\x0adone\x0a' sh {} +\x3b    echo\x3b   echo "===== INLINE ====="\x3b   find src/design-system/primitives/Inline -maxdepth 2 -type f -print -exec sh -c '\x0afor file do\x0aecho\x0aecho "----- $file -----"\x0acat "$file"\x0adone\x0a' sh {} +\x3b    echo\x3b   echo "===== TOKENS ====="\x3b   find src/core/tokens -maxdepth 3 -type f -print -exec sh -c '\x0afor file do\x0aecho\x0aecho "----- $file -----"\x0acat "$file"\x0adone\x0a' sh {} +\x3b    echo\x3b   echo "===== ARCHITECTURE DOC ====="\x3b   if [ -f docs/architecture/layout-primitives.md ]\x3b then     cat docs/architecture/layout-primitives.md\x3b   fi\x3b } > layout-refactor-context.txt;d8d197c6-4528-40a7-a4e8-b4a860ce3f9c]633;C===== PACKAGE.JSON =====
+{
+  "name": "the-gentle-page-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "latest",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "latest",
+    "tailwindcss": "latest"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@testing-library/user-event": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "eslint": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react-refresh": "latest",
+    "globals": "latest",
+    "husky": "latest",
+    "jsdom": "latest",
+    "lint-staged": "latest",
+    "prettier": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,json,md,yml,yaml}": "prettier --write"
+  }
+}
+
+===== PRIMITIVES INDEX =====
+export { Text } from './Text'
+export type { TextProps, TextTone, TextVariant } from './Text'
+
+export { Button } from './Button'
+export type { ButtonProps, ButtonSize, ButtonVariant } from './Button'
+
+export { Input, inputRootVariants } from './Input'
+
+export type {
+  InputProps,
+  InputSize,
+  InputVariantProps,
+} from './Input'
+
+export { Field } from './Field'
+
+export type {
+  FieldProps,
+} from './Field'
+export { Textarea, textareaVariants } from './Textarea'
+
+export type {
+  TextareaProps,
+  TextareaResize,
+  TextareaSize,
+  TextareaVariantProps,
+} from './Textarea'
+
+export { Select, selectVariants } from './Select'
+
+export type {
+  SelectProps,
+  SelectSize,
+  SelectVariantProps,
+} from './Select'
+
+export {
+  Checkbox,
+  checkboxControlVariants,
+  checkboxLabelVariants,
+} from './Checkbox'
+
+export type {
+  CheckboxControlVariantProps,
+  CheckboxProps,
+  CheckboxSize,
+} from './Checkbox'
+
+export {
+  Radio,
+  RadioGroup,
+  radioControlVariants,
+  radioGroupVariants,
+  radioLabelVariants,
+} from './RadioGroup'
+
+export type {
+  RadioControlVariantProps,
+  RadioGroupOrientation,
+  RadioGroupProps,
+  RadioGroupSize,
+  RadioGroupVariantProps,
+  RadioProps,
+} from './RadioGroup'
+
+export {
+  Switch,
+  switchLabelVariants,
+  switchThumbVariants,
+  switchTrackVariants,
+} from './Switch'
+
+export type {
+  SwitchProps,
+  SwitchSize,
+  SwitchTrackVariantProps,
+} from './Switch'
+
+export { Box } from './Box'
+export type { BoxProps } from './Box'
+
+export { Stack } from './Stack'
+export type { StackProps } from './Stack'
+
+export { Inline } from './Inline'
+export type { InlineAlign, InlineJustify, InlineProps } from './Inline'
+
+===== BOX =====
+src/design-system/primitives/Box/Box.test.tsx
+src/design-system/primitives/Box/Box.tsx
+src/design-system/primitives/Box/index.ts
+
+----- src/design-system/primitives/Box/Box.test.tsx -----
+import { createRef } from 'react'
+import { render, screen } from '@testing-library/react'
+
+import { Box } from './Box'
+
+describe('Box', () => {
+  it('renders a div by default', () => {
+    render(<Box data-testid="box">Content</Box>)
+    expect(screen.getByTestId('box').tagName).toBe('DIV')
+  })
+
+  it('supports polymorphic semantic elements', () => {
+    render(
+      <Box as="section" aria-label="Publication settings">
+        Content
+      </Box>,
+    )
+    expect(
+      screen.getByRole('region', { name: 'Publication settings' }),
+    ).toBeInTheDocument()
+  })
+
+  it('forwards native props and class names', () => {
+    render(
+      <Box as="button" type="button" className="custom-box">
+        Open
+      </Box>,
+    )
+    expect(screen.getByRole('button', { name: 'Open' })).toHaveClass(
+      'custom-box',
+    )
+  })
+
+  it('forwards refs to the rendered element', () => {
+    const ref = createRef<HTMLElement>()
+    render(<Box as="section" ref={ref} data-testid="box" />)
+    expect(ref.current).toBe(screen.getByTestId('box'))
+  })
+})
+
+----- src/design-system/primitives/Box/Box.tsx -----
+import type {
+  ComponentPropsWithRef,
+  ElementType,
+  ReactElement,
+} from 'react'
+
+export type BoxProps<T extends ElementType = 'div'> = {
+  as?: T
+} & Omit<ComponentPropsWithRef<T>, 'as'>
+
+export function Box<T extends ElementType = 'div'>({
+  as,
+  ...props
+}: BoxProps<T>): ReactElement | null {
+  const Component = as ?? 'div'
+
+  return <Component {...props} />
+}
+
+----- src/design-system/primitives/Box/index.ts -----
+export { Box } from './Box'
+export type { BoxProps } from './Box'
+
+===== STACK =====
+src/design-system/primitives/Stack/index.ts
+src/design-system/primitives/Stack/Stack.module.css
+src/design-system/primitives/Stack/Stack.test.tsx
+src/design-system/primitives/Stack/Stack.tsx
+
+----- src/design-system/primitives/Stack/index.ts -----
+export { Stack } from './Stack'
+export type { StackProps } from './Stack'
+
+----- src/design-system/primitives/Stack/Stack.module.css -----
+.stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+----- src/design-system/primitives/Stack/Stack.test.tsx -----
+import { createRef } from 'react'
+import { render, screen } from '@testing-library/react'
+
+import { Stack } from './Stack'
+
+describe('Stack', () => {
+  it('renders a vertical layout with the default gap', () => {
+    render(
+      <Stack data-testid="stack">
+        <span>First</span>
+        <span>Second</span>
+      </Stack>,
+    )
+    const stack = screen.getByTestId('stack')
+    expect(stack).toHaveAttribute('data-gap', 'md')
+    expect(stack).toHaveStyle({ gap: '16px' })
+  })
+
+  it('supports spacing tokens', () => {
+    render(<Stack gap="xl" data-testid="stack" />)
+    expect(screen.getByTestId('stack')).toHaveStyle({ gap: '32px' })
+  })
+
+  it('supports polymorphic elements and style overrides', () => {
+    render(
+      <Stack
+        as="section"
+        aria-label="Pages"
+        gap="sm"
+        style={{ gap: '40px' }}
+      />,
+    )
+    const stack = screen.getByRole('region', { name: 'Pages' })
+    expect(stack).toHaveAttribute('data-gap', 'sm')
+    expect(stack).toHaveStyle({ gap: '40px' })
+  })
+
+  it('forwards refs', () => {
+    const ref = createRef<HTMLElement>()
+    render(<Stack as="section" ref={ref} data-testid="stack" />)
+    expect(ref.current).toBe(screen.getByTestId('stack'))
+  })
+})
+
+----- src/design-system/primitives/Stack/Stack.tsx -----
+import type {
+  ComponentPropsWithRef,
+  ElementType,
+  ReactElement,
+} from 'react'
+
+import {
+  spacing,
+  type SpacingToken,
+} from '@/core/tokens'
+
+import { cn } from '../../shared'
+import styles from './Stack.module.css'
+
+export type StackProps<T extends ElementType = 'div'> = {
+  as?: T
+  gap?: SpacingToken
+} & Omit<ComponentPropsWithRef<T>, 'as' | 'gap'>
+
+export function Stack<T extends ElementType = 'div'>({
+  as,
+  gap = 'md',
+  className,
+  style,
+  ...props
+}: StackProps<T>): ReactElement | null {
+  const Component = as ?? 'div'
+
+  return (
+    <Component
+      {...props}
+      className={cn(styles.stack, className)}
+      data-gap={gap}
+      style={{
+        gap: `${spacing[gap]}px`,
+        ...style,
+      }}
+    />
+  )
+}
+
+===== INLINE =====
+src/design-system/primitives/Inline/index.ts
+src/design-system/primitives/Inline/Inline.module.css
+src/design-system/primitives/Inline/Inline.test.tsx
+src/design-system/primitives/Inline/Inline.tsx
+
+----- src/design-system/primitives/Inline/index.ts -----
+export { Inline } from './Inline'
+export type { InlineAlign, InlineJustify, InlineProps } from './Inline'
+
+----- src/design-system/primitives/Inline/Inline.module.css -----
+.inline {
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+}
+
+----- src/design-system/primitives/Inline/Inline.test.tsx -----
+import { createRef } from 'react'
+import { render, screen } from '@testing-library/react'
+
+import { Inline } from './Inline'
+
+describe('Inline', () => {
+  it('renders a horizontal layout with defaults', () => {
+    render(
+      <Inline data-testid="inline">
+        <span>First</span>
+        <span>Second</span>
+      </Inline>,
+    )
+    const inline = screen.getByTestId('inline')
+    expect(inline).toHaveAttribute('data-gap', 'md')
+    expect(inline).toHaveAttribute('data-align', 'center')
+    expect(inline).toHaveAttribute('data-justify', 'start')
+    expect(inline).toHaveStyle({
+      alignItems: 'center',
+      gap: '16px',
+      justifyContent: 'flex-start',
+    })
+  })
+
+  it('supports token gap, alignment, and justification', () => {
+    render(
+      <Inline
+        gap="lg"
+        align="baseline"
+        justify="between"
+        data-testid="inline"
+      />,
+    )
+    expect(screen.getByTestId('inline')).toHaveStyle({
+      alignItems: 'baseline',
+      gap: '24px',
+      justifyContent: 'space-between',
+    })
+  })
+
+  it('supports polymorphic elements and style overrides', () => {
+    render(
+      <Inline
+        as="nav"
+        aria-label="Publication actions"
+        style={{ justifyContent: 'center' }}
+      />,
+    )
+    expect(
+      screen.getByRole('navigation', { name: 'Publication actions' }),
+    ).toHaveStyle({ justifyContent: 'center' })
+  })
+
+  it('forwards refs', () => {
+    const ref = createRef<HTMLElement>()
+    render(<Inline as="nav" ref={ref} data-testid="inline" />)
+    expect(ref.current).toBe(screen.getByTestId('inline'))
+  })
+})
+
+----- src/design-system/primitives/Inline/Inline.tsx -----
+import type {
+  ComponentPropsWithRef,
+  CSSProperties,
+  ElementType,
+  ReactElement,
+} from 'react'
+
+import {
+  spacing,
+  type SpacingToken,
+} from '@/core/tokens'
+
+import { cn } from '../../shared'
+import styles from './Inline.module.css'
+
+export type InlineAlign =
+  | 'start'
+  | 'center'
+  | 'end'
+  | 'stretch'
+  | 'baseline'
+
+export type InlineJustify =
+  | 'start'
+  | 'center'
+  | 'end'
+  | 'between'
+  | 'around'
+  | 'evenly'
+
+export type InlineProps<T extends ElementType = 'div'> = {
+  as?: T
+  gap?: SpacingToken
+  align?: InlineAlign
+  justify?: InlineJustify
+} & Omit<
+  ComponentPropsWithRef<T>,
+  'align' | 'as' | 'gap'
+>
+
+const alignValues: Record<
+  InlineAlign,
+  CSSProperties['alignItems']
+> = {
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  stretch: 'stretch',
+  baseline: 'baseline',
+}
+
+const justifyValues: Record<
+  InlineJustify,
+  CSSProperties['justifyContent']
+> = {
+  start: 'flex-start',
+  center: 'center',
+  end: 'flex-end',
+  between: 'space-between',
+  around: 'space-around',
+  evenly: 'space-evenly',
+}
+
+export function Inline<T extends ElementType = 'div'>({
+  as,
+  gap = 'md',
+  align = 'center',
+  justify = 'start',
+  className,
+  style,
+  ...props
+}: InlineProps<T>): ReactElement | null {
+  const Component = as ?? 'div'
+
+  return (
+    <Component
+      {...props}
+      className={cn(styles.inline, className)}
+      data-align={align}
+      data-gap={gap}
+      data-justify={justify}
+      style={{
+        alignItems: alignValues[align],
+        gap: `${spacing[gap]}px`,
+        justifyContent: justifyValues[justify],
+        ...style,
+      }}
+    />
+  )
+}
+
+===== TOKENS =====
+src/core/tokens/.gitkeep
+src/core/tokens/colors.ts
+src/core/tokens/index.ts
+src/core/tokens/motion.ts
+src/core/tokens/radius.ts
+src/core/tokens/shadows.ts
+src/core/tokens/spacing.ts
+src/core/tokens/typography.ts
+
+----- src/core/tokens/.gitkeep -----
+
+----- src/core/tokens/colors.ts -----
+export const lightColors = {
+  surface: {
+    primary: '#FCFDFC',
+    secondary: '#F6F8F7',
+    tertiary: '#EEF3F0',
+  },
+
+  text: {
+    primary: '#1F2522',
+    secondary: '#66736C',
+    tertiary: '#98A39D',
+    inverse: '#FCFDFC',
+  },
+
+  border: {
+    default: '#E3EAE5',
+    subtle: '#F0F3F1',
+    strong: '#CCD7D0',
+  },
+
+  accent: {
+    primary: '#7BA58D',
+    hover: '#6D987F',
+    active: '#5E836B',
+    soft: '#DCEADF',
+    contrast: '#FFFFFF',
+  },
+
+  feedback: {
+    success: '#5E9B73',
+    warning: '#D89A3D',
+    danger: '#D66B6B',
+    info: '#5E8FD6',
+  },
+} as const
+
+export const darkColors = {
+  surface: {
+    primary: '#121715',
+    secondary: '#1A211D',
+    tertiary: '#232C27',
+  },
+
+  text: {
+    primary: '#F4F7F5',
+    secondary: '#C3CEC8',
+    tertiary: '#9AA8A0',
+    inverse: '#121715',
+  },
+
+  border: {
+    default: '#2D3933',
+    subtle: '#232C27',
+    strong: '#415047',
+  },
+
+  accent: {
+    primary: '#8CB89D',
+    hover: '#9CC6AC',
+    active: '#79A98B',
+    soft: '#24352C',
+    contrast: '#FFFFFF',
+  },
+
+  feedback: {
+    success: '#6DB884',
+    warning: '#E6B255',
+    danger: '#E07D7D',
+    info: '#7AA8EA',
+  },
+} as const
+
+export type ColorTheme = typeof lightColors
+
+export const colors = lightColors
+----- src/core/tokens/index.ts -----
+export { colors, darkColors, lightColors } from './colors'
+export type { ColorTheme } from './colors'
+
+export { spacing } from './spacing'
+export type { SpacingToken, SpacingValue } from './spacing'
+
+export { radius } from './radius'
+export type { RadiusToken, RadiusValue } from './radius'
+
+export { typography } from './typography'
+export type { TypographyToken } from './typography'
+
+export { motion } from './motion'
+export type { MotionToken } from './motion'
+
+export { shadows } from './shadows'
+export type { ShadowToken, ShadowValue } from './shadows'
+----- src/core/tokens/motion.ts -----
+export const motion = {
+  duration: {
+    fast: 120,
+    normal: 180,
+    slow: 260,
+  },
+
+  easing: {
+    standard: 'cubic-bezier(0.2, 0, 0, 1)',
+    emphasized: 'cubic-bezier(0.2, 0, 0, 1.2)',
+    exit: 'cubic-bezier(0.4, 0, 1, 1)',
+  },
+} as const
+
+export type MotionToken = typeof motion
+----- src/core/tokens/radius.ts -----
+export const radius = {
+  none: 0,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  full: 9999,
+} as const
+
+export type RadiusToken = keyof typeof radius
+export type RadiusValue = (typeof radius)[RadiusToken]
+----- src/core/tokens/shadows.ts -----
+export const shadows = {
+  none: 'none',
+  xs: '0 1px 2px rgb(31 37 34 / 0.05)',
+  sm: '0 2px 8px rgb(31 37 34 / 0.08)',
+  md: '0 8px 24px rgb(31 37 34 / 0.10)',
+  lg: '0 16px 40px rgb(31 37 34 / 0.12)',
+} as const
+
+export type ShadowToken = keyof typeof shadows
+export type ShadowValue = (typeof shadows)[ShadowToken]
+----- src/core/tokens/spacing.ts -----
+export const spacing = {
+  none: 0,
+  xxs: 4,
+  xs: 8,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  '2xl': 48,
+  '3xl': 64,
+  '4xl': 96,
+} as const
+
+export type SpacingToken = keyof typeof spacing
+export type SpacingValue = (typeof spacing)[SpacingToken]
+----- src/core/tokens/typography.ts -----
+export const typography = {
+  fontFamily: {
+    sans: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  },
+
+  fontSize: {
+    caption: 12,
+    bodySmall: 14,
+    body: 16,
+    h3: 20,
+    h2: 24,
+    h1: 32,
+    display: 48,
+  },
+
+  lineHeight: {
+    caption: 16,
+    bodySmall: 20,
+    body: 24,
+    h3: 28,
+    h2: 32,
+    h1: 40,
+    display: 56,
+  },
+
+  fontWeight: {
+    regular: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700,
+  },
+
+  letterSpacing: {
+    tight: -0.02,
+    normal: 0,
+    wide: 0.02,
+  },
+} as const
+
+export type TypographyToken = typeof typography
+===== ARCHITECTURE DOC =====
+# Layout primitives
+
+The Gentle Page Studio uses small, focused layout primitives instead of component-specific spacing CSS.
+
+- `Box`: polymorphic composition only.
+- `Stack`: vertical flow with token-based gaps.
+- `Inline`: horizontal, non-wrapping flow with token-based gaps.
+
+Rules:
+
+1. Public spacing APIs use the existing semantic spacing tokens.
+2. Each primitive has one clear responsibility.
+3. Every primitive includes tests, documentation, and a public export.
+4. Wrapping is excluded from `Inline`; it belongs to `Cluster`.
+
+## Polymorphic composition
+
+`Box`, `Stack`, and `Inline` share the same React 19 polymorphic pattern:
+the rendered element is selected with `as`, and its native props and `ref`
+are accepted through `ComponentPropsWithRef`.
+
+React 19 supports `ref` as a regular component prop, so these primitives do
+not require `forwardRef`. This avoids unsafe generic casts while preserving
+element-specific prop and ref inference.

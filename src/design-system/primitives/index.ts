@@ -84,3 +84,16 @@ export type { StackProps } from './Stack'
 
 export { Inline } from './Inline'
 export type { InlineAlign, InlineJustify, InlineProps } from './Inline'
+
+export { Cluster } from './Cluster'
+export type {
+  ClusterAlign,
+  ClusterJustify,
+  ClusterProps,
+} from './Cluster'
+
+export { Center } from './Center'
+export type { CenterProps } from './Center'
+
+export { Spacer } from './Spacer'
+export type { SpacerProps } from './Spacer'
