@@ -45,3 +45,20 @@ export type {
   CheckboxProps,
   CheckboxSize,
 } from './Checkbox'
+
+export {
+  Radio,
+  RadioGroup,
+  radioControlVariants,
+  radioGroupVariants,
+  radioLabelVariants,
+} from './RadioGroup'
+
+export type {
+  RadioControlVariantProps,
+  RadioGroupOrientation,
+  RadioGroupProps,
+  RadioGroupSize,
+  RadioGroupVariantProps,
+  RadioProps,
+} from './RadioGroup'
