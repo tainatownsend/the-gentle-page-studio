@@ -97,3 +97,21 @@ export type { CenterProps } from './Center'
 
 export { Spacer } from './Spacer'
 export type { SpacerProps } from './Spacer'
+
+export { Surface } from './Surface'
+export type {
+  SurfaceProps,
+  SurfaceTone,
+} from './Surface'
+
+export { Divider } from './Divider'
+export type {
+  DividerOrientation,
+  DividerProps,
+} from './Divider'
+
+export { Container } from './Container'
+export type {
+  ContainerProps,
+  ContainerSize,
+} from './Container'
