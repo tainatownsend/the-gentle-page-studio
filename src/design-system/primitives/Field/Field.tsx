@@ -19,6 +19,7 @@ export type FieldProps = {
   required?: boolean
   optionalText?: ReactNode
   controlId?: string
+  renderLabel?: boolean
   labelClassName?: string
   contentClassName?: string
 } & HTMLAttributes<HTMLDivElement>
@@ -35,6 +36,7 @@ export function Field({
   required = false,
   optionalText = 'Optional',
   controlId,
+  renderLabel = true,
   className,
   labelClassName,
   contentClassName,
@@ -58,6 +60,7 @@ export function Field({
     describedBy,
     invalid: Boolean(error),
     required,
+    hasExternalLabel: renderLabel,
   }
 
   return (
@@ -67,35 +70,37 @@ export function Field({
         className={cn(styles.field, className)}
         data-invalid={error ? true : undefined}
       >
-        <div className={styles.heading}>
-          <label
-            htmlFor={baseId}
-            className={cn(styles.label, labelClassName)}
-          >
-            {label}
+        {renderLabel && (
+          <div className={styles.heading}>
+            <label
+              htmlFor={baseId}
+              className={cn(styles.label, labelClassName)}
+            >
+              {label}
 
-            {required && (
-              <>
-                <span
-                  className={styles.requiredIndicator}
-                  aria-hidden="true"
-                >
-                  *
-                </span>
+              {required && (
+                <>
+                  <span
+                    className={styles.requiredIndicator}
+                    aria-hidden="true"
+                  >
+                    *
+                  </span>
 
-                <span className={styles.visuallyHidden}>
-                  Required
-                </span>
-              </>
+                  <span className={styles.visuallyHidden}>
+                    Required
+                  </span>
+                </>
+              )}
+            </label>
+
+            {!required && optionalText && (
+              <span className={styles.optional}>
+                {optionalText}
+              </span>
             )}
-          </label>
-
-          {!required && optionalText && (
-            <span className={styles.optional}>
-              {optionalText}
-            </span>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className={cn(styles.content, contentClassName)}>
           {children}

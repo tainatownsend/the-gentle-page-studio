@@ -62,3 +62,16 @@ export type {
   RadioGroupVariantProps,
   RadioProps,
 } from './RadioGroup'
+
+export {
+  Switch,
+  switchLabelVariants,
+  switchThumbVariants,
+  switchTrackVariants,
+} from './Switch'
+
+export type {
+  SwitchProps,
+  SwitchSize,
+  SwitchTrackVariantProps,
+} from './Switch'
