@@ -75,3 +75,12 @@ export type {
   SwitchSize,
   SwitchTrackVariantProps,
 } from './Switch'
+
+export { Box } from './Box'
+export type { BoxProps } from './Box'
+
+export { Stack } from './Stack'
+export type { StackProps } from './Stack'
+
+export { Inline } from './Inline'
+export type { InlineAlign, InlineJustify, InlineProps } from './Inline'
