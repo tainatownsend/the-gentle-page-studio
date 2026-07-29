@@ -39,7 +39,7 @@ is needed.
 <Field
   label="Publishing preference"
   description="You can change this later."
->
+ renderLabel={false}>
   <Checkbox label="Publish immediately" />
 </Field>
 ```
@@ -51,7 +51,7 @@ is needed.
   label="Publishing consent"
   error="Consent is required."
   required
->
+ renderLabel={false}>
   <Checkbox label="I agree to publish this content" />
 </Field>
 ```

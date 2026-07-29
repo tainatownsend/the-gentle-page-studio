@@ -35,7 +35,7 @@ options. `Radio` renders each selectable option.
 <Field
   label="Theme"
   description="Choose the visual theme."
->
+ renderLabel={false}>
   <RadioGroup aria-label="Theme options">
     <Radio value="light" label="Light" />
     <Radio value="dark" label="Dark" />
@@ -50,7 +50,7 @@ options. `Radio` renders each selectable option.
   label="Publication format"
   error="Select a publication format."
   required
->
+ renderLabel={false}>
   <RadioGroup aria-label="Publication formats">
     <Radio value="journal" label="Journal" />
     <Radio value="planner" label="Planner" />

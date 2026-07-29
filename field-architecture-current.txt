@@ -1,3 +1,131 @@
+]633;E;{   echo "===== Field.tsx ====="\x3b   cat src/design-system/primitives/Field/Field.tsx\x3b    echo\x3b   echo "===== Field.test.tsx ====="\x3b   cat src/design-system/primitives/Field/Field.test.tsx\x3b    echo\x3b   echo "===== FieldContext ====="\x3b   cat src/design-system/primitives/Field/FieldContext.ts\x3b } > field-architecture-current.txt;3574faab-96f8-47c5-9095-36b25320b1ac]633;C===== Field.tsx =====
+import {
+  useId,
+  type HTMLAttributes,
+  type ReactNode,
+} from 'react'
+
+import { cn } from '../../shared'
+import styles from './Field.module.css'
+import {
+  FieldContext,
+  type FieldContextValue,
+} from './FieldContext'
+
+export type FieldProps = {
+  children: ReactNode
+  label: ReactNode
+  description?: ReactNode
+  error?: ReactNode
+  required?: boolean
+  optionalText?: ReactNode
+  controlId?: string
+  labelClassName?: string
+  contentClassName?: string
+} & HTMLAttributes<HTMLDivElement>
+
+function createFieldId(generatedId: string): string {
+  return `field-${generatedId.replaceAll(':', '')}`
+}
+
+export function Field({
+  children,
+  label,
+  description,
+  error,
+  required = false,
+  optionalText = 'Optional',
+  controlId,
+  className,
+  labelClassName,
+  contentClassName,
+  ...props
+}: FieldProps) {
+  const generatedId = useId()
+  const baseId = controlId ?? createFieldId(generatedId)
+
+  const descriptionId = description
+    ? `${baseId}-description`
+    : undefined
+
+  const errorId = error ? `${baseId}-error` : undefined
+
+  const describedBy = [descriptionId, errorId]
+    .filter(Boolean)
+    .join(' ') || undefined
+
+  const contextValue: FieldContextValue = {
+    controlId: baseId,
+    describedBy,
+    invalid: Boolean(error),
+    required,
+  }
+
+  return (
+    <FieldContext.Provider value={contextValue}>
+      <div
+        {...props}
+        className={cn(styles.field, className)}
+        data-invalid={error ? true : undefined}
+      >
+        <div className={styles.heading}>
+          <label
+            htmlFor={baseId}
+            className={cn(styles.label, labelClassName)}
+          >
+            {label}
+
+            {required && (
+              <>
+                <span
+                  className={styles.requiredIndicator}
+                  aria-hidden="true"
+                >
+                  *
+                </span>
+
+                <span className={styles.visuallyHidden}>
+                  Required
+                </span>
+              </>
+            )}
+          </label>
+
+          {!required && optionalText && (
+            <span className={styles.optional}>
+              {optionalText}
+            </span>
+          )}
+        </div>
+
+        <div className={cn(styles.content, contentClassName)}>
+          {children}
+        </div>
+
+        {description && (
+          <div
+            id={descriptionId}
+            className={styles.description}
+          >
+            {description}
+          </div>
+        )}
+
+        {error && (
+          <div
+            id={errorId}
+            className={styles.error}
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
+      </div>
+    </FieldContext.Provider>
+  )
+}
+
+===== Field.test.tsx =====
 import {
   render,
   screen,
@@ -215,28 +343,21 @@ describe('Field', () => {
         ?.parentElement,
     ).toHaveClass('custom-content')
   })
-  it('does not render an external label when renderLabel is false', () => {
-    render(
-      <Field
-        label="Notification settings"
-        renderLabel={false}
-        description="Choose whether reminders are enabled."
-      >
-        <Input aria-label="Enable reminders" />
-      </Field>,
-    )
-
-    const input = screen.getByRole('textbox', {
-      name: 'Enable reminders',
-    })
-
-    expect(
-      screen.queryByText('Notification settings'),
-    ).not.toBeInTheDocument()
-
-    expect(input).toHaveAccessibleDescription(
-      'Choose whether reminders are enabled.',
-    )
-  })
-
 })
+
+===== FieldContext =====
+import { createContext, useContext } from 'react'
+
+export type FieldContextValue = {
+  controlId: string
+  describedBy?: string
+  invalid: boolean
+  required: boolean
+}
+
+export const FieldContext =
+  createContext<FieldContextValue | null>(null)
+
+export function useFieldContext(): FieldContextValue | null {
+  return useContext(FieldContext)
+}

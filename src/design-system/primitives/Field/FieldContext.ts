@@ -5,6 +5,7 @@ export type FieldContextValue = {
   describedBy?: string
   invalid: boolean
   required: boolean
+  hasExternalLabel: boolean
 }
 
 export const FieldContext =

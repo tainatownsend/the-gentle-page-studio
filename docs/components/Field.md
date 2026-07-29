@@ -228,3 +228,21 @@ Explicit attributes supplied directly to a control are preserved where
 
 appropriate.
 
+## Internal control labels
+
+Use `renderLabel={false}` when the child control already renders its own
+accessible label, such as `Checkbox`, `Switch`, or individual radio options.
+
+```tsx
+<Field
+  label="Reminder settings"
+  renderLabel={false}
+  description="Choose whether reminders are enabled."
+>
+  <Switch label="Enable reminders" />
+</Field>
+```
+
+The `Field` continues to provide the control ID, description, error, required,
+and invalid state through context. It only stops rendering the external
+`<label>`.
