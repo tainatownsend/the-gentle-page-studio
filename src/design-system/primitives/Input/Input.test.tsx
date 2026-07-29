@@ -5,6 +5,7 @@ import {
   screen,
 } from '@testing-library/react'
 
+import { Field } from '../Field'
 import styles from './Input.module.css'
 import { Input } from './Input'
 
@@ -191,5 +192,76 @@ describe('Input', () => {
       'autocomplete',
       'email',
     )
+  })
+})
+
+describe('Input with Field context', () => {
+  it('preserves an explicit input id', () => {
+    render(
+      <Field
+        label="Publication title"
+        controlId="field-title"
+      >
+        <Input
+          id="explicit-title"
+          aria-label="Explicit title"
+        />
+      </Field>,
+    )
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Explicit title',
+      }),
+    ).toHaveAttribute('id', 'explicit-title')
+  })
+
+  it('combines explicit and field descriptions', () => {
+    render(
+      <>
+        <span id="external-help">
+          External help
+        </span>
+
+        <Field
+          label="Publication title"
+          description="Field help"
+        >
+          <Input aria-describedby="external-help" />
+        </Field>
+      </>,
+    )
+
+    const input = screen.getByRole('textbox', {
+      name: 'Publication title',
+    })
+
+    expect(
+      input.getAttribute('aria-describedby'),
+    ).toContain('external-help')
+
+    expect(
+      input.getAttribute('aria-describedby'),
+    ).toContain('-description')
+  })
+
+  it('allows an explicit invalid value to override context', () => {
+    render(
+      <Field
+        label="Publication title"
+        error="Field error"
+      >
+        <Input
+          invalid={false}
+          aria-invalid="false"
+        />
+      </Field>,
+    )
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Publication title',
+      }),
+    ).toHaveAttribute('aria-invalid', 'false')
   })
 })

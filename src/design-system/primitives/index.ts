@@ -11,3 +11,9 @@ export type {
   InputSize,
   InputVariantProps,
 } from './Input'
+
+export { Field } from './Field'
+
+export type {
+  FieldProps,
+} from './Field'
