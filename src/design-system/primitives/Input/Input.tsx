@@ -5,6 +5,7 @@ import {
 } from 'react'
 
 import { cn } from '../../shared'
+import { useFieldContext } from '../Field/FieldContext'
 import styles from './Input.module.css'
 import {
   inputRootVariants,
@@ -20,37 +21,62 @@ export type InputProps = {
   inputClassName?: string
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>
 
+function mergeIds(
+  first?: string,
+  second?: string,
+): string | undefined {
+  return [first, second].filter(Boolean).join(' ') || undefined
+}
+
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   function Input(
     {
       size = 'md',
-      invalid = false,
+      invalid,
       fullWidth = false,
       startAdornment,
       endAdornment,
       className,
       inputClassName,
       disabled,
+      id,
+      required,
+      'aria-describedby': ariaDescribedBy,
       'aria-invalid': ariaInvalid,
       ...props
     },
     ref,
   ) {
+    const fieldContext = useFieldContext()
+
+    const resolvedId = id ?? fieldContext?.controlId
+
+    const resolvedInvalid =
+      invalid ?? fieldContext?.invalid ?? false
+
+    const resolvedRequired =
+      required ?? fieldContext?.required
+
+    const resolvedAriaDescribedBy = mergeIds(
+      ariaDescribedBy,
+      fieldContext?.describedBy,
+    )
+
     const resolvedAriaInvalid =
-      ariaInvalid ?? (invalid || undefined)
+      ariaInvalid ?? (resolvedInvalid || undefined)
 
     return (
       <span
         className={cn(
           inputRootVariants({
             size,
-            invalid,
+            invalid: resolvedInvalid,
             fullWidth,
           }),
           className,
         )}
         data-disabled={disabled || undefined}
-        data-invalid={invalid || undefined}
+        data-invalid={resolvedInvalid || undefined}
       >
         {startAdornment && (
           <span
@@ -65,8 +91,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           {...props}
           ref={ref}
+          id={resolvedId}
           className={cn(styles.input, inputClassName)}
           disabled={disabled}
+          required={resolvedRequired}
+          aria-describedby={resolvedAriaDescribedBy}
           aria-invalid={resolvedAriaInvalid}
         />
 
