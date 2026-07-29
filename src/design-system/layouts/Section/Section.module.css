@@ -1,0 +1,53 @@
+.root {
+  display: grid;
+  gap: var(--space-5, 1.25rem);
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5, 1.25rem);
+  min-width: 0;
+}
+
+.headingGroup {
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font: inherit;
+}
+
+.description {
+  max-width: 70ch;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3, 0.75rem);
+}
+
+.content {
+  min-width: 0;
+}
+
+@media (max-width: 42rem) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
