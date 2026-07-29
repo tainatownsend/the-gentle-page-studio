@@ -1,0 +1,39 @@
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  min-width: 0;
+}
+
+.start,
+.content,
+.end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  min-width: 0;
+}
+
+.content {
+  flex: 1 1 auto;
+}
+
+.end {
+  margin-inline-start: auto;
+  justify-content: flex-end;
+}
+
+@media (max-width: 42rem) {
+  .start,
+  .content,
+  .end {
+    width: 100%;
+  }
+
+  .end {
+    margin-inline-start: 0;
+    justify-content: flex-start;
+  }
+}
