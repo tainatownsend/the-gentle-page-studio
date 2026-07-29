@@ -17,3 +17,11 @@ export { Field } from './Field'
 export type {
   FieldProps,
 } from './Field'
+export { Textarea, textareaVariants } from './Textarea'
+
+export type {
+  TextareaProps,
+  TextareaResize,
+  TextareaSize,
+  TextareaVariantProps,
+} from './Textarea'
