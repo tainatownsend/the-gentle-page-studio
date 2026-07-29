@@ -33,3 +33,15 @@ export type {
   SelectSize,
   SelectVariantProps,
 } from './Select'
+
+export {
+  Checkbox,
+  checkboxControlVariants,
+  checkboxLabelVariants,
+} from './Checkbox'
+
+export type {
+  CheckboxControlVariantProps,
+  CheckboxProps,
+  CheckboxSize,
+} from './Checkbox'
