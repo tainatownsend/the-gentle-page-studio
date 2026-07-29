@@ -4,10 +4,13 @@ import {
   type ReactNode,
 } from 'react'
 
+import { cn } from '../../shared'
 import styles from './Button.module.css'
-
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost'
-export type ButtonSize = 'sm' | 'md' | 'lg'
+import {
+  buttonVariants,
+  type ButtonSize,
+  type ButtonVariant,
+} from './buttonVariants'
 
 export type ButtonProps = {
   children: ReactNode
@@ -38,22 +41,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) {
     const isDisabled = disabled || loading
 
-    const classes = [
-      styles.button,
-      styles[variant],
-      styles[size],
-      fullWidth ? styles.fullWidth : '',
-      className ?? '',
-    ]
-      .filter(Boolean)
-      .join(' ')
-
     return (
       <button
         {...props}
         ref={ref}
         type={type}
-        className={classes}
+        className={cn(
+          buttonVariants({
+            variant,
+            size,
+            fullWidth,
+          }),
+          className,
+        )}
         disabled={isDisabled}
         aria-busy={loading || undefined}
       >
