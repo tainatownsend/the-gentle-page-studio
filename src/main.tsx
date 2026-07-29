@@ -1,8 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import { App } from '@/app/App'
 import '@/app/styles.css'
+import { ThemeProvider } from '@/core/theme'
+
 
 const root = document.getElementById('root')
 
@@ -12,8 +13,8 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <BrowserRouter>
+    <ThemeProvider>
       <App />
-    </BrowserRouter>
-  </StrictMode>,
+    </ThemeProvider>
+  </StrictMode>
 )
