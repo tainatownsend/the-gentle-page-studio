@@ -25,3 +25,11 @@ export type {
   TextareaSize,
   TextareaVariantProps,
 } from './Textarea'
+
+export { Select, selectVariants } from './Select'
+
+export type {
+  SelectProps,
+  SelectSize,
+  SelectVariantProps,
+} from './Select'
