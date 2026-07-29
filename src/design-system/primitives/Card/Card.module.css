@@ -1,0 +1,15 @@
+.card {
+  border-radius: var(--radius-lg, 12px);
+}
+
+.sm {
+  padding: var(--space-md, 16px);
+}
+
+.md {
+  padding: var(--space-lg, 24px);
+}
+
+.lg {
+  padding: var(--space-xl, 32px);
+}

@@ -1,0 +1,38 @@
+.emptyState {
+  width: 100%;
+  padding-block: var(--space-2xl, 48px);
+}
+
+.content,
+.copy {
+  width: 100%;
+}
+
+.start {
+  align-items: flex-start;
+  text-align: start;
+}
+
+.center {
+  align-items: center;
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-secondary);
+}
+
+.title {
+  max-width: 32rem;
+}
+
+.description {
+  max-width: 40rem;
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  margin-top: var(--space-xs, 4px);
+}
