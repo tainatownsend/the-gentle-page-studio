@@ -1,0 +1,104 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2, 8px);
+  color: var(--color-text-primary);
+  background: var(--color-surface-primary);
+  border: 1px solid var(--color-border-primary, currentColor);
+  border-radius: var(--radius-md, 8px);
+  transition:
+    border-color var(--motion-duration-fast, 150ms)
+      var(--motion-easing-standard, ease),
+    box-shadow var(--motion-duration-fast, 150ms)
+      var(--motion-easing-standard, ease),
+    opacity var(--motion-duration-fast, 150ms)
+      var(--motion-easing-standard, ease);
+}
+
+.root:hover:not([data-disabled='true']) {
+  border-color: var(
+    --color-border-strong,
+    var(--color-text-secondary)
+  );
+}
+
+.root:focus-within {
+  border-color: var(--color-text-primary);
+  box-shadow:
+    0 0 0 1px var(--color-surface-primary),
+    0 0 0 3px var(--color-text-primary);
+}
+
+.root[data-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.72;
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.adornment {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.sm {
+  min-height: 32px;
+  padding: 0 var(--spacing-3, 12px);
+  font-size: 0.875rem;
+}
+
+.md {
+  min-height: 40px;
+  padding: 0 var(--spacing-4, 16px);
+  font-size: 1rem;
+}
+
+.lg {
+  min-height: 48px;
+  padding: 0 var(--spacing-4, 16px);
+  font-size: 1rem;
+}
+
+.invalid {
+  border-color: var(--color-status-danger, currentColor);
+}
+
+.invalid:focus-within {
+  border-color: var(--color-status-danger, currentColor);
+  box-shadow:
+    0 0 0 1px var(--color-surface-primary),
+    0 0 0 3px var(--color-status-danger, currentColor);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}
