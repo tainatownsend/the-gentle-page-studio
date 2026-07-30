@@ -1,0 +1,12 @@
+.page {
+  min-height: 100vh;
+  padding-block: var(--space-xl, 32px);
+  color: var(--color-text-primary, #1f2522);
+  background: var(--color-surface-secondary, #f6f8f7);
+}
+
+@media (min-width: 48rem) {
+  .page {
+    padding-block: var(--space-2xl, 48px);
+  }
+}

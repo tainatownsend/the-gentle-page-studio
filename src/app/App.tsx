@@ -1,9 +1,11 @@
 import { useState } from 'react'
 
 import {
+  PublicationEditorPage,
   PublicationsPage,
   type Publication,
   type PublicationCreateValues,
+  type PublicationEditorValues,
 } from '@/studio/publications'
 
 const initialPublications: Publication[] = []
@@ -26,6 +28,12 @@ export function App() {
     initialPublications,
   )
   const [isCreating, setIsCreating] = useState(false)
+  const [activePublicationId, setActivePublicationId] =
+    useState<string>()
+
+  const activePublication = publications.find(
+    (publication) => publication.id === activePublicationId,
+  )
 
   function handleSubmitCreate(values: PublicationCreateValues) {
     setPublications((current) => [
@@ -35,6 +43,37 @@ export function App() {
     setIsCreating(false)
   }
 
+  function handleSavePublication(
+    values: PublicationEditorValues,
+  ) {
+    if (!activePublicationId) {
+      return
+    }
+
+    setPublications((current) =>
+      current.map((publication) =>
+        publication.id === activePublicationId
+          ? {
+              ...publication,
+              ...values,
+              updatedAt: 'Just now',
+            }
+          : publication,
+      ),
+    )
+    setActivePublicationId(undefined)
+  }
+
+  if (activePublication) {
+    return (
+      <PublicationEditorPage
+        publication={activePublication}
+        onBack={() => setActivePublicationId(undefined)}
+        onSave={handleSavePublication}
+      />
+    )
+  }
+
   return (
     <PublicationsPage
       publications={publications}
@@ -42,6 +81,7 @@ export function App() {
       onCreate={() => setIsCreating(true)}
       onCancelCreate={() => setIsCreating(false)}
       onSubmitCreate={handleSubmitCreate}
+      onOpen={setActivePublicationId}
     />
   )
 }
