@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { BookOpen } from 'lucide-react'
 import { vi } from 'vitest'
 
 import { ResourceCollection } from './ResourceCollection'
@@ -89,6 +90,7 @@ describe('ResourceCollection', () => {
         )}
         emptyTitle="Create your first resource"
         emptyDescription="Start with a journal, planner, or workbook."
+        emptyIcon={<BookOpen data-testid="empty-icon" />}
         emptyActions={<button type="button">Create resource</button>}
       />,
     )
@@ -104,6 +106,8 @@ describe('ResourceCollection', () => {
         'Start with a journal, planner, or workbook.',
       ),
     ).toBeInTheDocument()
+
+    expect(screen.getByTestId('empty-icon')).toBeInTheDocument()
 
     expect(
       screen.getByRole('button', {
