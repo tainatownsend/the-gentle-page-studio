@@ -1,0 +1,31 @@
+.card {
+  height: 100%;
+}
+
+.content {
+  height: 100%;
+}
+
+.title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  border: 1px solid var(--color-border-primary, currentColor);
+  border-radius: var(--radius-full, 9999px);
+  white-space: nowrap;
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.actions {
+  margin-top: auto;
+}
