@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import {
   Navigate,
   Route,
@@ -10,92 +10,47 @@ import {
 import {
   PublicationEditorPage,
   PublicationsPage,
-  type Publication,
-  type PublicationCreateValues,
+  usePublicationsWorkspace,
   type PublicationEditorValues,
+  type PublicationsWorkspace,
 } from '@/studio/publications'
 
-const initialPublications: Publication[] = []
-
-function createPublication(
-  values: PublicationCreateValues,
-  sequence: number,
-): Publication {
-  return {
-    id: `publication-${sequence}`,
-    title: values.title,
-    description: values.description,
-    updatedAt: 'Just now',
-    status: 'draft',
-  }
-}
-
 type PublicationEditorRouteProps = {
-  publications: readonly Publication[]
-  onSave: (
-    publicationId: string,
-    values: PublicationEditorValues,
-  ) => void
+  workspace: Pick<
+    PublicationsWorkspace,
+    'getPublication' | 'updatePublication'
+  >
 }
 
 function PublicationEditorRoute({
-  publications,
-  onSave,
+  workspace,
 }: PublicationEditorRouteProps): ReactElement {
   const navigate = useNavigate()
   const { publicationId } = useParams()
 
-  const publication = publications.find(
-    (item) => item.id === publicationId,
-  )
+  const publication = workspace.getPublication(publicationId)
 
   if (!publication || !publicationId) {
     return <Navigate to="/publications" replace />
+  }
+
+  function handleSave(values: PublicationEditorValues) {
+    workspace.updatePublication(publicationId, values)
+    navigate('/publications')
   }
 
   return (
     <PublicationEditorPage
       publication={publication}
       onBack={() => navigate('/publications')}
-      onSave={(values) => {
-        onSave(publicationId, values)
-        navigate('/publications')
-      }}
+      onSave={handleSave}
     />
   )
 }
 
 export function PublicationsRoutes(): ReactElement {
   const navigate = useNavigate()
-  const [publications, setPublications] = useState(
-    initialPublications,
-  )
-  const [isCreating, setIsCreating] = useState(false)
-
-  function handleSubmitCreate(values: PublicationCreateValues) {
-    setPublications((current) => [
-      createPublication(values, current.length + 1),
-      ...current,
-    ])
-    setIsCreating(false)
-  }
-
-  function handleSavePublication(
-    publicationId: string,
-    values: PublicationEditorValues,
-  ) {
-    setPublications((current) =>
-      current.map((publication) =>
-        publication.id === publicationId
-          ? {
-              ...publication,
-              ...values,
-              updatedAt: 'Just now',
-            }
-          : publication,
-      ),
-    )
-  }
+  const workspace = usePublicationsWorkspace()
 
   return (
     <Routes>
@@ -108,11 +63,11 @@ export function PublicationsRoutes(): ReactElement {
         path="/publications"
         element={
           <PublicationsPage
-            publications={publications}
-            isCreating={isCreating}
-            onCreate={() => setIsCreating(true)}
-            onCancelCreate={() => setIsCreating(false)}
-            onSubmitCreate={handleSubmitCreate}
+            publications={workspace.publications}
+            isCreating={workspace.isCreating}
+            onCreate={workspace.startCreating}
+            onCancelCreate={workspace.cancelCreating}
+            onSubmitCreate={workspace.createDraft}
             onOpen={(publicationId) =>
               navigate(
                 `/publications/${encodeURIComponent(
@@ -127,10 +82,7 @@ export function PublicationsRoutes(): ReactElement {
       <Route
         path="/publications/:publicationId/edit"
         element={
-          <PublicationEditorRoute
-            publications={publications}
-            onSave={handleSavePublication}
-          />
+          <PublicationEditorRoute workspace={workspace} />
         }
       />
 
