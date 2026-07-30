@@ -1,0 +1,1 @@
+export { PublicationsRoutes } from './PublicationsRoutes'
