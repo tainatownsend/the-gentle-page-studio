@@ -7,17 +7,12 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { cn } from '@/design-system/shared'
 
+import type {
+  Publication,
+  PublicationStatus,
+} from '../../types'
+
 import styles from './PublicationCard.module.css'
-
-export type PublicationStatus = 'draft' | 'published'
-
-export type Publication = {
-  id: string
-  title: string
-  description?: string
-  updatedAt?: string
-  status: PublicationStatus
-}
 
 export type PublicationCardProps = {
   publication: Publication

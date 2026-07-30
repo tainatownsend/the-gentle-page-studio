@@ -9,9 +9,9 @@ import { ResourceCollection } from '@/studio/resources'
 import {
   PublicationCard,
   PublicationCreateForm,
-  type Publication,
   type PublicationCreateValues,
 } from '../../components'
+import type { Publication } from '../../types'
 
 import styles from './PublicationsPage.module.css'
 
