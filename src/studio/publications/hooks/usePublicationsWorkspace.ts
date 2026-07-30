@@ -1,17 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
-import type {
-  Publication,
-  PublicationCreateValues,
-  PublicationEditorValues,
-} from '../index'
+import type { Publication, PublicationCreateValues, PublicationEditorValues } from '../index'
 
 const initialPublications: Publication[] = []
 
-function createPublication(
-  values: PublicationCreateValues,
-  sequence: number,
-): Publication {
+function createPublication(values: PublicationCreateValues, sequence: number): Publication {
   return {
     id: `publication-${sequence}`,
     title: values.title,
@@ -27,20 +20,14 @@ export type PublicationsWorkspace = {
   startCreating: () => void
   cancelCreating: () => void
   createDraft: (values: PublicationCreateValues) => Publication
-  updatePublication: (
-    publicationId: string,
-    values: PublicationEditorValues,
-  ) => void
-  getPublication: (
-    publicationId: string | undefined,
-  ) => Publication | undefined
+  updatePublication: (publicationId: string, values: PublicationEditorValues) => void
+  getPublication: (publicationId: string | undefined) => Publication | undefined
 }
 
 export function usePublicationsWorkspace(): PublicationsWorkspace {
-  const [publications, setPublications] = useState<Publication[]>(
-    initialPublications,
-  )
+  const [publications, setPublications] = useState<Publication[]>(initialPublications)
   const [isCreating, setIsCreating] = useState(false)
+  const nextPublicationSequence = useRef(1)
 
   const startCreating = useCallback(() => {
     setIsCreating(true)
@@ -50,35 +37,19 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
     setIsCreating(false)
   }, [])
 
-  const createDraft = useCallback(
-    (values: PublicationCreateValues): Publication => {
-      let createdPublication: Publication | undefined
+  const createDraft = useCallback((values: PublicationCreateValues): Publication => {
+    const createdPublication = createPublication(values, nextPublicationSequence.current)
 
-      setPublications((current) => {
-        createdPublication = createPublication(
-          values,
-          current.length + 1,
-        )
+    nextPublicationSequence.current += 1
 
-        return [createdPublication, ...current]
-      })
+    setPublications((current) => [createdPublication, ...current])
+    setIsCreating(false)
 
-      setIsCreating(false)
-
-      if (!createdPublication) {
-        throw new Error('Publication draft was not created.')
-      }
-
-      return createdPublication
-    },
-    [],
-  )
+    return createdPublication
+  }, [])
 
   const updatePublication = useCallback(
-    (
-      publicationId: string,
-      values: PublicationEditorValues,
-    ) => {
+    (publicationId: string, values: PublicationEditorValues) => {
       setPublications((current) =>
         current.map((publication) =>
           publication.id === publicationId
@@ -96,9 +67,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
 
   const getPublication = useCallback(
     (publicationId: string | undefined) =>
-      publications.find(
-        (publication) => publication.id === publicationId,
-      ),
+      publications.find((publication) => publication.id === publicationId),
     [publications],
   )
 

@@ -1,11 +1,5 @@
 import type { ReactElement } from 'react'
-import {
-  Navigate,
-  Route,
-  Routes,
-  useNavigate,
-  useParams,
-} from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
 import {
   PublicationEditorPage,
@@ -16,15 +10,10 @@ import {
 } from '@/studio/publications'
 
 type PublicationEditorRouteProps = {
-  workspace: Pick<
-    PublicationsWorkspace,
-    'getPublication' | 'updatePublication'
-  >
+  workspace: Pick<PublicationsWorkspace, 'getPublication' | 'updatePublication'>
 }
 
-function PublicationEditorRoute({
-  workspace,
-}: PublicationEditorRouteProps): ReactElement {
+function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): ReactElement {
   const navigate = useNavigate()
   const { publicationId } = useParams()
 
@@ -34,8 +23,10 @@ function PublicationEditorRoute({
     return <Navigate to="/publications" replace />
   }
 
+  const resolvedPublicationId = publicationId
+
   function handleSave(values: PublicationEditorValues) {
-    workspace.updatePublication(publicationId, values)
+    workspace.updatePublication(resolvedPublicationId, values)
     navigate('/publications')
   }
 
@@ -54,10 +45,7 @@ export function PublicationsRoutes(): ReactElement {
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={<Navigate to="/publications" replace />}
-      />
+      <Route path="/" element={<Navigate to="/publications" replace />} />
 
       <Route
         path="/publications"
@@ -69,11 +57,7 @@ export function PublicationsRoutes(): ReactElement {
             onCancelCreate={workspace.cancelCreating}
             onSubmitCreate={workspace.createDraft}
             onOpen={(publicationId) =>
-              navigate(
-                `/publications/${encodeURIComponent(
-                  publicationId,
-                )}/edit`,
-              )
+              navigate(`/publications/${encodeURIComponent(publicationId)}/edit`)
             }
           />
         }
@@ -81,15 +65,10 @@ export function PublicationsRoutes(): ReactElement {
 
       <Route
         path="/publications/:publicationId/edit"
-        element={
-          <PublicationEditorRoute workspace={workspace} />
-        }
+        element={<PublicationEditorRoute workspace={workspace} />}
       />
 
-      <Route
-        path="*"
-        element={<Navigate to="/publications" replace />}
-      />
+      <Route path="*" element={<Navigate to="/publications" replace />} />
     </Routes>
   )
 }
