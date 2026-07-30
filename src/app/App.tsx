@@ -1,23 +1,24 @@
-import { Sparkles } from 'lucide-react'
+import { PublicationsPage } from '@/studio/publications'
+
+const publications = [
+  {
+    id: 'adhd-emotional-regulation-journal',
+    title: 'ADHD Emotional Regulation Journal',
+    description:
+      'A supportive journal for noticing emotions, understanding patterns, and choosing gentle next steps.',
+    updatedAt: 'July 29, 2026',
+    status: 'draft' as const,
+  },
+  {
+    id: 'daily-clarity-planner',
+    title: 'Daily Clarity Planner',
+    description:
+      'A calm daily planning system designed to make priorities feel clear and manageable.',
+    updatedAt: 'July 28, 2026',
+    status: 'published' as const,
+  },
+]
 
 export function App() {
-  return (
-    <main className="app-shell">
-      <section className="welcome-panel" aria-labelledby="welcome-title">
-        <div className="brand-mark" aria-hidden="true">
-          <Sparkles size={22} strokeWidth={1.8} />
-        </div>
-        <p className="eyebrow">The Gentle Page Studio</p>
-        <h1 id="welcome-title">A thoughtful publishing workspace is taking shape.</h1>
-        <p className="intro">
-          Commit 1 establishes the project foundation: architecture, tooling, quality checks,
-          testing, and a clean place for every future feature.
-        </p>
-        <div className="status-row" role="status">
-          <span className="status-dot" />
-          Core foundation ready
-        </div>
-      </section>
-    </main>
-  )
+  return <PublicationsPage publications={publications} />
 }
