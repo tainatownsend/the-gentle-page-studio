@@ -92,18 +92,6 @@ describe('PublicationsPage', () => {
       />,
     )
 
-    expect(
-      screen.getByRole('heading', {
-        name: 'Create your first publication',
-      }),
-    ).toBeInTheDocument()
-
-    expect(
-      screen.getByText(
-        'Start with one thoughtful idea. You can shape the content, design, and release details as you go.',
-      ),
-    ).toBeInTheDocument()
-
     const createButton = screen.getByRole('button', {
       name: 'Create publication',
     })
@@ -119,5 +107,28 @@ describe('PublicationsPage', () => {
     await user.click(createButton)
 
     expect(onCreate).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders the creation form instead of the empty state', () => {
+    render(
+      <PublicationsPage
+        publications={[]}
+        isCreating
+        onCancelCreate={() => undefined}
+        onSubmitCreate={() => undefined}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Create publication',
+      }),
+    ).toBeInTheDocument()
+
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Create your first publication',
+      }),
+    ).not.toBeInTheDocument()
   })
 })
