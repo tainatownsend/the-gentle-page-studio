@@ -81,21 +81,43 @@ describe('PublicationsPage', () => {
     expect(onDelete).toHaveBeenCalledWith('publication-1')
   })
 
-  it('renders the publication empty state', () => {
-    render(<PublicationsPage publications={[]} />)
+  it('renders one focused create action in the empty state', async () => {
+    const user = userEvent.setup()
+    const onCreate = vi.fn()
+
+    render(
+      <PublicationsPage
+        publications={[]}
+        onCreate={onCreate}
+      />,
+    )
 
     expect(
       screen.getByRole('heading', {
-        name: 'No publications yet',
+        name: 'Create your first publication',
       }),
     ).toBeInTheDocument()
 
     expect(
-      screen.getByRole('region', {
-        name: 'Publications',
-      }),
+      screen.getByText(
+        'Start with one thoughtful idea. You can shape the content, design, and release details as you go.',
+      ),
     ).toBeInTheDocument()
 
+    const createButton = screen.getByRole('button', {
+      name: 'Create publication',
+    })
+
+    expect(
+      screen.getAllByRole('button', {
+        name: 'Create publication',
+      }),
+    ).toHaveLength(1)
+
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
+
+    await user.click(createButton)
+
+    expect(onCreate).toHaveBeenCalledTimes(1)
   })
 })

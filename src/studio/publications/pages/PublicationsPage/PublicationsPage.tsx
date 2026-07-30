@@ -1,12 +1,15 @@
 import type { ReactElement } from 'react'
-import { Plus } from 'lucide-react'
+import { BookOpen, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
 import { Container } from '@/design-system/primitives/Container'
 import { Stack } from '@/design-system/primitives/Stack'
-import { PublicationCard, type Publication } from '../../components/PublicationCard'
 import { ResourceCollection } from '@/studio/resources'
+import {
+  PublicationCard,
+  type Publication,
+} from '../../components/PublicationCard'
 
 import styles from './PublicationsPage.module.css'
 
@@ -25,6 +28,8 @@ export function PublicationsPage({
   onDuplicate,
   onDelete,
 }: PublicationsPageProps): ReactElement {
+  const hasPublications = publications.length > 0
+
   return (
     <main className={styles.page}>
       <Container size="lg">
@@ -34,8 +39,11 @@ export function PublicationsPage({
             title="Publications"
             description="Create, organize, and prepare thoughtful digital products for release."
             actions={
-              onCreate ? (
-                <Button startIcon={<Plus size={18} />} onClick={onCreate}>
+              hasPublications && onCreate ? (
+                <Button
+                  startIcon={<Plus size={18} />}
+                  onClick={onCreate}
+                >
                   Create publication
                 </Button>
               ) : null
@@ -54,11 +62,17 @@ export function PublicationsPage({
                 onDelete={onDelete}
               />
             )}
-            emptyTitle="No publications yet"
-            emptyDescription="Create your first publication to begin building your product library."
+            emptyIcon={<BookOpen size={28} />}
+            emptyTitle="Create your first publication"
+            emptyDescription="Start with one thoughtful idea. You can shape the content, design, and release details as you go."
             emptyActions={
               onCreate ? (
-                <Button onClick={onCreate}>Create publication</Button>
+                <Button
+                  startIcon={<Plus size={18} />}
+                  onClick={onCreate}
+                >
+                  Create publication
+                </Button>
               ) : null
             }
           />

@@ -16,6 +16,7 @@ types without importing their domain-specific components.
 - `renderResource`: renders an individual item.
 - `emptyTitle`: heading displayed when the collection is empty.
 - `emptyDescription`: optional supporting empty-state copy.
+- `emptyIcon`: optional decorative empty-state icon.
 - `emptyActions`: optional empty-state actions.
 
 Native `section` attributes are also supported.

@@ -22,6 +22,7 @@ export type ResourceCollectionProps<TResource> = {
   ) => ReactNode
   emptyTitle?: ReactNode
   emptyDescription?: ReactNode
+  emptyIcon?: ReactNode
   emptyActions?: ReactNode
 } & Omit<ComponentPropsWithRef<'section'>, 'children'>
 
@@ -31,6 +32,7 @@ export function ResourceCollection<TResource>({
   renderResource,
   emptyTitle = 'No resources yet',
   emptyDescription,
+  emptyIcon,
   emptyActions,
   className,
   ...props
@@ -41,6 +43,7 @@ export function ResourceCollection<TResource>({
         {...props}
         title={emptyTitle}
         description={emptyDescription}
+        icon={emptyIcon}
         actions={emptyActions}
         className={className}
       />
