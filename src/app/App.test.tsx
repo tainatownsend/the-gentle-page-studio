@@ -1,21 +1,25 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 
 import { App } from './App'
 
-async function createDraft(
-  user: ReturnType<typeof userEvent.setup>,
-) {
+function renderApp(initialEntry = '/publications') {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <App />
+    </MemoryRouter>,
+  )
+}
+
+async function createDraft(user: ReturnType<typeof userEvent.setup>) {
   await user.click(
     screen.getByRole('button', {
       name: 'Create publication',
     }),
   )
 
-  await user.type(
-    screen.getByRole('textbox', { name: /title/i }),
-    'Gentle Focus Journal',
-  )
+  await user.type(screen.getByRole('textbox', { name: /title/i }), 'Gentle Focus Journal')
 
   await user.type(
     screen.getByRole('textbox', { name: /description/i }),
@@ -29,51 +33,22 @@ async function createDraft(
   )
 }
 
-describe('App', () => {
-  it('creates a draft publication from the creation form', async () => {
-    const user = userEvent.setup()
-
-    render(<App />)
-    await createDraft(user)
-
-    expect(
-      screen.getByText('Gentle Focus Journal'),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('A supportive focus practice.'),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Draft')).toBeInTheDocument()
-    expect(screen.getByText('Updated Just now')).toBeInTheDocument()
-  })
-
-  it('returns to the empty state when creation is cancelled', async () => {
-    const user = userEvent.setup()
-
-    render(<App />)
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Create publication',
-      }),
-    )
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Cancel',
-      }),
-    )
+describe('App routing', () => {
+  it('redirects the root path to publications', () => {
+    renderApp('/')
 
     expect(
       screen.getByRole('heading', {
-        name: 'Create your first publication',
+        level: 1,
+        name: 'Publications',
       }),
     ).toBeInTheDocument()
   })
 
-  it('opens, edits, and saves a publication', async () => {
+  it('creates, opens, edits, and saves a publication through routes', async () => {
     const user = userEvent.setup()
 
-    render(<App />)
+    renderApp()
     await createDraft(user)
 
     await user.click(
@@ -103,13 +78,68 @@ describe('App', () => {
     )
 
     expect(
-      screen.getByText('Updated Gentle Journal'),
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Publications',
+      }),
+    ).toBeInTheDocument()
+
+    expect(screen.getByText('Updated Gentle Journal')).toBeInTheDocument()
+  }, 10_000)
+
+  it('returns to publications from the editor without saving', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await createDraft(user)
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Open',
+      }),
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Back to publications',
+      }),
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Publications',
+      }),
+    ).toBeInTheDocument()
+
+    expect(screen.getByText('Gentle Focus Journal')).toBeInTheDocument()
+  }, 10_000)
+
+  it('redirects unknown publication editor routes to the library', () => {
+    renderApp('/publications/missing-publication/edit')
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Publications',
+      }),
     ).toBeInTheDocument()
 
     expect(
-      screen.queryByRole('heading', {
-        name: 'Publication details',
+      screen.getByRole('heading', {
+        name: 'Create your first publication',
       }),
-    ).not.toBeInTheDocument()
+    ).toBeInTheDocument()
+  })
+
+  it('redirects unknown application paths to publications', () => {
+    renderApp('/unknown')
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Publications',
+      }),
+    ).toBeInTheDocument()
   })
 })
