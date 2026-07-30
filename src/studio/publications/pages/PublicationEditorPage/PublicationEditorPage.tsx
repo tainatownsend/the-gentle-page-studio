@@ -15,7 +15,7 @@ import { Input } from '@/design-system/primitives/Input'
 import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
-import type { Publication } from '../../components/PublicationCard'
+import type { Publication } from '../../types'
 
 import styles from './PublicationEditorPage.module.css'
 
