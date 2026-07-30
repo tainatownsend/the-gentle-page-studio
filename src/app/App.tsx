@@ -3,36 +3,45 @@ import { useState } from 'react'
 import {
   PublicationsPage,
   type Publication,
+  type PublicationCreateValues,
 } from '@/studio/publications'
 
 const initialPublications: Publication[] = []
 
-const firstPublication: Publication = {
-  id: 'adhd-emotional-regulation-journal',
-  title: 'ADHD Emotional Regulation Journal',
-  description:
-    'A supportive journal for noticing emotions, understanding patterns, and choosing gentle next steps.',
-  updatedAt: 'July 29, 2026',
-  status: 'draft',
+function createPublication(
+  values: PublicationCreateValues,
+  sequence: number,
+): Publication {
+  return {
+    id: `publication-${sequence}`,
+    title: values.title,
+    description: values.description,
+    updatedAt: 'Just now',
+    status: 'draft',
+  }
 }
 
 export function App() {
   const [publications, setPublications] = useState(
     initialPublications,
   )
+  const [isCreating, setIsCreating] = useState(false)
 
-  function handleCreate() {
-    setPublications((current) =>
-      current.length === 0
-        ? [firstPublication]
-        : current,
-    )
+  function handleSubmitCreate(values: PublicationCreateValues) {
+    setPublications((current) => [
+      createPublication(values, current.length + 1),
+      ...current,
+    ])
+    setIsCreating(false)
   }
 
   return (
     <PublicationsPage
       publications={publications}
-      onCreate={handleCreate}
+      isCreating={isCreating}
+      onCreate={() => setIsCreating(true)}
+      onCancelCreate={() => setIsCreating(false)}
+      onSubmitCreate={handleSubmitCreate}
     />
   )
 }
