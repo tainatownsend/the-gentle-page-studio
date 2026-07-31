@@ -14,7 +14,7 @@ const publication = {
 }
 
 describe('PublicationEditorPage', () => {
-  it('renders the current publication details', () => {
+  it('renders the current publication details and status', () => {
     render(
       <PublicationEditorPage
         publication={publication}
@@ -32,12 +32,16 @@ describe('PublicationEditorPage', () => {
 
     expect(screen.getByRole('textbox', { name: /title/i })).toHaveValue('Gentle Focus Journal')
 
-    expect(screen.getByRole('textbox', { name: /description/i })).toHaveValue(
-      'A supportive focus practice.',
-    )
+    expect(
+      screen.getByRole('textbox', {
+        name: /description/i,
+      }),
+    ).toHaveValue('A supportive focus practice.')
+
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('draft')
   })
 
-  it('submits normalized changes', async () => {
+  it('submits normalized changes and the selected status', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
 
@@ -51,11 +55,17 @@ describe('PublicationEditorPage', () => {
     const descriptionInput = screen.getByRole('textbox', {
       name: /description/i,
     })
+    const statusSelect = screen.getByRole('combobox', {
+      name: 'Status',
+    })
 
     await user.clear(titleInput)
     await user.type(titleInput, '  Updated Gentle Journal  ')
+
     await user.clear(descriptionInput)
     await user.type(descriptionInput, '  Updated description.  ')
+
+    await user.selectOptions(statusSelect, 'published')
 
     await user.click(
       screen.getByRole('button', {
@@ -66,6 +76,42 @@ describe('PublicationEditorPage', () => {
     expect(onSave).toHaveBeenCalledWith({
       title: 'Updated Gentle Journal',
       description: 'Updated description.',
+      status: 'published',
+    })
+  })
+
+  it('supports returning a published publication to draft', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+
+    render(
+      <PublicationEditorPage
+        publication={{
+          ...publication,
+          status: 'published',
+        }}
+        onBack={() => undefined}
+        onSave={onSave}
+      />,
+    )
+
+    await user.selectOptions(
+      screen.getByRole('combobox', {
+        name: 'Status',
+      }),
+      'draft',
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Save changes',
+      }),
+    )
+
+    expect(onSave).toHaveBeenCalledWith({
+      title: 'Gentle Focus Journal',
+      description: 'A supportive focus practice.',
+      status: 'draft',
     })
   })
 
@@ -85,6 +131,7 @@ describe('PublicationEditorPage', () => {
     )
 
     expect(screen.getByText('Enter a title for your publication.')).toBeInTheDocument()
+
     expect(onSave).not.toHaveBeenCalled()
 
     await user.click(

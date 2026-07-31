@@ -1,8 +1,4 @@
-import {
-  useState,
-  type FormEvent,
-  type ReactElement,
-} from 'react'
+import { useState, type FormEvent, type ReactElement } from 'react'
 import { ArrowLeft, Save } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
@@ -12,16 +8,19 @@ import { Cluster } from '@/design-system/primitives/Cluster'
 import { Container } from '@/design-system/primitives/Container'
 import { Field } from '@/design-system/primitives/Field'
 import { Input } from '@/design-system/primitives/Input'
+import { Select } from '@/design-system/primitives/Select'
 import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
-import type { Publication } from '../../types'
+
+import type { Publication, PublicationStatus } from '../../types'
 
 import styles from './PublicationEditorPage.module.css'
 
 export type PublicationEditorValues = {
   title: string
   description?: string
+  status: PublicationStatus
 }
 
 export type PublicationEditorPageProps = {
@@ -36,9 +35,8 @@ export function PublicationEditorPage({
   onSave,
 }: PublicationEditorPageProps): ReactElement {
   const [title, setTitle] = useState(publication.title)
-  const [description, setDescription] = useState(
-    publication.description ?? '',
-  )
+  const [description, setDescription] = useState(publication.description ?? '')
+  const [status, setStatus] = useState<PublicationStatus>(publication.status)
   const [titleError, setTitleError] = useState<string>()
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -57,6 +55,7 @@ export function PublicationEditorPage({
     onSave({
       title: normalizedTitle,
       description: normalizedDescription || undefined,
+      status,
     })
   }
 
@@ -67,17 +66,9 @@ export function PublicationEditorPage({
           <PageHeader
             eyebrow="Publication editor"
             title={publication.title}
-            description={`Status: ${
-              publication.status === 'published'
-                ? 'Published'
-                : 'Draft'
-            }`}
+            description={`Status: ${publication.status === 'published' ? 'Published' : 'Draft'}`}
             actions={
-              <Button
-                variant="ghost"
-                startIcon={<ArrowLeft size={18} />}
-                onClick={onBack}
-              >
+              <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
                 Back to publications
               </Button>
             }
@@ -87,17 +78,12 @@ export function PublicationEditorPage({
             <form onSubmit={handleSubmit} noValidate>
               <Stack gap="lg">
                 <Stack gap="xs">
-                  <Text
-                    as="h2"
-                    id="publication-details-title"
-                    variant="h2"
-                    weight="semibold"
-                  >
+                  <Text as="h2" id="publication-details-title" variant="h2" weight="semibold">
                     Publication details
                   </Text>
 
                   <Text tone="secondary">
-                    Refine the working title and description for this draft.
+                    Refine the working details and release status for this publication.
                   </Text>
                 </Stack>
 
@@ -121,33 +107,35 @@ export function PublicationEditorPage({
                   />
                 </Field>
 
-                <Field
-                  label="Description"
-                  description="Summarize the purpose of this publication."
-                >
+                <Field label="Description" description="Summarize the purpose of this publication.">
                   <Textarea
                     fullWidth
                     rows={6}
                     value={description}
-                    onChange={(event) =>
-                      setDescription(event.target.value)
-                    }
+                    onChange={(event) => setDescription(event.target.value)}
                   />
                 </Field>
 
-                <Cluster justify="end" gap="sm">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={onBack}
+                <Field
+                  label="Status"
+                  description="Drafts remain works in progress. Published items are marked as ready for release."
+                >
+                  <Select
+                    fullWidth
+                    value={status}
+                    onChange={(event) => setStatus(event.target.value as PublicationStatus)}
                   >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </Select>
+                </Field>
+
+                <Cluster justify="end" gap="sm">
+                  <Button type="button" variant="ghost" onClick={onBack}>
                     Cancel
                   </Button>
 
-                  <Button
-                    type="submit"
-                    startIcon={<Save size={18} />}
-                  >
+                  <Button type="submit" startIcon={<Save size={18} />}>
                     Save changes
                   </Button>
                 </Cluster>

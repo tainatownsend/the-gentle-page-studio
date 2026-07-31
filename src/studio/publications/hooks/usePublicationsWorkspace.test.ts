@@ -245,6 +245,7 @@ describe('usePublicationsWorkspace', () => {
       result.current.updatePublication(publicationId, {
         title: 'Updated title',
         description: 'Updated description.',
+        status: 'draft',
       })
     })
 
@@ -256,6 +257,38 @@ describe('usePublicationsWorkspace', () => {
       updatedAt: updatedTimestamp,
       status: 'draft',
     })
+  })
+
+  it('updates publication status and persists the transition', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let publicationId = ''
+
+    act(() => {
+      publicationId = result.current.createDraft({
+        title: 'Release-ready journal',
+      }).id
+    })
+
+    vi.setSystemTime(new Date(updatedTimestamp))
+
+    act(() => {
+      result.current.updatePublication(publicationId, {
+        title: 'Release-ready journal',
+        status: 'published',
+      })
+    })
+
+    expect(result.current.publications[0]).toMatchObject({
+      id: publicationId,
+      status: 'published',
+      createdAt: initialTimestamp,
+      updatedAt: updatedTimestamp,
+    })
+
+    const persistedWorkspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
+
+    expect(persistedWorkspace.publications[0].status).toBe('published')
   })
 
   it('ignores updates for unknown publication ids', () => {
@@ -270,6 +303,7 @@ describe('usePublicationsWorkspace', () => {
     act(() => {
       result.current.updatePublication('missing', {
         title: 'Should not replace',
+        status: 'draft',
       })
     })
 
