@@ -1,16 +1,32 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Publication } from '../types'
-import { loadPublications, PUBLICATIONS_STORAGE_KEY, savePublications } from './publicationsStorage'
+import { createPublicationFixture } from '../testing'
+import {
+  LEGACY_PUBLICATIONS_STORAGE_KEY,
+  loadPublications,
+  PUBLICATIONS_STORAGE_KEY,
+  savePublications,
+} from './publicationsStorage'
 
-const publication: Publication = {
-  id: 'publication-1',
+const publication = createPublicationFixture({
   title: 'Gentle Focus Journal',
   description: 'A supportive focus practice.',
-  status: 'draft',
-  createdAt: '2026-07-30T22:47:00.000Z',
-  updatedAt: '2026-07-30T22:47:00.000Z',
-}
+  content: {
+    blocks: [
+      {
+        id: 'heading-1',
+        type: 'heading',
+        level: 1,
+        text: 'Gentle Focus',
+      },
+      {
+        id: 'paragraph-1',
+        type: 'paragraph',
+        text: 'Begin with one small step.',
+      },
+    ],
+  },
+})
 
 describe('publicationsStorage', () => {
   beforeEach(() => {
@@ -26,11 +42,11 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([])
   })
 
-  it('loads a valid versioned workspace', () => {
+  it('loads a valid version 2 workspace', () => {
     localStorage.setItem(
       PUBLICATIONS_STORAGE_KEY,
       JSON.stringify({
-        version: 1,
+        version: 2,
         publications: [publication],
       }),
     )
@@ -38,27 +54,68 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([publication])
   })
 
+  it('migrates a version 1 workspace with empty content', () => {
+    const legacyPublication = {
+      id: publication.id,
+      title: publication.title,
+      description: publication.description,
+      status: publication.status,
+      createdAt: publication.createdAt,
+      updatedAt: publication.updatedAt,
+    }
+
+    localStorage.setItem(
+      LEGACY_PUBLICATIONS_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        publications: [legacyPublication],
+      }),
+    )
+
+    expect(loadPublications()).toEqual([
+      {
+        ...legacyPublication,
+        content: {
+          blocks: [],
+        },
+      },
+    ])
+  })
+
   it.each([
     ['invalid JSON', '{invalid-json'],
     [
       'unknown version',
       JSON.stringify({
-        version: 2,
+        version: 3,
         publications: [publication],
       }),
     ],
     [
       'invalid collection',
       JSON.stringify({
-        version: 1,
+        version: 2,
         publications: {},
       }),
     ],
     [
-      'invalid publication',
+      'invalid publication content',
       JSON.stringify({
-        version: 1,
-        publications: [{ ...publication, updatedAt: 'invalid' }],
+        version: 2,
+        publications: [
+          {
+            ...publication,
+            content: {
+              blocks: [
+                {
+                  id: '',
+                  type: 'paragraph',
+                  text: 'Invalid block',
+                },
+              ],
+            },
+          },
+        ],
       }),
     ],
   ])('falls back safely for %s', (_label, payload) => {
@@ -75,11 +132,11 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([])
   })
 
-  it('writes a versioned workspace', () => {
+  it('writes a version 2 workspace', () => {
     savePublications([publication])
 
     expect(JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '')).toEqual({
-      version: 1,
+      version: 2,
       publications: [publication],
     })
   })

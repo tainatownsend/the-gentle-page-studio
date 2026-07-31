@@ -4,16 +4,16 @@ import { vi } from 'vitest'
 
 import buttonStyles from '@/design-system/primitives/Button/Button.module.css'
 
+import { createPublicationFixture } from '../../testing'
+
 import { PublicationCard } from './PublicationCard'
 
-const publication = {
-  id: 'publication-1',
+const publication = createPublicationFixture({
   title: 'ADHD Emotional Regulation Journal',
   description: 'A guided journal for everyday emotional clarity.',
   createdAt: '2026-07-29T12:00:00.000Z',
   updatedAt: '2026-07-29T12:00:00.000Z',
-  status: 'draft' as const,
-}
+})
 
 describe('PublicationCard', () => {
   it('renders publication details in an article', () => {
@@ -28,7 +28,7 @@ describe('PublicationCard', () => {
       }),
     ).toBeInTheDocument()
 
-    expect(screen.getByText(publication.description)).toBeInTheDocument()
+    expect(screen.getByText('A guided journal for everyday emotional clarity.')).toBeInTheDocument()
 
     expect(screen.getByText('Updated Jul 29, 2026')).toBeInTheDocument()
 

@@ -44,6 +44,9 @@ describe('usePublicationsWorkspace', () => {
       id: 'stored-publication',
       title: 'Stored publication',
       status: 'draft',
+      content: {
+        blocks: [],
+      },
       createdAt: initialTimestamp,
       updatedAt: initialTimestamp,
     }
@@ -51,7 +54,7 @@ describe('usePublicationsWorkspace', () => {
     localStorage.setItem(
       PUBLICATIONS_STORAGE_KEY,
       JSON.stringify({
-        version: 1,
+        version: 2,
         publications: [publication],
       }),
     )
@@ -82,6 +85,9 @@ describe('usePublicationsWorkspace', () => {
       title: 'Gentle Focus Journal',
       description: 'A supportive focus practice.',
       status: 'draft',
+      content: {
+        blocks: [],
+      },
       createdAt: initialTimestamp,
       updatedAt: initialTimestamp,
     })
@@ -98,7 +104,7 @@ describe('usePublicationsWorkspace', () => {
 
     const workspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
 
-    expect(workspace.version).toBe(1)
+    expect(workspace.version).toBe(2)
     expect(workspace.publications).toHaveLength(1)
     expect(workspace.publications[0].title).toBe('Persistent publication')
   })
@@ -210,7 +216,7 @@ describe('usePublicationsWorkspace', () => {
     expect(result.current.publications.map((publication) => publication.id)).toEqual([secondId])
 
     const persistedWorkspace = JSON.parse(
-      localStorage.getItem('the-gentle-page:publications-workspace:v1') ?? '{}',
+      localStorage.getItem('the-gentle-page:publications-workspace:v2') ?? '{}',
     )
 
     expect(

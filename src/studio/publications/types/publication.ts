@@ -1,3 +1,5 @@
+import type { PublicationContent } from './publicationContent'
+
 export type PublicationStatus = 'draft' | 'published'
 
 export type Publication = {
@@ -5,6 +7,7 @@ export type Publication = {
   title: string
   description?: string
   status: PublicationStatus
+  content: PublicationContent
   createdAt: string
   updatedAt: string
 }

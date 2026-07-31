@@ -14,6 +14,9 @@ function createPublication(values: PublicationCreateValues): Publication {
     title: values.title,
     description: values.description,
     status: 'draft',
+    content: {
+      blocks: [],
+    },
     createdAt: timestamp,
     updatedAt: timestamp,
   }
@@ -63,6 +66,11 @@ function createPublicationCopy(
   return {
     ...publication,
     id: createPublicationId(),
+    content: {
+      blocks: publication.content.blocks.map((block) => ({
+        ...block,
+      })),
+    },
     title: getNextPublicationCopyTitle(publication, publications),
     status: 'draft',
     createdAt: timestamp,
