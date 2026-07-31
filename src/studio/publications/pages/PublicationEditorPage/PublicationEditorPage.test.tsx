@@ -2,16 +2,14 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 
+import { createPublicationFixture } from '../../testing'
+
 import { PublicationEditorPage } from './PublicationEditorPage'
 
-const publication = {
-  id: 'publication-1',
+const publication = createPublicationFixture({
   title: 'Gentle Focus Journal',
   description: 'A supportive focus practice.',
-  createdAt: '2026-07-30T22:47:00.000Z',
-  updatedAt: '2026-07-30T22:47:00.000Z',
-  status: 'draft' as const,
-}
+})
 
 describe('PublicationEditorPage', () => {
   it('renders the current publication details and status', () => {
