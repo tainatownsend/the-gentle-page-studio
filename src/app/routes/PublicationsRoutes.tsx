@@ -60,6 +60,8 @@ export function PublicationsRoutes(): ReactElement {
               navigate(`/publications/${encodeURIComponent(publicationId)}/edit`)
             }
             onDuplicate={workspace.duplicatePublication}
+
+            onDelete={workspace.deletePublication}
           />
         }
       />

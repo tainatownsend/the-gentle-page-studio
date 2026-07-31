@@ -4,21 +4,23 @@ import { vi } from 'vitest'
 
 import { PublicationsPage } from './PublicationsPage'
 
+const timestamp = '2026-07-30T22:47:00.000Z'
+
 const publications = [
   {
     id: 'publication-1',
     title: 'ADHD Emotional Regulation Journal',
     description: 'A guided journal for everyday emotional clarity.',
-    updatedAt: '2026-07-30T22:47:00.000Z',
-    createdAt: '2026-07-30T22:47:00.000Z',
+    createdAt: timestamp,
+    updatedAt: timestamp,
     status: 'draft' as const,
   },
   {
     id: 'publication-2',
     title: 'Daily Clarity Planner',
     description: 'A gentle daily planning system.',
-    createdAt: '2026-07-30T22:47:00.000Z',
-    updatedAt: '2026-07-30T22:47:00.000Z',
+    createdAt: timestamp,
+    updatedAt: timestamp,
     status: 'published' as const,
   },
 ]
@@ -45,12 +47,11 @@ describe('PublicationsPage', () => {
     expect(screen.getByText('Daily Clarity Planner')).toBeInTheDocument()
   })
 
-  it('connects page and card actions', async () => {
+  it('connects create, open, and duplicate actions', async () => {
     const user = userEvent.setup()
     const onCreate = vi.fn()
     const onOpen = vi.fn()
     const onDuplicate = vi.fn()
-    const onDelete = vi.fn()
 
     render(
       <PublicationsPage
@@ -58,7 +59,6 @@ describe('PublicationsPage', () => {
         onCreate={onCreate}
         onOpen={onOpen}
         onDuplicate={onDuplicate}
-        onDelete={onDelete}
       />,
     )
 
@@ -68,13 +68,56 @@ describe('PublicationsPage', () => {
       }),
     )
     await user.click(screen.getByRole('button', { name: 'Open' }))
-    await user.click(screen.getByRole('button', { name: 'Duplicate' }))
-    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Duplicate',
+      }),
+    )
 
     expect(onCreate).toHaveBeenCalledTimes(1)
     expect(onOpen).toHaveBeenCalledWith('publication-1')
     expect(onDuplicate).toHaveBeenCalledWith('publication-1')
+  })
+
+  it('requires confirmation before deleting a publication', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+
+    render(<PublicationsPage publications={[publications[0]]} onDelete={onDelete} />)
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(onDelete).not.toHaveBeenCalled()
+
+    const confirmationTitle = screen.getByText('Delete publication?')
+    const confirmationDialog = confirmationTitle.closest('[role="alertdialog"]')
+    const cancelButton = screen.getByText('Cancel').closest('button')
+    const confirmButton = screen.getByText('Delete publication').closest('button')
+
+    expect(confirmationDialog).toBeInTheDocument()
+    expect(confirmationDialog).toHaveAttribute('aria-modal', 'true')
+    expect(cancelButton).toHaveFocus()
+    expect(confirmButton).not.toBeNull()
+
+    await user.click(confirmButton as HTMLButtonElement)
+
     expect(onDelete).toHaveBeenCalledWith('publication-1')
+
+    expect(screen.queryByText('Delete publication?')).not.toBeInTheDocument()
+  })
+
+  it('cancels deletion with Escape', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+
+    render(<PublicationsPage publications={[publications[0]]} onDelete={onDelete} />)
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await user.keyboard('{Escape}')
+
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
   it('renders one focused create action in the empty state', async () => {

@@ -77,6 +77,7 @@ export type PublicationsWorkspace = {
   cancelCreating: () => void
   createDraft: (values: PublicationCreateValues) => Publication
   duplicatePublication: (publicationId: string) => Publication | undefined
+  deletePublication: (publicationId: string) => void
   updatePublication: (publicationId: string, values: PublicationEditorValues) => void
   getPublication: (publicationId: string | undefined) => Publication | undefined
 }
@@ -122,6 +123,13 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
     },
     [publications],
   )
+  const deletePublication = useCallback((publicationId: string): void => {
+    setPublications((current) => {
+      const nextPublications = current.filter((publication) => publication.id !== publicationId)
+
+      return nextPublications.length === current.length ? current : nextPublications
+    })
+  }, [])
 
   const updatePublication = useCallback(
     (publicationId: string, values: PublicationEditorValues) => {
@@ -154,6 +162,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
       cancelCreating,
       createDraft,
       duplicatePublication,
+      deletePublication,
       updatePublication,
       getPublication,
     }),
@@ -164,6 +173,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
       cancelCreating,
       createDraft,
       duplicatePublication,
+      deletePublication,
       updatePublication,
       getPublication,
     ],

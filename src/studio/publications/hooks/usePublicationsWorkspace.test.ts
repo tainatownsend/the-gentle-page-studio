@@ -187,6 +187,47 @@ describe('usePublicationsWorkspace', () => {
     expect(result.current.publications).toEqual([])
   })
 
+  it('deletes an existing publication and persists the collection', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let firstId = ''
+    let secondId = ''
+
+    act(() => {
+      firstId = result.current.createDraft({
+        title: 'First publication',
+      }).id
+
+      secondId = result.current.createDraft({
+        title: 'Second publication',
+      }).id
+    })
+
+    act(() => {
+      result.current.deletePublication(firstId)
+    })
+
+    expect(result.current.publications.map((publication) => publication.id)).toEqual([secondId])
+
+    const persistedWorkspace = JSON.parse(
+      localStorage.getItem('the-gentle-page:publications-workspace:v1') ?? '{}',
+    )
+
+    expect(
+      persistedWorkspace.publications.map((publication: { id: string }) => publication.id),
+    ).toEqual([secondId])
+  })
+
+  it('ignores deletion for an unknown publication', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    act(() => {
+      result.current.deletePublication('missing')
+    })
+
+    expect(result.current.publications).toEqual([])
+  })
+
   it('updates timestamps while preserving creation time', () => {
     const { result } = renderHook(() => usePublicationsWorkspace())
 
