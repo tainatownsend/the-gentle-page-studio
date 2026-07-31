@@ -1,4 +1,10 @@
+export type { Publication, PublicationStatus } from './publication'
+
 export type {
-  Publication,
-  PublicationStatus,
-} from './publication'
+  PublicationBlock,
+  PublicationBlockId,
+  PublicationContent,
+  PublicationHeadingBlock,
+  PublicationHeadingLevel,
+  PublicationParagraphBlock,
+} from './publicationContent'

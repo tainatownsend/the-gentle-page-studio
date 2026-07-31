@@ -1,9 +1,25 @@
-import type { Publication } from '../types'
+import type { Publication, PublicationBlock, PublicationContent, PublicationStatus } from '../types'
 
-export const PUBLICATIONS_STORAGE_KEY = 'the-gentle-page:publications-workspace:v1'
+export const LEGACY_PUBLICATIONS_STORAGE_KEY = 'the-gentle-page:publications-workspace:v1'
+
+export const PUBLICATIONS_STORAGE_KEY = 'the-gentle-page:publications-workspace:v2'
+
+type LegacyPublicationV1 = {
+  id: string
+  title: string
+  description?: string
+  status: PublicationStatus
+  createdAt: string
+  updatedAt: string
+}
 
 type PersistedPublicationsWorkspaceV1 = {
   version: 1
+  publications: LegacyPublicationV1[]
+}
+
+type PersistedPublicationsWorkspaceV2 = {
+  version: 2
   publications: Publication[]
 }
 
@@ -15,7 +31,11 @@ function isValidDate(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && !Number.isNaN(Date.parse(value))
 }
 
-function isPublication(value: unknown): value is Publication {
+function isPublicationStatus(value: unknown): value is PublicationStatus {
+  return value === 'draft' || value === 'published'
+}
+
+function isBasePublication(value: unknown): boolean {
   if (!isRecord(value)) {
     return false
   }
@@ -25,22 +45,66 @@ function isPublication(value: unknown): value is Publication {
     value.id.trim().length > 0 &&
     typeof value.title === 'string' &&
     (value.description === undefined || typeof value.description === 'string') &&
-    (value.status === 'draft' || value.status === 'published') &&
+    isPublicationStatus(value.status) &&
     isValidDate(value.createdAt) &&
     isValidDate(value.updatedAt)
   )
 }
 
-function isPersistedWorkspaceV1(value: unknown): value is PersistedPublicationsWorkspaceV1 {
-  if (!isRecord(value)) {
+function isPublicationBlock(value: unknown): value is PublicationBlock {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    value.id.trim().length === 0 ||
+    typeof value.text !== 'string'
+  ) {
     return false
   }
 
+  if (value.type === 'paragraph') {
+    return true
+  }
+
+  return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
+}
+
+function isPublicationContent(value: unknown): value is PublicationContent {
+  return isRecord(value) && Array.isArray(value.blocks) && value.blocks.every(isPublicationBlock)
+}
+
+function isLegacyPublicationV1(value: unknown): value is LegacyPublicationV1 {
+  return isBasePublication(value)
+}
+
+function isPublication(value: unknown): value is Publication {
+  return isBasePublication(value) && isRecord(value) && isPublicationContent(value.content)
+}
+
+function isPersistedWorkspaceV1(value: unknown): value is PersistedPublicationsWorkspaceV1 {
   return (
+    isRecord(value) &&
     value.version === 1 &&
+    Array.isArray(value.publications) &&
+    value.publications.every(isLegacyPublicationV1)
+  )
+}
+
+function isPersistedWorkspaceV2(value: unknown): value is PersistedPublicationsWorkspaceV2 {
+  return (
+    isRecord(value) &&
+    value.version === 2 &&
     Array.isArray(value.publications) &&
     value.publications.every(isPublication)
   )
+}
+
+function migratePublicationV1(publication: LegacyPublicationV1): Publication {
+  return {
+    ...publication,
+    content: {
+      blocks: [],
+    },
+  }
 }
 
 function getStorage(): Storage | undefined {
@@ -51,6 +115,16 @@ function getStorage(): Storage | undefined {
   }
 }
 
+function readWorkspace(storage: Storage, key: string): unknown {
+  const serializedWorkspace = storage.getItem(key)
+
+  if (!serializedWorkspace) {
+    return undefined
+  }
+
+  return JSON.parse(serializedWorkspace)
+}
+
 export function loadPublications(): Publication[] {
   const storage = getStorage()
 
@@ -59,19 +133,19 @@ export function loadPublications(): Publication[] {
   }
 
   try {
-    const serializedWorkspace = storage.getItem(PUBLICATIONS_STORAGE_KEY)
+    const currentWorkspace = readWorkspace(storage, PUBLICATIONS_STORAGE_KEY)
 
-    if (!serializedWorkspace) {
-      return []
+    if (isPersistedWorkspaceV2(currentWorkspace)) {
+      return currentWorkspace.publications
     }
 
-    const parsedWorkspace: unknown = JSON.parse(serializedWorkspace)
+    const legacyWorkspace = readWorkspace(storage, LEGACY_PUBLICATIONS_STORAGE_KEY)
 
-    if (!isPersistedWorkspaceV1(parsedWorkspace)) {
-      return []
+    if (isPersistedWorkspaceV1(legacyWorkspace)) {
+      return legacyWorkspace.publications.map(migratePublicationV1)
     }
 
-    return parsedWorkspace.publications
+    return []
   } catch {
     return []
   }
@@ -84,8 +158,8 @@ export function savePublications(publications: readonly Publication[]): void {
     return
   }
 
-  const workspace: PersistedPublicationsWorkspaceV1 = {
-    version: 1,
+  const workspace: PersistedPublicationsWorkspaceV2 = {
+    version: 2,
     publications: [...publications],
   }
 

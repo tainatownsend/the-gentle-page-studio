@@ -7,6 +7,9 @@ export function createPublicationFixture(overrides: Partial<Publication> = {}): 
     id: 'publication-1',
     title: 'Untitled publication',
     status: 'draft',
+    content: {
+      blocks: [],
+    },
     createdAt: DEFAULT_PUBLICATION_TIMESTAMP,
     updatedAt: DEFAULT_PUBLICATION_TIMESTAMP,
     ...overrides,
