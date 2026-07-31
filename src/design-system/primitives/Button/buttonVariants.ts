@@ -1,7 +1,4 @@
-import {
-  cva,
-  type VariantProps,
-} from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 
 import styles from './Button.module.css'
 
@@ -11,6 +8,7 @@ export const buttonVariants = cva(styles.button, {
       primary: styles.primary,
       secondary: styles.secondary,
       ghost: styles.ghost,
+      destructive: styles.destructive,
     },
     size: {
       sm: styles.sm,
@@ -29,14 +27,8 @@ export const buttonVariants = cva(styles.button, {
   },
 })
 
-export type ButtonVariantProps = VariantProps<
-  typeof buttonVariants
->
+export type ButtonVariantProps = VariantProps<typeof buttonVariants>
 
-export type ButtonVariant = NonNullable<
-  ButtonVariantProps['variant']
->
+export type ButtonVariant = NonNullable<ButtonVariantProps['variant']>
 
-export type ButtonSize = NonNullable<
-  ButtonVariantProps['size']
->
+export type ButtonSize = NonNullable<ButtonVariantProps['size']>

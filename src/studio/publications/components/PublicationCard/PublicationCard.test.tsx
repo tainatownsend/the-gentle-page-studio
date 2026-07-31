@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 
+import buttonStyles from '@/design-system/primitives/Button/Button.module.css'
+
 import { PublicationCard } from './PublicationCard'
 
 const publication = {
@@ -41,6 +43,12 @@ describe('PublicationCard', () => {
     expect(screen.queryByRole('button', { name: 'Duplicate' })).not.toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+  })
+
+  it('uses the destructive button variant for deletion', () => {
+    render(<PublicationCard publication={publication} onDelete={() => undefined} />)
+
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveClass(buttonStyles.destructive)
   })
 
   it('passes the publication id to action callbacks', async () => {

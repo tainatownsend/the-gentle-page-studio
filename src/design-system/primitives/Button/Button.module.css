@@ -11,16 +11,11 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color var(--motion-duration-fast, 150ms)
-      var(--motion-easing-standard, ease),
-    border-color var(--motion-duration-fast, 150ms)
-      var(--motion-easing-standard, ease),
-    color var(--motion-duration-fast, 150ms)
-      var(--motion-easing-standard, ease),
-    opacity var(--motion-duration-fast, 150ms)
-      var(--motion-easing-standard, ease),
-    transform var(--motion-duration-fast, 150ms)
-      var(--motion-easing-standard, ease);
+    background-color var(--motion-duration-fast, 150ms) var(--motion-easing-standard, ease),
+    border-color var(--motion-duration-fast, 150ms) var(--motion-easing-standard, ease),
+    color var(--motion-duration-fast, 150ms) var(--motion-easing-standard, ease),
+    opacity var(--motion-duration-fast, 150ms) var(--motion-easing-standard, ease),
+    transform var(--motion-duration-fast, 150ms) var(--motion-easing-standard, ease);
 }
 
 .button:hover:not(:disabled) {
@@ -48,16 +43,29 @@
 
 .secondary {
   color: var(--color-text-primary);
-  background: var(
-    --color-surface-secondary,
-    var(--color-surface-primary)
-  );
+  background: var(--color-surface-secondary, var(--color-surface-primary));
   border-color: var(--color-border-primary, currentColor);
 }
 
 .ghost {
   color: var(--color-text-primary);
   background: transparent;
+}
+
+.destructive {
+  color: var(--color-surface-primary, #ffffff);
+  background: var(--color-danger-primary, #a53f3f);
+  border-color: var(--color-danger-primary, #a53f3f);
+}
+
+.destructive:hover:not(:disabled) {
+  opacity: 1;
+  background: var(--color-danger-emphasis, #873232);
+  border-color: var(--color-danger-emphasis, #873232);
+}
+
+.destructive:focus-visible {
+  outline-color: var(--color-danger-primary, #a53f3f);
 }
 
 .sm {

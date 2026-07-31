@@ -10,7 +10,6 @@ import { cn } from '@/design-system/shared'
 import type { Publication, PublicationStatus } from '../../types'
 import { formatPublicationUpdatedAt } from '../../utils'
 
-
 import styles from './PublicationCard.module.css'
 
 export type PublicationCardProps = {
@@ -76,7 +75,7 @@ export function PublicationCard({
             ) : null}
 
             {onDelete ? (
-              <Button variant="ghost" onClick={() => onDelete(publication.id)}>
+              <Button variant="destructive" onClick={() => onDelete(publication.id)}>
                 Delete
               </Button>
             ) : null}
