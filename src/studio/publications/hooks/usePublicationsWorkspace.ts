@@ -19,12 +19,64 @@ function createPublication(values: PublicationCreateValues): Publication {
   }
 }
 
+function getPublicationCopyBaseTitle(title: string): string {
+  return title.replace(/ — Copy(?: \d+)?$/, '')
+}
+
+function getNextPublicationCopyTitle(
+  publication: Publication,
+  publications: readonly Publication[],
+): string {
+  const baseTitle = getPublicationCopyBaseTitle(publication.title)
+  const firstCopyTitle = `${baseTitle} — Copy`
+  const numberedCopyPrefix = `${firstCopyTitle} `
+
+  const highestCopyNumber = publications.reduce((highest, currentPublication) => {
+    if (currentPublication.title === firstCopyTitle) {
+      return Math.max(highest, 1)
+    }
+
+    if (!currentPublication.title.startsWith(numberedCopyPrefix)) {
+      return highest
+    }
+
+    const suffix = currentPublication.title.slice(numberedCopyPrefix.length)
+
+    if (!/^\d+$/.test(suffix)) {
+      return highest
+    }
+
+    return Math.max(highest, Number.parseInt(suffix, 10))
+  }, 0)
+
+  const nextCopyNumber = highestCopyNumber + 1
+
+  return nextCopyNumber === 1 ? firstCopyTitle : `${firstCopyTitle} ${nextCopyNumber}`
+}
+
+function createPublicationCopy(
+  publication: Publication,
+  publications: readonly Publication[],
+): Publication {
+  const timestamp = new Date().toISOString()
+
+  return {
+    ...publication,
+    id: createPublicationId(),
+    title: getNextPublicationCopyTitle(publication, publications),
+    status: 'draft',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }
+}
+
 export type PublicationsWorkspace = {
   publications: readonly Publication[]
   isCreating: boolean
   startCreating: () => void
   cancelCreating: () => void
   createDraft: (values: PublicationCreateValues) => Publication
+  duplicatePublication: (publicationId: string) => Publication | undefined
   updatePublication: (publicationId: string, values: PublicationEditorValues) => void
   getPublication: (publicationId: string | undefined) => Publication | undefined
 }
@@ -53,6 +105,23 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
 
     return createdPublication
   }, [])
+
+  const duplicatePublication = useCallback(
+    (publicationId: string): Publication | undefined => {
+      const sourcePublication = publications.find((publication) => publication.id === publicationId)
+
+      if (!sourcePublication) {
+        return undefined
+      }
+
+      const duplicatedPublication = createPublicationCopy(sourcePublication, publications)
+
+      setPublications((current) => [duplicatedPublication, ...current])
+
+      return duplicatedPublication
+    },
+    [publications],
+  )
 
   const updatePublication = useCallback(
     (publicationId: string, values: PublicationEditorValues) => {
@@ -84,6 +153,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
       startCreating,
       cancelCreating,
       createDraft,
+      duplicatePublication,
       updatePublication,
       getPublication,
     }),
@@ -93,6 +163,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
       startCreating,
       cancelCreating,
       createDraft,
+      duplicatePublication,
       updatePublication,
       getPublication,
     ],

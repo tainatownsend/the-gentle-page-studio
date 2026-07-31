@@ -6,6 +6,7 @@ import type { Publication } from '../types'
 import { usePublicationsWorkspace } from './usePublicationsWorkspace'
 
 const initialTimestamp = '2026-07-30T22:47:00.000Z'
+const duplicatedTimestamp = '2026-07-30T23:00:00.000Z'
 const updatedTimestamp = '2026-07-30T23:15:00.000Z'
 
 describe('usePublicationsWorkspace', () => {
@@ -100,6 +101,90 @@ describe('usePublicationsWorkspace', () => {
     expect(workspace.version).toBe(1)
     expect(workspace.publications).toHaveLength(1)
     expect(workspace.publications[0].title).toBe('Persistent publication')
+  })
+
+  it('duplicates a publication as a new persisted draft', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let sourcePublication: Publication | undefined
+
+    act(() => {
+      sourcePublication = result.current.createDraft({
+        title: 'Gentle Focus Journal',
+        description: 'A supportive focus practice.',
+      })
+    })
+
+    vi.setSystemTime(new Date(duplicatedTimestamp))
+
+    let duplicatedPublication: Publication | undefined
+
+    act(() => {
+      duplicatedPublication = result.current.duplicatePublication(sourcePublication?.id ?? '')
+    })
+
+    expect(result.current.publications).toHaveLength(2)
+    expect(result.current.publications[0]).toEqual(duplicatedPublication)
+
+    expect(duplicatedPublication).toMatchObject({
+      id: expect.any(String),
+      title: 'Gentle Focus Journal — Copy',
+      description: 'A supportive focus practice.',
+      status: 'draft',
+      createdAt: duplicatedTimestamp,
+      updatedAt: duplicatedTimestamp,
+    })
+
+    expect(duplicatedPublication?.id).not.toBe(sourcePublication?.id)
+
+    const workspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
+
+    expect(workspace.publications[0]).toEqual(duplicatedPublication)
+  })
+
+  it('numbers subsequent copies without stacking copy suffixes', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let originalId = ''
+    let secondCopyId = ''
+
+    act(() => {
+      originalId = result.current.createDraft({
+        title: 'Gentle Focus Journal',
+      }).id
+    })
+
+    act(() => {
+      result.current.duplicatePublication(originalId)
+    })
+
+    act(() => {
+      secondCopyId = result.current.duplicatePublication(originalId)?.id ?? ''
+    })
+
+    act(() => {
+      result.current.duplicatePublication(secondCopyId)
+    })
+
+    expect(result.current.publications.map((publication) => publication.title)).toEqual([
+      'Gentle Focus Journal — Copy 3',
+      'Gentle Focus Journal — Copy 2',
+      'Gentle Focus Journal — Copy',
+      'Gentle Focus Journal',
+    ])
+  })
+
+  it('returns undefined when duplicating an unknown publication', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let duplicatedPublication: Publication | undefined
+
+    act(() => {
+      duplicatedPublication = result.current.duplicatePublication('missing')
+    })
+
+    expect(duplicatedPublication).toBeUndefined()
+    expect(result.current.publications).toEqual([])
   })
 
   it('updates timestamps while preserving creation time', () => {
