@@ -2,27 +2,22 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 
+import { createPublicationFixture } from '../../testing'
+
 import { PublicationsPage } from './PublicationsPage'
 
-const timestamp = '2026-07-30T22:47:00.000Z'
-
 const publications = [
-  {
+  createPublicationFixture({
     id: 'publication-1',
     title: 'ADHD Emotional Regulation Journal',
     description: 'A guided journal for everyday emotional clarity.',
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    status: 'draft' as const,
-  },
-  {
+  }),
+  createPublicationFixture({
     id: 'publication-2',
     title: 'Daily Clarity Planner',
     description: 'A gentle daily planning system.',
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    status: 'published' as const,
-  },
+    status: 'published',
+  }),
 ]
 
 describe('PublicationsPage', () => {
