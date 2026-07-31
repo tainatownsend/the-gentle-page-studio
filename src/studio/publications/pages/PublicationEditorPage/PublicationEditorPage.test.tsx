@@ -8,7 +8,8 @@ const publication = {
   id: 'publication-1',
   title: 'Gentle Focus Journal',
   description: 'A supportive focus practice.',
-  updatedAt: 'Just now',
+  createdAt: '2026-07-30T22:47:00.000Z',
+  updatedAt: '2026-07-30T22:47:00.000Z',
   status: 'draft' as const,
 }
 
@@ -29,13 +30,11 @@ describe('PublicationEditorPage', () => {
       }),
     ).toBeInTheDocument()
 
-    expect(
-      screen.getByRole('textbox', { name: /title/i }),
-    ).toHaveValue('Gentle Focus Journal')
+    expect(screen.getByRole('textbox', { name: /title/i })).toHaveValue('Gentle Focus Journal')
 
-    expect(
-      screen.getByRole('textbox', { name: /description/i }),
-    ).toHaveValue('A supportive focus practice.')
+    expect(screen.getByRole('textbox', { name: /description/i })).toHaveValue(
+      'A supportive focus practice.',
+    )
   })
 
   it('submits normalized changes', async () => {
@@ -43,11 +42,7 @@ describe('PublicationEditorPage', () => {
     const onSave = vi.fn()
 
     render(
-      <PublicationEditorPage
-        publication={publication}
-        onBack={() => undefined}
-        onSave={onSave}
-      />,
+      <PublicationEditorPage publication={publication} onBack={() => undefined} onSave={onSave} />,
     )
 
     const titleInput = screen.getByRole('textbox', {
@@ -60,10 +55,7 @@ describe('PublicationEditorPage', () => {
     await user.clear(titleInput)
     await user.type(titleInput, '  Updated Gentle Journal  ')
     await user.clear(descriptionInput)
-    await user.type(
-      descriptionInput,
-      '  Updated description.  ',
-    )
+    await user.type(descriptionInput, '  Updated description.  ')
 
     await user.click(
       screen.getByRole('button', {
@@ -82,17 +74,9 @@ describe('PublicationEditorPage', () => {
     const onBack = vi.fn()
     const onSave = vi.fn()
 
-    render(
-      <PublicationEditorPage
-        publication={publication}
-        onBack={onBack}
-        onSave={onSave}
-      />,
-    )
+    render(<PublicationEditorPage publication={publication} onBack={onBack} onSave={onSave} />)
 
-    await user.clear(
-      screen.getByRole('textbox', { name: /title/i }),
-    )
+    await user.clear(screen.getByRole('textbox', { name: /title/i }))
 
     await user.click(
       screen.getByRole('button', {
@@ -100,9 +84,7 @@ describe('PublicationEditorPage', () => {
       }),
     )
 
-    expect(
-      screen.getByText('Enter a title for your publication.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Enter a title for your publication.')).toBeInTheDocument()
     expect(onSave).not.toHaveBeenCalled()
 
     await user.click(

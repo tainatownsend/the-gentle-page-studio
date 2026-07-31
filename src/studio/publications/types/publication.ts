@@ -4,6 +4,7 @@ export type Publication = {
   id: string
   title: string
   description?: string
-  updatedAt?: string
   status: PublicationStatus
+  createdAt: string
+  updatedAt: string
 }
