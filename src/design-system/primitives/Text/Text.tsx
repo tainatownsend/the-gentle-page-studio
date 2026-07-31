@@ -1,20 +1,8 @@
-import type {
-  CSSProperties,
-  ElementType,
-  HTMLAttributes,
-  ReactNode,
-} from 'react'
+import type { CSSProperties, ElementType, HTMLAttributes, ReactNode } from 'react'
 
-import { colors, typography } from '@/core/tokens'
+import { typography } from '@/core/tokens'
 
-export type TextVariant =
-  | 'display'
-  | 'h1'
-  | 'h2'
-  | 'h3'
-  | 'body'
-  | 'bodySmall'
-  | 'caption'
+export type TextVariant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption'
 
 export type TextTone = 'primary' | 'secondary' | 'tertiary' | 'inverse'
 
@@ -66,16 +54,16 @@ const variantStyles: Record<TextVariant, CSSProperties> = {
 
 const toneStyles: Record<TextTone, CSSProperties> = {
   primary: {
-    color: colors.text.primary,
+    color: 'var(--color-text-primary)',
   },
   secondary: {
-    color: colors.text.secondary,
+    color: 'var(--color-text-secondary)',
   },
   tertiary: {
-    color: colors.text.tertiary,
+    color: 'var(--color-text-tertiary)',
   },
   inverse: {
-    color: colors.text.inverse,
+    color: 'var(--color-text-inverse)',
   },
 }
 

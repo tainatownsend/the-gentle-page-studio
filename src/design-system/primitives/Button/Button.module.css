@@ -53,19 +53,19 @@
 }
 
 .destructive {
-  color: var(--color-surface-primary, #ffffff);
-  background: var(--color-danger-primary, #a53f3f);
-  border-color: var(--color-danger-primary, #a53f3f);
+  color: var(--color-accent-contrast, #ffffff);
+  background: var(--color-feedback-danger, #b74242);
+  border-color: var(--color-feedback-danger, #b74242);
 }
 
 .destructive:hover:not(:disabled) {
   opacity: 1;
-  background: var(--color-danger-emphasis, #873232);
-  border-color: var(--color-danger-emphasis, #873232);
+  background: color-mix(in srgb, var(--color-feedback-danger, #b74242) 85%, #000000);
+  border-color: color-mix(in srgb, var(--color-feedback-danger, #b74242) 85%, #000000);
 }
 
 .destructive:focus-visible {
-  outline-color: var(--color-danger-primary, #a53f3f);
+  outline-color: var(--color-feedback-danger, #b74242);
 }
 
 .sm {

@@ -25,13 +25,13 @@ describe('Text', () => {
     expect(heading).toHaveStyle({ fontWeight: 600 })
   })
 
-  it('applies the selected tone', () => {
+  it('applies the selected semantic tone', () => {
     render(<Text tone="secondary">Supporting text</Text>)
 
-    expect(screen.getByText('Supporting text')).toHaveAttribute(
-      'data-tone',
-      'secondary',
-    )
+    expect(screen.getByText('Supporting text')).toHaveAttribute('data-tone', 'secondary')
+    expect(screen.getByText('Supporting text')).toHaveStyle({
+      color: 'var(--color-text-secondary)',
+    })
   })
 
   it('allows style overrides', () => {
