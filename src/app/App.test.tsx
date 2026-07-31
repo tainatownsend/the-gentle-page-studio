@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 
 import { App } from './App'
@@ -34,6 +35,14 @@ async function createDraft(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('App routing', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+  })
+
   it('redirects the root path to publications', () => {
     renderApp('/')
 

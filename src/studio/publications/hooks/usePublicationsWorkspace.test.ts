@@ -1,12 +1,27 @@
 import { act, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { PUBLICATIONS_STORAGE_KEY } from '../persistence'
+import type { Publication } from '../types'
 import { usePublicationsWorkspace } from './usePublicationsWorkspace'
 
+const initialTimestamp = '2026-07-30T22:47:00.000Z'
+const updatedTimestamp = '2026-07-30T23:15:00.000Z'
+
 describe('usePublicationsWorkspace', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(initialTimestamp))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    localStorage.clear()
+  })
+
   it('controls the publication creation state', () => {
-    const { result } = renderHook(() =>
-      usePublicationsWorkspace(),
-    )
+    const { result } = renderHook(() => usePublicationsWorkspace())
 
     expect(result.current.isCreating).toBe(false)
 
@@ -23,17 +38,37 @@ describe('usePublicationsWorkspace', () => {
     expect(result.current.isCreating).toBe(false)
   })
 
-  it('creates and retrieves a draft publication', () => {
-    const { result } = renderHook(() =>
-      usePublicationsWorkspace(),
+  it('hydrates publications from storage', () => {
+    const publication: Publication = {
+      id: 'stored-publication',
+      title: 'Stored publication',
+      status: 'draft',
+      createdAt: initialTimestamp,
+      updatedAt: initialTimestamp,
+    }
+
+    localStorage.setItem(
+      PUBLICATIONS_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        publications: [publication],
+      }),
     )
+
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    expect(result.current.publications).toEqual([publication])
+    expect(result.current.getPublication('stored-publication')).toEqual(publication)
+  })
+
+  it('creates a durable draft with timestamps', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let createdPublication: Publication | undefined
 
     act(() => {
       result.current.startCreating()
-    })
-
-    act(() => {
-      result.current.createDraft({
+      createdPublication = result.current.createDraft({
         title: 'Gentle Focus Journal',
         description: 'A supportive focus practice.',
       })
@@ -41,53 +76,64 @@ describe('usePublicationsWorkspace', () => {
 
     expect(result.current.isCreating).toBe(false)
     expect(result.current.publications).toHaveLength(1)
-
-    const publication = result.current.publications[0]
-
-    expect(publication).toEqual({
-      id: 'publication-1',
+    expect(createdPublication).toMatchObject({
+      id: expect.any(String),
       title: 'Gentle Focus Journal',
       description: 'A supportive focus practice.',
-      updatedAt: 'Just now',
       status: 'draft',
+      createdAt: initialTimestamp,
+      updatedAt: initialTimestamp,
     })
-
-    expect(
-      result.current.getPublication('publication-1'),
-    ).toEqual(publication)
   })
 
-  it('updates an existing publication', () => {
-    const { result } = renderHook(() =>
-      usePublicationsWorkspace(),
-    )
+  it('persists publications after creation', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
 
     act(() => {
       result.current.createDraft({
-        title: 'Original title',
+        title: 'Persistent publication',
       })
     })
 
+    const workspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
+
+    expect(workspace.version).toBe(1)
+    expect(workspace.publications).toHaveLength(1)
+    expect(workspace.publications[0].title).toBe('Persistent publication')
+  })
+
+  it('updates timestamps while preserving creation time', () => {
+    const { result } = renderHook(() => usePublicationsWorkspace())
+
+    let publicationId = ''
+
     act(() => {
-      result.current.updatePublication('publication-1', {
+      publicationId = result.current.createDraft({
+        title: 'Original title',
+      }).id
+    })
+
+    vi.setSystemTime(new Date(updatedTimestamp))
+
+    act(() => {
+      result.current.updatePublication(publicationId, {
         title: 'Updated title',
         description: 'Updated description.',
       })
     })
 
-    expect(result.current.publications[0]).toEqual({
-      id: 'publication-1',
+    expect(result.current.publications[0]).toMatchObject({
+      id: publicationId,
       title: 'Updated title',
       description: 'Updated description.',
-      updatedAt: 'Just now',
+      createdAt: initialTimestamp,
+      updatedAt: updatedTimestamp,
       status: 'draft',
     })
   })
 
   it('ignores updates for unknown publication ids', () => {
-    const { result } = renderHook(() =>
-      usePublicationsWorkspace(),
-    )
+    const { result } = renderHook(() => usePublicationsWorkspace())
 
     act(() => {
       result.current.createDraft({
@@ -101,8 +147,6 @@ describe('usePublicationsWorkspace', () => {
       })
     })
 
-    expect(result.current.publications[0]?.title).toBe(
-      'Existing publication',
-    )
+    expect(result.current.publications[0]?.title).toBe('Existing publication')
   })
 })

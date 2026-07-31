@@ -8,7 +8,8 @@ const publication = {
   id: 'publication-1',
   title: 'ADHD Emotional Regulation Journal',
   description: 'A guided journal for everyday emotional clarity.',
-  updatedAt: 'July 29, 2026',
+  createdAt: '2026-07-29T12:00:00.000Z',
+  updatedAt: '2026-07-29T12:00:00.000Z',
   status: 'draft' as const,
 }
 
@@ -25,36 +26,21 @@ describe('PublicationCard', () => {
       }),
     ).toBeInTheDocument()
 
-    expect(
-      screen.getByText(publication.description),
-    ).toBeInTheDocument()
+    expect(screen.getByText(publication.description)).toBeInTheDocument()
 
-    expect(
-      screen.getByText('Updated July 29, 2026'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Updated Jul 29, 2026')).toBeInTheDocument()
 
     expect(screen.getByText('Draft')).toBeInTheDocument()
   })
 
   it('renders only the supplied actions', () => {
-    render(
-      <PublicationCard
-        publication={publication}
-        onOpen={() => undefined}
-      />,
-    )
+    render(<PublicationCard publication={publication} onOpen={() => undefined} />)
 
-    expect(
-      screen.getByRole('button', { name: 'Open' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open' })).toBeInTheDocument()
 
-    expect(
-      screen.queryByRole('button', { name: 'Duplicate' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Duplicate' })).not.toBeInTheDocument()
 
-    expect(
-      screen.queryByRole('button', { name: 'Delete' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
   })
 
   it('passes the publication id to action callbacks', async () => {
@@ -72,17 +58,11 @@ describe('PublicationCard', () => {
       />,
     )
 
-    await user.click(
-      screen.getByRole('button', { name: 'Open' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Open' }))
 
-    await user.click(
-      screen.getByRole('button', { name: 'Duplicate' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Duplicate' }))
 
-    await user.click(
-      screen.getByRole('button', { name: 'Delete' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
 
     expect(onOpen).toHaveBeenCalledWith(publication.id)
     expect(onDuplicate).toHaveBeenCalledWith(publication.id)
@@ -98,8 +78,6 @@ describe('PublicationCard', () => {
       />,
     )
 
-    expect(
-      screen.getByTestId('publication-card'),
-    ).toHaveClass('custom-class')
+    expect(screen.getByTestId('publication-card')).toHaveClass('custom-class')
   })
 })

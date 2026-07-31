@@ -9,14 +9,16 @@ const publications = [
     id: 'publication-1',
     title: 'ADHD Emotional Regulation Journal',
     description: 'A guided journal for everyday emotional clarity.',
-    updatedAt: 'July 29, 2026',
+    updatedAt: '2026-07-30T22:47:00.000Z',
+    createdAt: '2026-07-30T22:47:00.000Z',
     status: 'draft' as const,
   },
   {
     id: 'publication-2',
     title: 'Daily Clarity Planner',
     description: 'A gentle daily planning system.',
-    updatedAt: 'July 28, 2026',
+    createdAt: '2026-07-30T22:47:00.000Z',
+    updatedAt: '2026-07-30T22:47:00.000Z',
     status: 'published' as const,
   },
 ]
@@ -38,13 +40,9 @@ describe('PublicationsPage', () => {
       }),
     ).toBeInTheDocument()
 
-    expect(
-      screen.getByText('ADHD Emotional Regulation Journal'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('ADHD Emotional Regulation Journal')).toBeInTheDocument()
 
-    expect(
-      screen.getByText('Daily Clarity Planner'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Daily Clarity Planner')).toBeInTheDocument()
   })
 
   it('connects page and card actions', async () => {
@@ -70,9 +68,7 @@ describe('PublicationsPage', () => {
       }),
     )
     await user.click(screen.getByRole('button', { name: 'Open' }))
-    await user.click(
-      screen.getByRole('button', { name: 'Duplicate' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Duplicate' }))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
     expect(onCreate).toHaveBeenCalledTimes(1)
@@ -85,12 +81,7 @@ describe('PublicationsPage', () => {
     const user = userEvent.setup()
     const onCreate = vi.fn()
 
-    render(
-      <PublicationsPage
-        publications={[]}
-        onCreate={onCreate}
-      />,
-    )
+    render(<PublicationsPage publications={[]} onCreate={onCreate} />)
 
     const createButton = screen.getByRole('button', {
       name: 'Create publication',

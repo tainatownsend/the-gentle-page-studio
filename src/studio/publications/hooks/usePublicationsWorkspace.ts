@@ -1,16 +1,21 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { Publication, PublicationCreateValues, PublicationEditorValues } from '../index'
+import type { PublicationCreateValues } from '../components'
+import type { PublicationEditorValues } from '../pages'
+import { loadPublications, savePublications } from '../persistence'
+import type { Publication } from '../types'
+import { createPublicationId } from '../utils'
 
-const initialPublications: Publication[] = []
+function createPublication(values: PublicationCreateValues): Publication {
+  const timestamp = new Date().toISOString()
 
-function createPublication(values: PublicationCreateValues, sequence: number): Publication {
   return {
-    id: `publication-${sequence}`,
+    id: createPublicationId(),
     title: values.title,
     description: values.description,
-    updatedAt: 'Just now',
     status: 'draft',
+    createdAt: timestamp,
+    updatedAt: timestamp,
   }
 }
 
@@ -25,9 +30,12 @@ export type PublicationsWorkspace = {
 }
 
 export function usePublicationsWorkspace(): PublicationsWorkspace {
-  const [publications, setPublications] = useState<Publication[]>(initialPublications)
+  const [publications, setPublications] = useState<Publication[]>(loadPublications)
   const [isCreating, setIsCreating] = useState(false)
-  const nextPublicationSequence = useRef(1)
+
+  useEffect(() => {
+    savePublications(publications)
+  }, [publications])
 
   const startCreating = useCallback(() => {
     setIsCreating(true)
@@ -38,9 +46,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
   }, [])
 
   const createDraft = useCallback((values: PublicationCreateValues): Publication => {
-    const createdPublication = createPublication(values, nextPublicationSequence.current)
-
-    nextPublicationSequence.current += 1
+    const createdPublication = createPublication(values)
 
     setPublications((current) => [createdPublication, ...current])
     setIsCreating(false)
@@ -56,7 +62,7 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
             ? {
                 ...publication,
                 ...values,
-                updatedAt: 'Just now',
+                updatedAt: new Date().toISOString(),
               }
             : publication,
         ),

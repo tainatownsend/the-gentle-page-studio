@@ -7,10 +7,9 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { cn } from '@/design-system/shared'
 
-import type {
-  Publication,
-  PublicationStatus,
-} from '../../types'
+import type { Publication, PublicationStatus } from '../../types'
+import { formatPublicationUpdatedAt } from '../../utils'
+
 
 import styles from './PublicationCard.module.css'
 
@@ -37,20 +36,10 @@ export function PublicationCard({
   const hasActions = Boolean(onOpen || onDuplicate || onDelete)
 
   return (
-    <Card
-      {...props}
-      as="article"
-      padding="md"
-      className={cn(styles.card, className)}
-    >
+    <Card {...props} as="article" padding="md" className={cn(styles.card, className)}>
       <Stack gap="md" className={styles.content}>
         <Cluster align="start" justify="between" gap="sm">
-          <Text
-            as="h3"
-            variant="h3"
-            weight="semibold"
-            className={styles.title}
-          >
+          <Text as="h3" variant="h3" weight="semibold" className={styles.title}>
             {publication.title}
           </Text>
 
@@ -72,34 +61,22 @@ export function PublicationCard({
           </Text>
         ) : null}
 
-        {publication.updatedAt ? (
-          <Text variant="bodySmall" tone="tertiary">
-            Updated {publication.updatedAt}
-          </Text>
-        ) : null}
+        <Text variant="bodySmall" tone="tertiary">
+          Updated {formatPublicationUpdatedAt(publication.updatedAt)}
+        </Text>
 
         {hasActions ? (
           <Cluster as="footer" gap="sm" className={styles.actions}>
-            {onOpen ? (
-              <Button onClick={() => onOpen(publication.id)}>
-                Open
-              </Button>
-            ) : null}
+            {onOpen ? <Button onClick={() => onOpen(publication.id)}>Open</Button> : null}
 
             {onDuplicate ? (
-              <Button
-                variant="secondary"
-                onClick={() => onDuplicate(publication.id)}
-              >
+              <Button variant="secondary" onClick={() => onDuplicate(publication.id)}>
                 Duplicate
               </Button>
             ) : null}
 
             {onDelete ? (
-              <Button
-                variant="ghost"
-                onClick={() => onDelete(publication.id)}
-              >
+              <Button variant="ghost" onClick={() => onDelete(publication.id)}>
                 Delete
               </Button>
             ) : null}
