@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 
 import { createPublicationFixture } from '../../testing'
-
 import { PublicationEditorPage } from './PublicationEditorPage'
 
 const publication = createPublicationFixture({
@@ -78,47 +77,121 @@ describe('PublicationEditorPage', () => {
     })
   })
 
-  it('supports returning a published publication to draft', async () => {
+  it('leaves immediately when no values have changed', async () => {
     const user = userEvent.setup()
-    const onSave = vi.fn()
+    const onBack = vi.fn()
 
     render(
-      <PublicationEditorPage
-        publication={{
-          ...publication,
-          status: 'published',
-        }}
-        onBack={() => undefined}
-        onSave={onSave}
-      />,
+      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Back to publications',
+      }),
+    )
+
+    expect(onBack).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
+  })
+
+  it('protects unsaved changes from the back action', async () => {
+    const user = userEvent.setup()
+    const onBack = vi.fn()
+
+    render(
+      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
+    )
+
+    await user.type(screen.getByRole('textbox', { name: /title/i }), ' updated')
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Back to publications',
+      }),
+    )
+
+    expect(onBack).not.toHaveBeenCalled()
+
+    const confirmationTitle = screen.getByText('Discard unsaved changes?')
+    const confirmationDialog = confirmationTitle.closest('[role="alertdialog"]')
+    const keepEditingButton = screen.getByText('Keep editing').closest('button')
+
+    expect(confirmationDialog).toBeInTheDocument()
+    expect(confirmationDialog).toHaveAttribute('aria-modal', 'true')
+    expect(keepEditingButton).toHaveFocus()
+  })
+
+  it('keeps editing when the confirmation is cancelled', async () => {
+    const user = userEvent.setup()
+    const onBack = vi.fn()
+
+    render(
+      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
     )
 
     await user.selectOptions(
       screen.getByRole('combobox', {
         name: 'Status',
       }),
-      'draft',
+      'published',
     )
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Save changes',
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    await user.click(screen.getByText('Keep editing').closest('button') as HTMLButtonElement)
+
+    expect(onBack).not.toHaveBeenCalled()
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('published')
+  })
+
+  it('closes the confirmation with Escape', async () => {
+    const user = userEvent.setup()
+    const onBack = vi.fn()
+
+    render(
+      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
+    )
+
+    await user.clear(
+      screen.getByRole('textbox', {
+        name: /description/i,
       }),
     )
 
-    expect(onSave).toHaveBeenCalledWith({
-      title: 'Gentle Focus Journal',
-      description: 'A supportive focus practice.',
-      status: 'draft',
-    })
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    await user.keyboard('{Escape}')
+
+    expect(onBack).not.toHaveBeenCalled()
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
   })
 
-  it('requires a title and supports returning to the library', async () => {
+  it('discards changes after explicit confirmation', async () => {
     const user = userEvent.setup()
     const onBack = vi.fn()
+
+    render(
+      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
+    )
+
+    await user.type(screen.getByRole('textbox', { name: /title/i }), ' updated')
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    await user.click(screen.getByText('Discard changes').closest('button') as HTMLButtonElement)
+
+    expect(onBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('requires a title before saving', async () => {
+    const user = userEvent.setup()
     const onSave = vi.fn()
 
-    render(<PublicationEditorPage publication={publication} onBack={onBack} onSave={onSave} />)
+    render(
+      <PublicationEditorPage publication={publication} onBack={() => undefined} onSave={onSave} />,
+    )
 
     await user.clear(screen.getByRole('textbox', { name: /title/i }))
 
@@ -131,13 +204,5 @@ describe('PublicationEditorPage', () => {
     expect(screen.getByText('Enter a title for your publication.')).toBeInTheDocument()
 
     expect(onSave).not.toHaveBeenCalled()
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Back to publications',
-      }),
-    )
-
-    expect(onBack).toHaveBeenCalledTimes(1)
   })
 })
