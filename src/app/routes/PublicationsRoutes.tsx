@@ -59,6 +59,7 @@ export function PublicationsRoutes(): ReactElement {
             onOpen={(publicationId) =>
               navigate(`/publications/${encodeURIComponent(publicationId)}/edit`)
             }
+            onDuplicate={workspace.duplicatePublication}
           />
         }
       />
