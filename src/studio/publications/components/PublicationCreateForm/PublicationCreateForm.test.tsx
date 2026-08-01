@@ -1,33 +1,35 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 
 import { PublicationCreateForm } from './PublicationCreateForm'
 
 describe('PublicationCreateForm', () => {
-  it('submits normalized publication values', async () => {
-    const user = userEvent.setup()
+  it('submits normalized publication values', () => {
     const onSubmit = vi.fn()
 
-    render(
-      <PublicationCreateForm
-        onSubmit={onSubmit}
-        onCancel={() => undefined}
-      />,
+    render(<PublicationCreateForm onSubmit={onSubmit} onCancel={() => undefined} />)
+
+    fireEvent.change(screen.getByRole('textbox', { name: /title/i }), {
+      target: {
+        value: '  Gentle Focus Journal  ',
+      },
+    })
+
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: /description/i,
+      }),
+      {
+        target: {
+          value: '  A supportive focus practice.  ',
+        },
+      },
     )
 
-    await user.type(
-      screen.getByRole('textbox', { name: /title/i }),
-      '  Gentle Focus Journal  ',
-    )
-
-    await user.type(
-      screen.getByRole('textbox', { name: /description/i }),
-      '  A supportive focus practice.  ',
-    )
-
-    await user.click(
-      screen.getByRole('button', { name: 'Create draft' }),
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Create draft',
+      }),
     )
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -36,43 +38,49 @@ describe('PublicationCreateForm', () => {
     })
   })
 
-  it('requires a publication title', async () => {
-    const user = userEvent.setup()
+  it('requires a publication title', () => {
     const onSubmit = vi.fn()
 
-    render(
-      <PublicationCreateForm
-        onSubmit={onSubmit}
-        onCancel={() => undefined}
-      />,
+    render(<PublicationCreateForm onSubmit={onSubmit} onCancel={() => undefined} />)
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Create draft',
+      }),
     )
 
-    await user.click(
-      screen.getByRole('button', { name: 'Create draft' }),
-    )
-
-    expect(
-      screen.getByText('Enter a title for your publication.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Enter a title for your publication.')).toBeInTheDocument()
 
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it('calls onCancel without submitting', async () => {
-    const user = userEvent.setup()
+  it('clears the title error after editing', () => {
+    render(<PublicationCreateForm onSubmit={() => undefined} onCancel={() => undefined} />)
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Create draft',
+      }),
+    )
+
+    expect(screen.getByText('Enter a title for your publication.')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByRole('textbox', { name: /title/i }), {
+      target: {
+        value: 'Gentle Focus Journal',
+      },
+    })
+
+    expect(screen.queryByText('Enter a title for your publication.')).not.toBeInTheDocument()
+  })
+
+  it('calls onCancel without submitting', () => {
     const onSubmit = vi.fn()
     const onCancel = vi.fn()
 
-    render(
-      <PublicationCreateForm
-        onSubmit={onSubmit}
-        onCancel={onCancel}
-      />,
-    )
+    render(<PublicationCreateForm onSubmit={onSubmit} onCancel={onCancel} />)
 
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(onCancel).toHaveBeenCalledTimes(1)
     expect(onSubmit).not.toHaveBeenCalled()

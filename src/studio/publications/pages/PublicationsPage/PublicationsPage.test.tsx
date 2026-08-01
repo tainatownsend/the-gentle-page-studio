@@ -125,43 +125,31 @@ describe('PublicationsPage', () => {
 
     render(<PublicationsPage publications={[]} onCreate={onCreate} />)
 
-    const createButton = screen.getByRole('button', {
+    const createButtons = screen.getAllByRole('button', {
       name: 'Create publication',
     })
 
-    expect(
-      screen.getAllByRole('button', {
-        name: 'Create publication',
-      }),
-    ).toHaveLength(1)
-
+    expect(createButtons).toHaveLength(1)
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
 
-    await user.click(createButton)
+    await user.click(createButtons[0])
 
     expect(onCreate).toHaveBeenCalledTimes(1)
   })
 
-  it('renders the creation form instead of the empty state', () => {
-    render(
-      <PublicationsPage
-        publications={[]}
-        isCreating
-        onCancelCreate={() => undefined}
-        onSubmitCreate={() => undefined}
-      />,
-    )
+  it('does not render creation controls without an action', () => {
+    render(<PublicationsPage publications={[]} />)
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'Create publication',
+      }),
+    ).not.toBeInTheDocument()
 
     expect(
       screen.getByRole('heading', {
-        name: 'Create publication',
-      }),
-    ).toBeInTheDocument()
-
-    expect(
-      screen.queryByRole('heading', {
         name: 'Create your first publication',
       }),
-    ).not.toBeInTheDocument()
+    ).toBeInTheDocument()
   })
 })

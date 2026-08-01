@@ -8,21 +8,14 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { ResourceCollection } from '@/studio/resources'
 
-import {
-  PublicationCard,
-  PublicationCreateForm,
-  type PublicationCreateValues,
-} from '../../components'
+import { PublicationCard } from '../../components'
 import type { Publication } from '../../types'
 
 import styles from './PublicationsPage.module.css'
 
 export type PublicationsPageProps = {
   publications: readonly Publication[]
-  isCreating?: boolean
   onCreate?: () => void
-  onCancelCreate?: () => void
-  onSubmitCreate?: (values: PublicationCreateValues) => void
   onOpen?: (id: string) => void
   onPreview?: (id: string) => void
   onDuplicate?: (id: string) => void
@@ -83,7 +76,9 @@ function DeleteConfirmation({
               Cancel
             </Button>
 
-            <Button onClick={onConfirm}>Delete publication</Button>
+            <Button variant="destructive" onClick={onConfirm}>
+              Delete publication
+            </Button>
           </div>
         </Stack>
       </section>
@@ -93,19 +88,13 @@ function DeleteConfirmation({
 
 export function PublicationsPage({
   publications,
-  isCreating = false,
   onCreate,
-  onCancelCreate,
-  onSubmitCreate,
   onOpen,
   onPreview,
   onDuplicate,
   onDelete,
 }: PublicationsPageProps): ReactElement {
   const [pendingDeletionId, setPendingDeletionId] = useState<string>()
-
-  const hasPublications = publications.length > 0
-  const canRenderCreateForm = isCreating && onCancelCreate && onSubmitCreate
 
   const pendingDeletion = publications.find((publication) => publication.id === pendingDeletionId)
 
@@ -118,6 +107,8 @@ export function PublicationsPage({
     setPendingDeletionId(undefined)
   }
 
+  const hasPublications = publications.length > 0
+
   return (
     <>
       <main className={styles.page}>
@@ -128,7 +119,7 @@ export function PublicationsPage({
               title="Publications"
               description="Create, organize, and prepare thoughtful digital products for release."
               actions={
-                hasPublications && !isCreating && onCreate ? (
+                onCreate && hasPublications ? (
                   <Button startIcon={<Plus size={18} />} onClick={onCreate}>
                     Create publication
                   </Button>
@@ -136,36 +127,30 @@ export function PublicationsPage({
               }
             />
 
-            {canRenderCreateForm ? (
-              <PublicationCreateForm onSubmit={onSubmitCreate} onCancel={onCancelCreate} />
-            ) : null}
-
-            {hasPublications || !isCreating ? (
-              <ResourceCollection
-                aria-label="Publications"
-                resources={publications}
-                getResourceKey={(publication) => publication.id}
-                renderResource={(publication) => (
-                  <PublicationCard
-                    publication={publication}
-                    onOpen={onOpen}
-                    onPreview={onPreview}
-                    onDuplicate={onDuplicate}
-                    onDelete={onDelete ? setPendingDeletionId : undefined}
-                  />
-                )}
-                emptyIcon={<BookOpen size={28} />}
-                emptyTitle="Create your first publication"
-                emptyDescription="Start with one thoughtful idea. You can shape the content, design, and release details as you go."
-                emptyActions={
-                  onCreate ? (
-                    <Button startIcon={<Plus size={18} />} onClick={onCreate}>
-                      Create publication
-                    </Button>
-                  ) : null
-                }
-              />
-            ) : null}
+            <ResourceCollection
+              aria-label="Publications"
+              resources={publications}
+              getResourceKey={(publication) => publication.id}
+              renderResource={(publication) => (
+                <PublicationCard
+                  publication={publication}
+                  onOpen={onOpen}
+                  onPreview={onPreview}
+                  onDuplicate={onDuplicate}
+                  onDelete={onDelete ? setPendingDeletionId : undefined}
+                />
+              )}
+              emptyIcon={<BookOpen size={28} />}
+              emptyTitle="Create your first publication"
+              emptyDescription="Start with one thoughtful idea. You can shape the content, design, and release details as you go."
+              emptyActions={
+                onCreate ? (
+                  <Button startIcon={<Plus size={18} />} onClick={onCreate}>
+                    Create publication
+                  </Button>
+                ) : null
+              }
+            />
           </Stack>
         </Container>
       </main>

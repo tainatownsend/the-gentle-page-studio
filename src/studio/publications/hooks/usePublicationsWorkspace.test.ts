@@ -21,24 +21,6 @@ describe('usePublicationsWorkspace', () => {
     localStorage.clear()
   })
 
-  it('controls the publication creation state', () => {
-    const { result } = renderHook(() => usePublicationsWorkspace())
-
-    expect(result.current.isCreating).toBe(false)
-
-    act(() => {
-      result.current.startCreating()
-    })
-
-    expect(result.current.isCreating).toBe(true)
-
-    act(() => {
-      result.current.cancelCreating()
-    })
-
-    expect(result.current.isCreating).toBe(false)
-  })
-
   it('hydrates publications from storage', () => {
     const publication: Publication = {
       id: 'stored-publication',
@@ -71,14 +53,12 @@ describe('usePublicationsWorkspace', () => {
     let createdPublication: Publication | undefined
 
     act(() => {
-      result.current.startCreating()
       createdPublication = result.current.createDraft({
         title: 'Gentle Focus Journal',
         description: 'A supportive focus practice.',
       })
     })
 
-    expect(result.current.isCreating).toBe(false)
     expect(result.current.publications).toHaveLength(1)
     expect(createdPublication).toMatchObject({
       id: expect.any(String),
