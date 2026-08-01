@@ -24,6 +24,7 @@ export type PublicationsPageProps = {
   onCancelCreate?: () => void
   onSubmitCreate?: (values: PublicationCreateValues) => void
   onOpen?: (id: string) => void
+  onPreview?: (id: string) => void
   onDuplicate?: (id: string) => void
   onDelete?: (id: string) => void
 }
@@ -97,6 +98,7 @@ export function PublicationsPage({
   onCancelCreate,
   onSubmitCreate,
   onOpen,
+  onPreview,
   onDuplicate,
   onDelete,
 }: PublicationsPageProps): ReactElement {
@@ -147,6 +149,7 @@ export function PublicationsPage({
                   <PublicationCard
                     publication={publication}
                     onOpen={onOpen}
+                    onPreview={onPreview}
                     onDuplicate={onDuplicate}
                     onDelete={onDelete ? setPendingDeletionId : undefined}
                   />
