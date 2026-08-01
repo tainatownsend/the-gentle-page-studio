@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -13,7 +13,14 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
 
-import type { Publication, PublicationStatus } from '../../types'
+import type {
+  Publication,
+  PublicationBlock,
+  PublicationContent,
+  PublicationHeadingBlock,
+  PublicationHeadingLevel,
+  PublicationStatus,
+} from '../../types'
 
 import styles from './PublicationEditorPage.module.css'
 
@@ -21,6 +28,7 @@ export type PublicationEditorValues = {
   title: string
   description?: string
   status: PublicationStatus
+  content: PublicationContent
 }
 
 export type PublicationEditorPageProps = {
@@ -32,6 +40,76 @@ export type PublicationEditorPageProps = {
 type UnsavedChangesConfirmationProps = {
   onKeepEditing: () => void
   onDiscard: () => void
+}
+
+function createBlockId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return `block-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function createHeadingBlock(): PublicationHeadingBlock {
+  return {
+    id: createBlockId(),
+    type: 'heading',
+    level: 2,
+    text: '',
+  }
+}
+
+function createParagraphBlock(): PublicationBlock {
+  return {
+    id: createBlockId(),
+    type: 'paragraph',
+    text: '',
+  }
+}
+
+function cloneContent(content: PublicationContent): PublicationContent {
+  return {
+    blocks: content.blocks.map((block) => ({
+      ...block,
+    })),
+  }
+}
+
+function normalizeContent(content: PublicationContent): PublicationContent {
+  return {
+    blocks: content.blocks.map((block) => ({
+      ...block,
+      text: block.text.trim(),
+    })),
+  }
+}
+
+function contentMatches(
+  currentContent: PublicationContent,
+  savedContent: PublicationContent,
+): boolean {
+  if (currentContent.blocks.length !== savedContent.blocks.length) {
+    return false
+  }
+
+  return currentContent.blocks.every((currentBlock, index) => {
+    const savedBlock = savedContent.blocks[index]
+
+    if (
+      !savedBlock ||
+      currentBlock.id !== savedBlock.id ||
+      currentBlock.type !== savedBlock.type ||
+      currentBlock.text.trim() !== savedBlock.text.trim()
+    ) {
+      return false
+    }
+
+    if (currentBlock.type === 'heading' && savedBlock.type === 'heading') {
+      return currentBlock.level === savedBlock.level
+    }
+
+    return true
+  })
 }
 
 function UnsavedChangesConfirmation({
@@ -99,6 +177,9 @@ export function PublicationEditorPage({
   const [title, setTitle] = useState(publication.title)
   const [description, setDescription] = useState(publication.description ?? '')
   const [status, setStatus] = useState<PublicationStatus>(publication.status)
+  const [content, setContent] = useState<PublicationContent>(() =>
+    cloneContent(publication.content),
+  )
   const [titleError, setTitleError] = useState<string>()
   const [isConfirmingExit, setIsConfirmingExit] = useState(false)
 
@@ -109,7 +190,36 @@ export function PublicationEditorPage({
   const hasUnsavedChanges =
     normalizedTitle !== publication.title ||
     normalizedDescription !== savedDescription ||
-    status !== publication.status
+    status !== publication.status ||
+    !contentMatches(content, publication.content)
+
+  function markAsDraftAfterEdit() {
+    setStatus((currentStatus) => (currentStatus === 'published' ? 'draft' : currentStatus))
+  }
+
+  function updateBlock(blockId: string, update: (block: PublicationBlock) => PublicationBlock) {
+    markAsDraftAfterEdit()
+
+    setContent((current) => ({
+      blocks: current.blocks.map((block) => (block.id === blockId ? update(block) : block)),
+    }))
+  }
+
+  function addBlock(block: PublicationBlock) {
+    markAsDraftAfterEdit()
+
+    setContent((current) => ({
+      blocks: [...current.blocks, block],
+    }))
+  }
+
+  function removeBlock(blockId: string) {
+    markAsDraftAfterEdit()
+
+    setContent((current) => ({
+      blocks: current.blocks.filter((block) => block.id !== blockId),
+    }))
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -125,6 +235,7 @@ export function PublicationEditorPage({
       title: normalizedTitle,
       description: normalizedDescription || undefined,
       status,
+      content: normalizeContent(content),
     })
   }
 
@@ -145,7 +256,7 @@ export function PublicationEditorPage({
             <PageHeader
               eyebrow="Publication editor"
               title={publication.title}
-              description={`Status: ${publication.status === 'published' ? 'Published' : 'Draft'}`}
+              description={`Status: ${status === 'published' ? 'Published' : 'Draft'}`}
               actions={
                 <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={requestExit}>
                   Back to publications
@@ -153,77 +264,211 @@ export function PublicationEditorPage({
               }
             />
 
-            <Card as="section" padding="lg" aria-labelledby="publication-details-title">
-              <form onSubmit={handleSubmit} noValidate>
-                <Stack gap="lg">
-                  <Stack gap="xs">
-                    <Text as="h2" id="publication-details-title" variant="h2" weight="semibold">
-                      Publication details
-                    </Text>
+            <form onSubmit={handleSubmit} noValidate>
+              <Stack gap="lg">
+                <Card as="section" padding="lg" aria-labelledby="publication-details-title">
+                  <Stack gap="lg">
+                    <Stack gap="xs">
+                      <Text as="h2" id="publication-details-title" variant="h2" weight="semibold">
+                        Publication details
+                      </Text>
 
-                    <Text tone="secondary">
-                      Refine the working details and release status for this publication.
-                    </Text>
-                  </Stack>
+                      <Text tone="secondary">
+                        Refine the working details and release status for this publication.
+                      </Text>
+                    </Stack>
 
-                  <Field
-                    label="Title"
-                    required
-                    error={titleError}
-                    description="This title appears in your publications library."
-                  >
-                    <Input
-                      autoFocus
-                      fullWidth
-                      value={title}
-                      onChange={(event) => {
-                        setTitle(event.target.value)
-
-                        if (titleError) {
-                          setTitleError(undefined)
-                        }
-                      }}
-                    />
-                  </Field>
-
-                  <Field
-                    label="Description"
-                    description="Summarize the purpose of this publication."
-                  >
-                    <Textarea
-                      fullWidth
-                      rows={6}
-                      value={description}
-                      onChange={(event) => setDescription(event.target.value)}
-                    />
-                  </Field>
-
-                  <Field
-                    label="Status"
-                    description="Drafts remain works in progress. Published items are marked as ready for release."
-                  >
-                    <Select
-                      fullWidth
-                      value={status}
-                      onChange={(event) => setStatus(event.target.value as PublicationStatus)}
+                    <Field
+                      label="Title"
+                      required
+                      error={titleError}
+                      description="This title appears in your publications library."
                     >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                    </Select>
-                  </Field>
+                      <Input
+                        autoFocus
+                        fullWidth
+                        value={title}
+                        onChange={(event) => {
+                          setTitle(event.target.value)
+                          markAsDraftAfterEdit()
 
-                  <Cluster justify="end" gap="sm">
-                    <Button type="button" variant="ghost" onClick={requestExit}>
-                      Cancel
-                    </Button>
+                          if (titleError) {
+                            setTitleError(undefined)
+                          }
+                        }}
+                      />
+                    </Field>
 
-                    <Button type="submit" startIcon={<Save size={18} />}>
-                      Save changes
-                    </Button>
-                  </Cluster>
-                </Stack>
-              </form>
-            </Card>
+                    <Field
+                      label="Description"
+                      description="Summarize the purpose of this publication."
+                    >
+                      <Textarea
+                        fullWidth
+                        rows={6}
+                        value={description}
+                        onChange={(event) => {
+                          setDescription(event.target.value)
+                          markAsDraftAfterEdit()
+                        }}
+                      />
+                    </Field>
+
+                    <Field
+                      label="Status"
+                      description="Drafts remain works in progress. Published items are marked as ready for release."
+                    >
+                      <Select
+                        fullWidth
+                        value={status}
+                        onChange={(event) => setStatus(event.target.value as PublicationStatus)}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                      </Select>
+                    </Field>
+                  </Stack>
+                </Card>
+
+                <Card as="section" padding="lg" aria-labelledby="publication-content-title">
+                  <Stack gap="lg">
+                    <div className={styles.contentHeader}>
+                      <Stack gap="xs">
+                        <Text as="h2" id="publication-content-title" variant="h2" weight="semibold">
+                          Publication content
+                        </Text>
+
+                        <Text tone="secondary">
+                          Build the first version of your publication with headings and paragraphs.
+                        </Text>
+                      </Stack>
+
+                      <Cluster gap="sm">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          startIcon={<Plus size={18} />}
+                          onClick={() => addBlock(createHeadingBlock())}
+                        >
+                          Add heading
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          startIcon={<Plus size={18} />}
+                          onClick={() => addBlock(createParagraphBlock())}
+                        >
+                          Add paragraph
+                        </Button>
+                      </Cluster>
+                    </div>
+
+                    {content.blocks.length === 0 ? (
+                      <div className={styles.emptyContent}>
+                        <Stack gap="xs">
+                          <Text weight="semibold">No content blocks yet</Text>
+                          <Text tone="secondary">
+                            Add a heading or paragraph to begin shaping this publication.
+                          </Text>
+                        </Stack>
+                      </div>
+                    ) : (
+                      <ol className={styles.blockList} aria-label="Publication content blocks">
+                        {content.blocks.map((block, index) => {
+                          const blockNumber = index + 1
+                          const blockTypeLabel = block.type === 'heading' ? 'Heading' : 'Paragraph'
+                          const blockLabel = `Block ${blockNumber} · ${blockTypeLabel}`
+
+                          return (
+                            <li key={block.id} className={styles.blockItem}>
+                              <Stack gap="md">
+                                <div className={styles.blockHeader}>
+                                  <Text weight="semibold">{blockLabel}</Text>
+
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    startIcon={<Trash2 size={16} />}
+                                    onClick={() => removeBlock(block.id)}
+                                  >
+                                    Remove block {blockNumber}
+                                  </Button>
+                                </div>
+
+                                {block.type === 'heading' ? (
+                                  <div className={styles.headingFields}>
+                                    <Field label={`Block ${blockNumber} heading level`}>
+                                      <Select
+                                        fullWidth
+                                        value={String(block.level)}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'heading'
+                                              ? {
+                                                  ...currentBlock,
+                                                  level: Number(
+                                                    event.target.value,
+                                                  ) as PublicationHeadingLevel,
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      >
+                                        <option value="1">Heading 1</option>
+                                        <option value="2">Heading 2</option>
+                                        <option value="3">Heading 3</option>
+                                      </Select>
+                                    </Field>
+
+                                    <Field label={`Block ${blockNumber} heading text`}>
+                                      <Input
+                                        fullWidth
+                                        value={block.text}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) => ({
+                                            ...currentBlock,
+                                            text: event.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </Field>
+                                  </div>
+                                ) : (
+                                  <Field label={`Block ${blockNumber} paragraph text`}>
+                                    <Textarea
+                                      fullWidth
+                                      rows={5}
+                                      value={block.text}
+                                      onChange={(event) =>
+                                        updateBlock(block.id, (currentBlock) => ({
+                                          ...currentBlock,
+                                          text: event.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </Field>
+                                )}
+                              </Stack>
+                            </li>
+                          )
+                        })}
+                      </ol>
+                    )}
+                  </Stack>
+                </Card>
+
+                <Cluster justify="end" gap="sm">
+                  <Button type="button" variant="ghost" onClick={requestExit}>
+                    Cancel
+                  </Button>
+
+                  <Button type="submit" startIcon={<Save size={18} />}>
+                    Save changes
+                  </Button>
+                </Cluster>
+              </Stack>
+            </form>
           </Stack>
         </Container>
       </main>
