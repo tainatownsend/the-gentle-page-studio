@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 
 import { createPublicationFixture } from '../../testing'
@@ -11,7 +10,7 @@ const publication = createPublicationFixture({
 })
 
 describe('PublicationEditorPage', () => {
-  it('renders the current publication details and status', () => {
+  it('renders publication details and an empty content state', () => {
     render(
       <PublicationEditorPage
         publication={publication}
@@ -36,56 +35,249 @@ describe('PublicationEditorPage', () => {
     ).toHaveValue('A supportive focus practice.')
 
     expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('draft')
+
+    expect(screen.getByText('No content blocks yet')).toBeInTheDocument()
   })
 
-  it('submits normalized changes and the selected status', async () => {
-    const user = userEvent.setup()
+  it('renders existing heading and paragraph blocks', () => {
+    const publicationWithContent = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'heading-1',
+            type: 'heading',
+            level: 1,
+            text: 'Pause and notice',
+          },
+          {
+            id: 'paragraph-1',
+            type: 'paragraph',
+            text: 'What feels most present right now?',
+          },
+        ],
+      },
+    })
+
+    render(
+      <PublicationEditorPage
+        publication={publicationWithContent}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Block 1 heading level',
+      }),
+    ).toHaveValue('1')
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 1 heading text',
+      }),
+    ).toHaveValue('Pause and notice')
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 2 paragraph text',
+      }),
+    ).toHaveValue('What feels most present right now?')
+  })
+
+  it('adds headings at level 2 by default', () => {
+    render(
+      <PublicationEditorPage
+        publication={publication}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add heading' }))
+
+    expect(screen.getByText('Block 1 · Heading')).toBeInTheDocument()
+
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Block 1 heading level',
+      }),
+    ).toHaveValue('2')
+  })
+
+  it('adds, edits, and removes content blocks', () => {
+    render(
+      <PublicationEditorPage
+        publication={publication}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add heading' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add paragraph' }))
+
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Block 1 heading level',
+      }),
+      {
+        target: {
+          value: '3',
+        },
+      },
+    )
+
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: 'Block 1 heading text',
+      }),
+      {
+        target: {
+          value: 'A gentle beginning',
+        },
+      },
+    )
+
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: 'Block 2 paragraph text',
+      }),
+      {
+        target: {
+          value: 'Begin with one small step.',
+        },
+      },
+    )
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 1 heading text',
+      }),
+    ).toHaveValue('A gentle beginning')
+
+    expect(
+      screen.getByRole('combobox', {
+        name: 'Block 1 heading level',
+      }),
+    ).toHaveValue('3')
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Remove block 2',
+      }),
+    )
+
+    expect(
+      screen.queryByRole('textbox', {
+        name: 'Block 2 paragraph text',
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('returns a published publication to draft after editing', () => {
+    const publishedPublication = createPublicationFixture({
+      status: 'published',
+    })
+
+    render(
+      <PublicationEditorPage
+        publication={publishedPublication}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('published')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add paragraph' }))
+
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('draft')
+  })
+
+  it('submits normalized details and content', () => {
     const onSave = vi.fn()
 
     render(
       <PublicationEditorPage publication={publication} onBack={() => undefined} onSave={onSave} />,
     )
 
-    const titleInput = screen.getByRole('textbox', {
-      name: /title/i,
-    })
-    const descriptionInput = screen.getByRole('textbox', {
-      name: /description/i,
-    })
-    const statusSelect = screen.getByRole('combobox', {
-      name: 'Status',
-    })
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: /title/i,
+      }),
+      {
+        target: {
+          value: '  Updated Gentle Journal  ',
+        },
+      },
+    )
 
-    await user.clear(titleInput)
-    await user.type(titleInput, '  Updated Gentle Journal  ')
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: /description/i,
+      }),
+      {
+        target: {
+          value: '  Updated description.  ',
+        },
+      },
+    )
 
-    await user.clear(descriptionInput)
-    await user.type(descriptionInput, '  Updated description.  ')
+    fireEvent.change(
+      screen.getByRole('combobox', {
+        name: 'Status',
+      }),
+      {
+        target: {
+          value: 'published',
+        },
+      },
+    )
 
-    await user.selectOptions(statusSelect, 'published')
+    fireEvent.click(screen.getByRole('button', { name: 'Add paragraph' }))
 
-    await user.click(
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: 'Block 1 paragraph text',
+      }),
+      {
+        target: {
+          value: '  A saved reflection.  ',
+        },
+      },
+    )
+
+    fireEvent.click(
       screen.getByRole('button', {
         name: 'Save changes',
       }),
     )
 
+    expect(onSave).toHaveBeenCalledTimes(1)
     expect(onSave).toHaveBeenCalledWith({
       title: 'Updated Gentle Journal',
       description: 'Updated description.',
-      status: 'published',
+      status: 'draft',
+      content: {
+        blocks: [
+          expect.objectContaining({
+            type: 'paragraph',
+            text: 'A saved reflection.',
+          }),
+        ],
+      },
     })
   })
 
-  it('leaves immediately when no values have changed', async () => {
-    const user = userEvent.setup()
+  it('leaves immediately when no values have changed', () => {
     const onBack = vi.fn()
 
     render(
       <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
     )
 
-    await user.click(
+    fireEvent.click(
       screen.getByRole('button', {
         name: 'Back to publications',
       }),
@@ -95,17 +287,15 @@ describe('PublicationEditorPage', () => {
     expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
   })
 
-  it('protects unsaved changes from the back action', async () => {
-    const user = userEvent.setup()
+  it('protects unsaved content changes from exit', () => {
     const onBack = vi.fn()
 
     render(
       <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
     )
 
-    await user.type(screen.getByRole('textbox', { name: /title/i }), ' updated')
-
-    await user.click(
+    fireEvent.click(screen.getByRole('button', { name: 'Add heading' }))
+    fireEvent.click(
       screen.getByRole('button', {
         name: 'Back to publications',
       }),
@@ -113,89 +303,81 @@ describe('PublicationEditorPage', () => {
 
     expect(onBack).not.toHaveBeenCalled()
 
-    const confirmationTitle = screen.getByText('Discard unsaved changes?')
-    const confirmationDialog = confirmationTitle.closest('[role="alertdialog"]')
+    const confirmationDialog = screen
+      .getByText('Discard unsaved changes?')
+      .closest('[role="alertdialog"]')
+
     const keepEditingButton = screen.getByText('Keep editing').closest('button')
 
-    expect(confirmationDialog).toBeInTheDocument()
     expect(confirmationDialog).toHaveAttribute('aria-modal', 'true')
     expect(keepEditingButton).toHaveFocus()
   })
 
-  it('keeps editing when the confirmation is cancelled', async () => {
-    const user = userEvent.setup()
+  it('keeps editing when the confirmation is cancelled', () => {
     const onBack = vi.fn()
 
     render(
       <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
     )
 
-    await user.selectOptions(
-      screen.getByRole('combobox', {
-        name: 'Status',
-      }),
-      'published',
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
-
-    await user.click(screen.getByText('Keep editing').closest('button') as HTMLButtonElement)
+    fireEvent.click(screen.getByRole('button', { name: 'Add paragraph' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByText('Keep editing').closest('button') as HTMLButtonElement)
 
     expect(onBack).not.toHaveBeenCalled()
     expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('published')
-  })
-
-  it('closes the confirmation with Escape', async () => {
-    const user = userEvent.setup()
-    const onBack = vi.fn()
-
-    render(
-      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
-    )
-
-    await user.clear(
+    expect(
       screen.getByRole('textbox', {
-        name: /description/i,
+        name: 'Block 1 paragraph text',
       }),
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
-
-    await user.keyboard('{Escape}')
-
-    expect(onBack).not.toHaveBeenCalled()
-    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
+    ).toBeInTheDocument()
   })
 
-  it('discards changes after explicit confirmation', async () => {
-    const user = userEvent.setup()
+  it('closes the confirmation with Escape', () => {
     const onBack = vi.fn()
 
     render(
       <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
     )
 
-    await user.type(screen.getByRole('textbox', { name: /title/i }), ' updated')
+    fireEvent.click(screen.getByRole('button', { name: 'Add paragraph' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.keyDown(document, {
+      key: 'Escape',
+    })
 
-    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onBack).not.toHaveBeenCalled()
+    expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument()
+  })
 
-    await user.click(screen.getByText('Discard changes').closest('button') as HTMLButtonElement)
+  it('discards changes after explicit confirmation', () => {
+    const onBack = vi.fn()
+
+    render(
+      <PublicationEditorPage publication={publication} onBack={onBack} onSave={() => undefined} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add paragraph' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByText('Discard changes').closest('button') as HTMLButtonElement)
 
     expect(onBack).toHaveBeenCalledTimes(1)
   })
 
-  it('requires a title before saving', async () => {
-    const user = userEvent.setup()
+  it('requires a title before saving', () => {
     const onSave = vi.fn()
 
     render(
       <PublicationEditorPage publication={publication} onBack={() => undefined} onSave={onSave} />,
     )
 
-    await user.clear(screen.getByRole('textbox', { name: /title/i }))
+    fireEvent.change(screen.getByRole('textbox', { name: /title/i }), {
+      target: {
+        value: '',
+      },
+    })
 
-    await user.click(
+    fireEvent.click(
       screen.getByRole('button', {
         name: 'Save changes',
       }),

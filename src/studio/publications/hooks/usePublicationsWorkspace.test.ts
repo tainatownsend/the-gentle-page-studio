@@ -252,6 +252,9 @@ describe('usePublicationsWorkspace', () => {
         title: 'Updated title',
         description: 'Updated description.',
         status: 'draft',
+        content: {
+          blocks: [],
+        },
       })
     })
 
@@ -282,6 +285,9 @@ describe('usePublicationsWorkspace', () => {
       result.current.updatePublication(publicationId, {
         title: 'Release-ready journal',
         status: 'published',
+        content: {
+          blocks: [],
+        },
       })
     })
 
@@ -310,6 +316,9 @@ describe('usePublicationsWorkspace', () => {
       result.current.updatePublication('missing', {
         title: 'Should not replace',
         status: 'draft',
+        content: {
+          blocks: [],
+        },
       })
     })
 
