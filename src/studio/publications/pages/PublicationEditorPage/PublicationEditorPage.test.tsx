@@ -175,6 +175,133 @@ describe('PublicationEditorPage', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('moves content blocks while preserving their values', () => {
+    render(
+      <PublicationEditorPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'heading-1',
+                type: 'heading',
+                level: 2,
+                text: 'First section',
+              },
+              {
+                id: 'paragraph-1',
+                type: 'paragraph',
+                text: 'Second block',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Move block 1 up',
+      }),
+    ).toBeDisabled()
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Move block 2 down',
+      }),
+    ).toBeDisabled()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Move block 1 down',
+      }),
+    )
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 1 paragraph text',
+      }),
+    ).toHaveValue('Second block')
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 2 heading text',
+      }),
+    ).toHaveValue('First section')
+  })
+
+  it('duplicates a content block directly after its source', () => {
+    render(
+      <PublicationEditorPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'paragraph-1',
+                type: 'paragraph',
+                text: 'Repeat this reflection.',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Duplicate block 1',
+      }),
+    )
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 1 paragraph text',
+      }),
+    ).toHaveValue('Repeat this reflection.')
+
+    expect(
+      screen.getByRole('textbox', {
+        name: 'Block 2 paragraph text',
+      }),
+    ).toHaveValue('Repeat this reflection.')
+  })
+
+  it('returns a published publication to draft after structural edits', () => {
+    const publishedPublication = createPublicationFixture({
+      status: 'published',
+      content: {
+        blocks: [
+          {
+            id: 'paragraph-1',
+            type: 'paragraph',
+            text: 'Published reflection.',
+          },
+        ],
+      },
+    })
+
+    render(
+      <PublicationEditorPage
+        publication={publishedPublication}
+        onBack={() => undefined}
+        onSave={() => undefined}
+      />,
+    )
+
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('published')
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Duplicate block 1',
+      }),
+    )
+
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveValue('draft')
+  })
+
   it('returns a published publication to draft after editing', () => {
     const publishedPublication = createPublicationFixture({
       status: 'published',
