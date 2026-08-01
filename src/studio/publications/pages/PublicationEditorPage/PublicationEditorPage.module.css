@@ -43,6 +43,10 @@
   gap: var(--space-sm, 12px);
 }
 
+.blockActions {
+  justify-content: flex-end;
+}
+
 .headingFields {
   display: grid;
   gap: var(--space-md, 16px);
@@ -80,7 +84,19 @@
   }
 
   .headingFields {
-    grid-template-columns: minmax(9rem, 0.35fr) minmax(0, 1fr);
+    grid-template-columns:
+      minmax(9rem, 0.35fr)
+      minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 47.999rem) {
+  .blockHeader {
+    align-items: stretch;
+  }
+
+  .blockActions {
+    justify-content: flex-start;
   }
 }
 

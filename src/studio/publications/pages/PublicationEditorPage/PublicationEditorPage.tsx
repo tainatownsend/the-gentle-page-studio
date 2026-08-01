@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react'
-import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowUp, Copy, Plus, Save, Trash2 } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -213,6 +213,52 @@ export function PublicationEditorPage({
     }))
   }
 
+  function duplicateBlock(blockId: string) {
+    markAsDraftAfterEdit()
+
+    setContent((current) => {
+      const sourceIndex = current.blocks.findIndex((block) => block.id === blockId)
+
+      if (sourceIndex === -1) {
+        return current
+      }
+
+      const sourceBlock = current.blocks[sourceIndex]
+      const duplicatedBlock = {
+        ...sourceBlock,
+        id: createBlockId(),
+      }
+
+      const blocks = [...current.blocks]
+      blocks.splice(sourceIndex + 1, 0, duplicatedBlock)
+
+      return {
+        blocks,
+      }
+    })
+  }
+
+  function moveBlock(blockId: string, direction: -1 | 1) {
+    markAsDraftAfterEdit()
+
+    setContent((current) => {
+      const sourceIndex = current.blocks.findIndex((block) => block.id === blockId)
+      const destinationIndex = sourceIndex + direction
+
+      if (sourceIndex === -1 || destinationIndex < 0 || destinationIndex >= current.blocks.length) {
+        return current
+      }
+
+      const blocks = [...current.blocks]
+      const [movedBlock] = blocks.splice(sourceIndex, 1)
+      blocks.splice(destinationIndex, 0, movedBlock)
+
+      return {
+        blocks,
+      }
+    })
+  }
+
   function removeBlock(blockId: string) {
     markAsDraftAfterEdit()
 
@@ -386,14 +432,45 @@ export function PublicationEditorPage({
                                 <div className={styles.blockHeader}>
                                   <Text weight="semibold">{blockLabel}</Text>
 
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    startIcon={<Trash2 size={16} />}
-                                    onClick={() => removeBlock(block.id)}
-                                  >
-                                    Remove block {blockNumber}
-                                  </Button>
+                                  <Cluster gap="xs" className={styles.blockActions}>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      startIcon={<ArrowUp size={16} />}
+                                      disabled={index === 0}
+                                      onClick={() => moveBlock(block.id, -1)}
+                                    >
+                                      Move block {blockNumber} up
+                                    </Button>
+
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      startIcon={<ArrowDown size={16} />}
+                                      disabled={index === content.blocks.length - 1}
+                                      onClick={() => moveBlock(block.id, 1)}
+                                    >
+                                      Move block {blockNumber} down
+                                    </Button>
+
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      startIcon={<Copy size={16} />}
+                                      onClick={() => duplicateBlock(block.id)}
+                                    >
+                                      Duplicate block {blockNumber}
+                                    </Button>
+
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      startIcon={<Trash2 size={16} />}
+                                      onClick={() => removeBlock(block.id)}
+                                    >
+                                      Remove block {blockNumber}
+                                    </Button>
+                                  </Cluster>
                                 </div>
 
                                 {block.type === 'heading' ? (
