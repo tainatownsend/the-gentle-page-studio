@@ -15,6 +15,7 @@ import styles from './PublicationCard.module.css'
 export type PublicationCardProps = {
   publication: Publication
   onOpen?: (id: string) => void
+  onPreview?: (id: string) => void
   onDuplicate?: (id: string) => void
   onDelete?: (id: string) => void
 } & Omit<HTMLAttributes<HTMLElement>, 'children'>
@@ -27,12 +28,13 @@ const statusLabels: Record<PublicationStatus, string> = {
 export function PublicationCard({
   publication,
   onOpen,
+  onPreview,
   onDuplicate,
   onDelete,
   className,
   ...props
 }: PublicationCardProps): ReactElement {
-  const hasActions = Boolean(onOpen || onDuplicate || onDelete)
+  const hasActions = Boolean(onOpen || onPreview || onDuplicate || onDelete)
 
   return (
     <Card {...props} as="article" padding="md" className={cn(styles.card, className)}>
@@ -67,6 +69,12 @@ export function PublicationCard({
         {hasActions ? (
           <Cluster as="footer" gap="sm" className={styles.actions}>
             {onOpen ? <Button onClick={() => onOpen(publication.id)}>Open</Button> : null}
+
+            {onPreview ? (
+              <Button variant="secondary" onClick={() => onPreview(publication.id)}>
+                Preview
+              </Button>
+            ) : null}
 
             {onDuplicate ? (
               <Button variant="secondary" onClick={() => onDuplicate(publication.id)}>

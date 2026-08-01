@@ -42,10 +42,11 @@ describe('PublicationsPage', () => {
     expect(screen.getByText('Daily Clarity Planner')).toBeInTheDocument()
   })
 
-  it('connects create, open, and duplicate actions', async () => {
+  it('connects create, open, preview, and duplicate actions', async () => {
     const user = userEvent.setup()
     const onCreate = vi.fn()
     const onOpen = vi.fn()
+    const onPreview = vi.fn()
     const onDuplicate = vi.fn()
 
     render(
@@ -53,6 +54,7 @@ describe('PublicationsPage', () => {
         publications={[publications[0]]}
         onCreate={onCreate}
         onOpen={onOpen}
+        onPreview={onPreview}
         onDuplicate={onDuplicate}
       />,
     )
@@ -63,6 +65,7 @@ describe('PublicationsPage', () => {
       }),
     )
     await user.click(screen.getByRole('button', { name: 'Open' }))
+    await user.click(screen.getByRole('button', { name: 'Preview' }))
     await user.click(
       screen.getByRole('button', {
         name: 'Duplicate',
@@ -71,6 +74,7 @@ describe('PublicationsPage', () => {
 
     expect(onCreate).toHaveBeenCalledTimes(1)
     expect(onOpen).toHaveBeenCalledWith('publication-1')
+    expect(onPreview).toHaveBeenCalledWith('publication-1')
     expect(onDuplicate).toHaveBeenCalledWith('publication-1')
   })
 

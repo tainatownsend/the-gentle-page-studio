@@ -54,6 +54,7 @@ describe('PublicationCard', () => {
   it('passes the publication id to action callbacks', async () => {
     const user = userEvent.setup()
     const onOpen = vi.fn()
+    const onPreview = vi.fn()
     const onDuplicate = vi.fn()
     const onDelete = vi.fn()
 
@@ -61,6 +62,7 @@ describe('PublicationCard', () => {
       <PublicationCard
         publication={publication}
         onOpen={onOpen}
+        onPreview={onPreview}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
       />,
@@ -72,7 +74,14 @@ describe('PublicationCard', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Preview',
+      }),
+    )
+
     expect(onOpen).toHaveBeenCalledWith(publication.id)
+    expect(onPreview).toHaveBeenCalledWith(publication.id)
     expect(onDuplicate).toHaveBeenCalledWith(publication.id)
     expect(onDelete).toHaveBeenCalledWith(publication.id)
   })
