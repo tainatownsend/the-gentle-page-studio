@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 
 import { App } from './App'
@@ -20,10 +19,19 @@ async function createDraft(user: ReturnType<typeof userEvent.setup>) {
     }),
   )
 
+  expect(
+    screen.getByRole('heading', {
+      level: 1,
+      name: 'Create publication',
+    }),
+  ).toBeInTheDocument()
+
   await user.type(screen.getByRole('textbox', { name: /title/i }), 'Gentle Focus Journal')
 
   await user.type(
-    screen.getByRole('textbox', { name: /description/i }),
+    screen.getByRole('textbox', {
+      name: /description/i,
+    }),
     'A supportive focus practice.',
   )
 
@@ -35,14 +43,6 @@ async function createDraft(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('App routing', () => {
-  beforeEach(() => {
-    localStorage.clear()
-  })
-
-  afterEach(() => {
-    localStorage.clear()
-  })
-
   it('redirects the root path to publications', () => {
     renderApp('/')
 
@@ -54,24 +54,47 @@ describe('App routing', () => {
     ).toBeInTheDocument()
   })
 
-  it('creates, opens, edits, and saves a publication through routes', async () => {
+  it('opens publication creation on a dedicated route', async () => {
     const user = userEvent.setup()
 
     renderApp()
-    await createDraft(user)
 
     await user.click(
       screen.getByRole('button', {
-        name: 'Open',
+        name: 'Create publication',
       }),
     )
 
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'Gentle Focus Journal',
+        name: 'Create publication',
       }),
     ).toBeInTheDocument()
+
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Create your first publication',
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('creates a draft and continues directly in the editor', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await createDraft(user)
+
+    expect(screen.getByText('Publication editor')).toBeInTheDocument()
+
+    expect(screen.getByRole('textbox', { name: /title/i })).toHaveValue('Gentle Focus Journal')
+  }, 10_000)
+
+  it('creates, edits, and saves a publication through routes', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await createDraft(user)
 
     const titleInput = screen.getByRole('textbox', {
       name: /title/i,
@@ -96,23 +119,12 @@ describe('App routing', () => {
     expect(screen.getByText('Updated Gentle Journal')).toBeInTheDocument()
   }, 10_000)
 
-  it('returns to publications from the editor without saving', async () => {
+  it('returns to publications when creation is cancelled', async () => {
     const user = userEvent.setup()
 
-    renderApp()
-    await createDraft(user)
+    renderApp('/publications/new')
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Open',
-      }),
-    )
-
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Back to publications',
-      }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(
       screen.getByRole('heading', {
@@ -120,9 +132,7 @@ describe('App routing', () => {
         name: 'Publications',
       }),
     ).toBeInTheDocument()
-
-    expect(screen.getByText('Gentle Focus Journal')).toBeInTheDocument()
-  }, 10_000)
+  })
 
   it('redirects unknown publication editor routes to the library', () => {
     renderApp('/publications/missing-publication/edit')
@@ -131,12 +141,6 @@ describe('App routing', () => {
       screen.getByRole('heading', {
         level: 1,
         name: 'Publications',
-      }),
-    ).toBeInTheDocument()
-
-    expect(
-      screen.getByRole('heading', {
-        name: 'Create your first publication',
       }),
     ).toBeInTheDocument()
   })

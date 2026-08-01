@@ -80,9 +80,6 @@ function createPublicationCopy(
 
 export type PublicationsWorkspace = {
   publications: readonly Publication[]
-  isCreating: boolean
-  startCreating: () => void
-  cancelCreating: () => void
   createDraft: (values: PublicationCreateValues) => Publication
   duplicatePublication: (publicationId: string) => Publication | undefined
   deletePublication: (publicationId: string) => void
@@ -92,25 +89,15 @@ export type PublicationsWorkspace = {
 
 export function usePublicationsWorkspace(): PublicationsWorkspace {
   const [publications, setPublications] = useState<Publication[]>(loadPublications)
-  const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
     savePublications(publications)
   }, [publications])
 
-  const startCreating = useCallback(() => {
-    setIsCreating(true)
-  }, [])
-
-  const cancelCreating = useCallback(() => {
-    setIsCreating(false)
-  }, [])
-
   const createDraft = useCallback((values: PublicationCreateValues): Publication => {
     const createdPublication = createPublication(values)
 
     setPublications((current) => [createdPublication, ...current])
-    setIsCreating(false)
 
     return createdPublication
   }, [])
@@ -165,9 +152,6 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
   return useMemo(
     () => ({
       publications,
-      isCreating,
-      startCreating,
-      cancelCreating,
       createDraft,
       duplicatePublication,
       deletePublication,
@@ -176,9 +160,6 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
     }),
     [
       publications,
-      isCreating,
-      startCreating,
-      cancelCreating,
       createDraft,
       duplicatePublication,
       deletePublication,
