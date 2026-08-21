@@ -1,3 +1,7 @@
+export {
+  createPublicationPdfFilename,
+  downloadFillablePublicationPdf,
+} from './downloadFillablePublicationPdf'
 export { generateFillablePublicationPdf } from './generateFillablePublicationPdf'
 export {
   createPublicationPdfPlan,
