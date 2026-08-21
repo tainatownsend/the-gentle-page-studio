@@ -86,20 +86,42 @@ This backlog separates work that has already been processed, implementation-read
   - advances revision persistence to version 2 while retaining v1 migration support
   - validates interactive blocks before hydration
 
+## Processed in PR0027I
+
+### Interactive authoring and static preview
+
+- [x] **Interactive editor controls**
+  - adds multiline response fields and checkbox fields from the publication editor
+  - supports field-specific prompt / label editing
+  - interactive blocks reuse move, duplicate, delete, save, Draft transition, and unsaved-change behavior
+
+- [x] **Interactive preview affordances**
+  - multiline response fields render a prompt plus printable lined writing area
+  - checkbox fields render a printable empty checkbox plus label
+  - interactive field footprint participates in automatic pagination estimates
+  - static print output remains understandable without storing reader responses
+
 ## Ready to implement next
 
-### Fillable publication foundation
+### Fillable PDF foundation
 
-1. **Interactive editor and preview**
-   - add editor controls for multiline fields and checkboxes
-   - render field affordances in the publication preview
-   - keep static print output understandable before PDF form serialization is added
-
-2. **Fillable PDF serialization investigation**
-   - verify browser print behavior with interactive controls
-   - treat browser print as static output only when form interactivity is not preserved
-   - if needed, introduce a PDF form library behind the existing derived publication layout
+1. **Fillable PDF serialization investigation**
+   - verify whether browser Save as PDF preserves editable form semantics
+   - document the result independently from the existing static print path
+   - if browser output is static, select the smallest PDF form serialization approach that can reuse publication layout data
    - keep binary PDF generation separate from editorial authoring concerns
+
+2. **Fillable PDF serializer foundation**
+   - map multiline response fields to PDF text areas
+   - map checkbox fields to PDF checkboxes
+   - preserve cover, US Letter geometry, Gentle Page identity, page numbering, and static content
+   - avoid storing filled responses in the Studio publication model
+
+3. **Fillable export validation**
+   - verify fields are editable in common PDF viewers
+   - verify field names are stable and unique
+   - verify printed/static appearance remains understandable
+   - verify multi-page field placement
 
 ## Architectural note on automatic pagination
 
@@ -111,7 +133,7 @@ Use publish events as the version boundary: explicit publish creates an immutabl
 
 ## Fillable output decision
 
-Start with multiline text and checkbox blocks authored explicitly in the editor. Additional interactive field types follow only after the first fillable workflow is validated.
+Start with multiline text and checkbox blocks authored explicitly in the editor. Reader response data is not part of publication authoring state. Additional interactive field types follow only after the first fillable workflow is validated.
 
 ## Intentionally deferred
 
