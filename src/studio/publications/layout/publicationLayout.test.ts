@@ -44,6 +44,54 @@ describe('createPublicationLayout', () => {
     })
   })
 
+  it('flows larger content into sequential derived pages without reordering blocks', () => {
+    const blocks = Array.from({ length: 5 }, (_, index) => ({
+      id: `paragraph-${index + 1}`,
+      type: 'paragraph' as const,
+      text: `${index + 1}-${'a'.repeat(198)}`,
+    }))
+
+    const publication = createPublicationFixture({
+      id: 'long-journal',
+      content: {
+        blocks,
+      },
+    })
+
+    const layout = createPublicationLayout(publication)
+    const contentPages = layout.pages.filter((page) => page.kind === 'content')
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages.map((page) => page.pageNumber)).toEqual([1, 2])
+    expect(contentPages.map((page) => page.sequence)).toEqual([2, 3])
+    expect(contentPages.flatMap((page) => page.blocks.map((block) => block.id))).toEqual(
+      blocks.map((block) => block.id),
+    )
+    expect(contentPages[0]?.blocks).toHaveLength(4)
+    expect(contentPages[1]?.blocks).toHaveLength(1)
+  })
+
+  it('keeps a single oversized block intact instead of splitting authored content', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'long-paragraph',
+            type: 'paragraph',
+            text: 'a'.repeat(3000),
+          },
+        ],
+      },
+    })
+
+    const layout = createPublicationLayout(publication)
+    const contentPages = layout.pages.filter((page) => page.kind === 'content')
+
+    expect(contentPages).toHaveLength(1)
+    expect(contentPages[0]?.blocks).toHaveLength(1)
+    expect(contentPages[0]?.blocks[0]?.id).toBe('long-paragraph')
+  })
+
   it('returns independent layout data without mutating publication data', () => {
     const publication = createPublicationFixture({
       content: {
@@ -70,10 +118,8 @@ describe('createPublicationLayout', () => {
     const publication = createPublicationFixture()
     const layout = createPublicationLayout(publication)
 
-    expect(layout.pages[0]).toMatchObject({
-      kind: 'cover',
-      pageNumber: undefined,
-    })
+    expect(layout.pages[0]?.kind).toBe('cover')
+    expect(layout.pages[0]?.pageNumber).toBeUndefined()
 
     expect(layout.pages[1]).toEqual({
       id: 'publication-1-content-page-1',
