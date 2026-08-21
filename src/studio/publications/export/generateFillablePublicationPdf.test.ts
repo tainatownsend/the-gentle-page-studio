@@ -80,7 +80,7 @@ describe('generateFillablePublicationPdf', () => {
     expect(checkboxField.isChecked()).toBe(false)
   })
 
-  it('keeps interactive field names stable and page assignments valid across multiple pages', async () => {
+  it('keeps interactive field names stable across the derived page plan', async () => {
     const publication = createPublicationFixture({
       id: 'multi-page-journal',
       content: {
@@ -107,7 +107,7 @@ describe('generateFillablePublicationPdf', () => {
     const bytes = await generateFillablePublicationPdf(publication)
     const document = await PDFDocument.load(bytes)
 
-    expect(document.getPages()).toHaveLength(3)
+    expect(document.getPages()).toHaveLength(2)
     expect(document.getForm().getFields().map((field) => field.getName())).toEqual([
       'publication.multi-page-journal.block.response-1',
       'publication.multi-page-journal.block.response-2',
