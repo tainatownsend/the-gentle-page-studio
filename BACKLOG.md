@@ -1,8 +1,29 @@
 # Backlog
 
-This backlog separates implementation-ready work from product decisions that should be resolved before code is written.
+This backlog separates work that has already been processed, work that is technically sequenced but depends on product decisions, and intentionally deferred items.
 
-## Ready to implement
+## Processed in PR0027A
+
+### Engineering quality
+
+- [x] **Unified quality command**
+  - `npm run quality` runs lint, tests, and production build
+  - GitHub Actions uses the same command as the local workflow
+
+- [x] **Snapshot-first repair workflow**
+  - when a format-sensitive implementation script fails, capture the exact affected files before producing a repair script
+  - prefer deterministic rewrites over repeated heuristic patching
+  - contributor guidance documents the workflow
+
+- [x] **Test interaction guidance**
+  - use deterministic input events when character-by-character typing behavior is not itself under test
+  - reserve browser-like interaction helpers for behavior where interaction sequencing matters
+
+- [x] **Roadmap refresh**
+  - replace the stale foundation-era roadmap with the actual Studio state
+  - make the transition into editorial production explicit
+
+## Sequenced next — requires product input first
 
 ### Editorial document foundation
 
@@ -30,34 +51,18 @@ This backlog separates implementation-ready work from product decisions that sho
    - remove Studio chrome from printed output
    - establish deterministic page breaks
 
-### Engineering quality
-
-6. **Unified quality command**
-   - `npm run quality` runs lint, tests, and production build
-
-7. **Snapshot-first repair workflow**
-   - when a format-sensitive implementation script fails, capture the exact affected files before producing a repair script
-   - prefer deterministic rewrites over repeated heuristic patching
-
-8. **Test interaction guidance**
-   - use deterministic input events when character-by-character typing behavior is not itself under test
-   - reserve `userEvent` for interactions where browser-like sequencing matters
-
-## Requires product input before implementation
-
-### Page and print decisions
+### Product decisions required for the editorial foundation
 
 - **Primary page size:** US Letter, A4, or another format
 - **Orientation defaults:** portrait only for MVP or selectable portrait/landscape
 - **Margins / safe area:** fixed Gentle Page defaults or user-configurable in MVP
 - **Pagination behavior:** automatic flow, manually managed pages, or hybrid
 - **Page numbering:** whether numbers are shown and where they appear
-
-### Visual publication system
-
 - **Typography choices:** fixed Gentle Page typography or selectable presets
 - **Cover model:** cover as a special page, separate publication metadata, or template-driven artifact
 - **Brand customization:** whether MVP supports only Gentle Page styling or per-publication themes
+
+## Later — requires product input before implementation
 
 ### Fillable output
 
@@ -71,7 +76,7 @@ This backlog separates implementation-ready work from product decisions that sho
 - **Retention:** unlimited history or a capped number of revisions
 - **Restore semantics:** restore as a new draft or overwrite the current draft
 
-## Later / intentionally deferred
+## Intentionally deferred
 
 - drag-and-drop block reordering
 - keyboard shortcuts for block movement
