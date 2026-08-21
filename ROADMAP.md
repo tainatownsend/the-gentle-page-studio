@@ -38,26 +38,30 @@ The Gentle Page Studio is moving from platform foundation into editorial product
 
 ## 4. Editorial document foundation — next
 
-- [ ] Define page/document settings model
+MVP defaults are locked: US Letter, portrait, fixed Gentle Page margins, automatic pagination, bottom-center page numbers, fixed Gentle Page typography, and a fixed Gentle Page cover as page one.
+
+- [ ] Add durable document settings defaults
 - [ ] Introduce page-based publication structure
-- [ ] Add document dimensions and margins
-- [ ] Add publication typography settings
+- [ ] Add US Letter portrait geometry and Gentle Page safe area
+- [ ] Add Gentle Page document typography tokens
 - [ ] Build print-oriented document preview
-- [ ] Establish page overflow and pagination behavior
+- [ ] Add automatic content flow and deterministic page breaks
+- [ ] Add fixed cover rendering
+- [ ] Add bottom-center page numbering
 
 ## 5. Product export — upcoming
 
 - [ ] Print stylesheet and print validation
-- [ ] PDF export foundation
-- [ ] Cover support
-- [ ] Fillable field model
-- [ ] Fillable PDF export
+- [ ] Static PDF export foundation
 - [ ] Validate the first complete Gentle Page journal end to end
+- [ ] Add explicit fillable field blocks after static export is stable
+- [ ] Add first fillable PDF export with multiline text and checkbox fields
 
 ## 6. Studio evolution — later
 
-- [ ] Publication revision/version model
-- [ ] Version history, compare, and restore
+- [ ] Publication revision model based on immutable publish snapshots
+- [ ] Version history and restore-as-new-draft flow
+- [ ] Compare revisions
 - [ ] Autosave and draft recovery
 - [ ] Templates
 - [ ] Asset library
@@ -66,4 +70,4 @@ The Gentle Page Studio is moving from platform foundation into editorial product
 - [ ] Publishing/distribution workflows
 - [ ] AI-assisted creation
 
-See `BACKLOG.md` for prioritized implementation work and items that require product decisions.
+See `BACKLOG.md` for prioritized implementation work and ADR-0006 for the accepted editorial-output defaults.
