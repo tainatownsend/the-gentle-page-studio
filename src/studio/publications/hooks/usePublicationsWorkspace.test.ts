@@ -2,7 +2,10 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PUBLICATIONS_STORAGE_KEY } from '../persistence'
-import type { Publication } from '../types'
+import {
+  createDefaultPublicationDocumentSettings,
+  type Publication,
+} from '../types'
 import { usePublicationsWorkspace } from './usePublicationsWorkspace'
 
 const initialTimestamp = '2026-07-30T22:47:00.000Z'
@@ -29,6 +32,7 @@ describe('usePublicationsWorkspace', () => {
       content: {
         blocks: [],
       },
+      documentSettings: createDefaultPublicationDocumentSettings(),
       createdAt: initialTimestamp,
       updatedAt: initialTimestamp,
     }
@@ -36,7 +40,7 @@ describe('usePublicationsWorkspace', () => {
     localStorage.setItem(
       PUBLICATIONS_STORAGE_KEY,
       JSON.stringify({
-        version: 2,
+        version: 3,
         publications: [publication],
       }),
     )
@@ -47,7 +51,7 @@ describe('usePublicationsWorkspace', () => {
     expect(result.current.getPublication('stored-publication')).toEqual(publication)
   })
 
-  it('creates a durable draft with timestamps', () => {
+  it('creates a durable draft with timestamps and document defaults', () => {
     const { result } = renderHook(() => usePublicationsWorkspace())
 
     let createdPublication: Publication | undefined
@@ -68,6 +72,16 @@ describe('usePublicationsWorkspace', () => {
       content: {
         blocks: [],
       },
+      documentSettings: {
+        pageSize: 'us-letter',
+        orientation: 'portrait',
+        margins: {
+          top: 0.75,
+          right: 0.75,
+          bottom: 0.75,
+          left: 0.75,
+        },
+      },
       createdAt: initialTimestamp,
       updatedAt: initialTimestamp,
     })
@@ -84,9 +98,10 @@ describe('usePublicationsWorkspace', () => {
 
     const workspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
 
-    expect(workspace.version).toBe(2)
+    expect(workspace.version).toBe(3)
     expect(workspace.publications).toHaveLength(1)
     expect(workspace.publications[0].title).toBe('Persistent publication')
+    expect(workspace.publications[0].documentSettings.pageSize).toBe('us-letter')
   })
 
   it('duplicates a publication as a new persisted draft', () => {
@@ -117,11 +132,16 @@ describe('usePublicationsWorkspace', () => {
       title: 'Gentle Focus Journal — Copy',
       description: 'A supportive focus practice.',
       status: 'draft',
+      documentSettings: sourcePublication?.documentSettings,
       createdAt: duplicatedTimestamp,
       updatedAt: duplicatedTimestamp,
     })
 
     expect(duplicatedPublication?.id).not.toBe(sourcePublication?.id)
+    expect(duplicatedPublication?.documentSettings).not.toBe(sourcePublication?.documentSettings)
+    expect(duplicatedPublication?.documentSettings.margins).not.toBe(
+      sourcePublication?.documentSettings.margins,
+    )
 
     const workspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
 
@@ -195,9 +215,7 @@ describe('usePublicationsWorkspace', () => {
 
     expect(result.current.publications.map((publication) => publication.id)).toEqual([secondId])
 
-    const persistedWorkspace = JSON.parse(
-      localStorage.getItem('the-gentle-page:publications-workspace:v2') ?? '{}',
-    )
+    const persistedWorkspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
 
     expect(
       persistedWorkspace.publications.map((publication: { id: string }) => publication.id),
@@ -214,7 +232,7 @@ describe('usePublicationsWorkspace', () => {
     expect(result.current.publications).toEqual([])
   })
 
-  it('updates timestamps while preserving creation time', () => {
+  it('updates timestamps while preserving creation time and document settings', () => {
     const { result } = renderHook(() => usePublicationsWorkspace())
 
     let publicationId = ''
@@ -224,6 +242,8 @@ describe('usePublicationsWorkspace', () => {
         title: 'Original title',
       }).id
     })
+
+    const originalDocumentSettings = result.current.publications[0]?.documentSettings
 
     vi.setSystemTime(new Date(updatedTimestamp))
 
@@ -245,6 +265,7 @@ describe('usePublicationsWorkspace', () => {
       createdAt: initialTimestamp,
       updatedAt: updatedTimestamp,
       status: 'draft',
+      documentSettings: originalDocumentSettings,
     })
   })
 
