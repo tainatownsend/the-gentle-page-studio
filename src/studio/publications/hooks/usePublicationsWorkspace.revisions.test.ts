@@ -100,7 +100,7 @@ describe('usePublicationsWorkspace revisions', () => {
       localStorage.getItem(PUBLICATION_REVISIONS_STORAGE_KEY) ?? '{}',
     )
 
-    expect(persisted.version).toBe(1)
+    expect(persisted.version).toBe(2)
     expect(persisted.revisions).toHaveLength(1)
   })
 
