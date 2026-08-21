@@ -1,11 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { vi } from 'vitest'
 
 import { createPublicationFixture } from '../../testing'
 import { PublicationPreviewPage } from './PublicationPreviewPage'
 
 describe('PublicationPreviewPage', () => {
-  it('renders publication metadata and content blocks inside a US Letter page', () => {
+  it('renders a fixed Gentle Page cover followed by numbered publication content', () => {
     const publication = createPublicationFixture({
       title: 'Gentle Focus Journal',
       description: 'A supportive focus practice.',
@@ -41,34 +41,46 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
-    const page = screen.getByRole('article', {
-      name: 'Publication page 1',
+    const cover = screen.getByRole('article', {
+      name: 'Publication cover',
+    })
+    const contentPage = screen.getByRole('article', {
+      name: 'Publication content page 1',
     })
 
-    expect(page).toHaveAttribute('data-page-size', 'us-letter')
-    expect(page).toHaveAttribute('data-orientation', 'portrait')
+    expect(cover).toHaveAttribute('data-page-kind', 'cover')
+    expect(cover).toHaveAttribute('data-page-size', 'us-letter')
+    expect(cover).toHaveAttribute('data-orientation', 'portrait')
+    expect(contentPage).toHaveAttribute('data-page-kind', 'content')
 
     expect(document.getElementById('publication-preview-title')).toHaveTextContent(
       'Gentle Focus Journal',
     )
+    expect(within(cover).getByText('A supportive focus practice.')).toBeInTheDocument()
+    expect(
+      within(cover).getByText('Thoughtfully designed tools for everyday clarity.'),
+    ).toBeInTheDocument()
 
     expect(screen.getByText('Published preview')).toBeInTheDocument()
 
     expect(
-      screen.getByText('Pause and notice', {
+      within(contentPage).getByText('Pause and notice', {
         selector: 'h2',
       }),
     ).toBeInTheDocument()
 
-    expect(screen.getByText('What feels most present right now?')).toBeInTheDocument()
+    expect(
+      within(contentPage).getByText('What feels most present right now?'),
+    ).toBeInTheDocument()
 
     expect(
-      screen.getByText('Choose one next step', {
+      within(contentPage).getByText('Choose one next step', {
         selector: 'h3',
       }),
     ).toBeInTheDocument()
 
     expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
+    expect(screen.getAllByRole('article')).toHaveLength(2)
   })
 
   it('renders long unbroken content without changing its text', () => {
@@ -95,7 +107,7 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getByText(longText)).toBeInTheDocument()
   })
 
-  it('renders a focused empty state inside the document page', () => {
+  it('renders a focused empty state on the content page', () => {
     render(
       <PublicationPreviewPage
         publication={createPublicationFixture()}
@@ -110,6 +122,12 @@ describe('PublicationPreviewPage', () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getByText('Nothing to preview yet')).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Publication cover' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('article', {
+        name: 'Publication content page 1',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('connects navigation actions', () => {
