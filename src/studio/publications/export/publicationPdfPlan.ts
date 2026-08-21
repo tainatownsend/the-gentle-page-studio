@@ -117,8 +117,9 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
 
   const pages = layout.pages.map((page) => {
     const blockPlacements = createBlockPlacements(page.blocks)
+    const pageNumber = page.pageNumber
 
-    if (page.kind === 'content' && page.pageNumber !== undefined) {
+    if (page.kind === 'content' && pageNumber !== undefined) {
       page.blocks.forEach((block, index) => {
         const placement = blockPlacements[index]
 
@@ -132,7 +133,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
           interactiveFields.push({
             name: createFieldName(publication.id, block.id),
             blockId: block.id,
-            pageNumber: page.pageNumber,
+            pageNumber,
             kind: 'multiline-text',
             label: block.text,
             rect,
@@ -143,7 +144,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
           interactiveFields.push({
             name: createFieldName(publication.id, block.id),
             blockId: block.id,
-            pageNumber: page.pageNumber,
+            pageNumber,
             kind: 'checkbox',
             label: block.text,
             rect,
@@ -154,7 +155,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
 
     return {
       sequence: page.sequence,
-      pageNumber: page.pageNumber,
+      pageNumber,
       kind: page.kind,
       width: US_LETTER_WIDTH_POINTS,
       height: US_LETTER_HEIGHT_POINTS,
