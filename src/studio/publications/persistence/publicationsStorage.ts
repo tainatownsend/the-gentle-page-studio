@@ -176,11 +176,11 @@ function isLegacyPublicationV2(value: unknown): value is LegacyPublicationV2 {
 }
 
 function isLegacyPublicationV3(value: unknown): value is LegacyPublicationV3 {
-  return (
-    isLegacyPublicationV2(value) &&
-    isRecord(value) &&
-    isPublicationDocumentSettings(value.documentSettings)
-  )
+  if (!isLegacyPublicationV2(value) || !isRecord(value)) {
+    return false
+  }
+
+  return isPublicationDocumentSettings(value.documentSettings)
 }
 
 function isPublication(value: unknown): value is Publication {
