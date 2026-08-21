@@ -5,7 +5,7 @@ import { createPublicationFixture } from '../../testing'
 import { PublicationPreviewPage } from './PublicationPreviewPage'
 
 describe('PublicationPreviewPage', () => {
-  it('renders publication metadata and content blocks', () => {
+  it('renders publication metadata and content blocks inside a US Letter page', () => {
     const publication = createPublicationFixture({
       title: 'Gentle Focus Journal',
       description: 'A supportive focus practice.',
@@ -41,6 +41,13 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
+    const page = screen.getByRole('article', {
+      name: 'Publication page 1',
+    })
+
+    expect(page).toHaveAttribute('data-page-size', 'us-letter')
+    expect(page).toHaveAttribute('data-orientation', 'portrait')
+
     expect(document.getElementById('publication-preview-title')).toHaveTextContent(
       'Gentle Focus Journal',
     )
@@ -60,6 +67,8 @@ describe('PublicationPreviewPage', () => {
         selector: 'h3',
       }),
     ).toBeInTheDocument()
+
+    expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
   })
 
   it('renders long unbroken content without changing its text', () => {
@@ -86,7 +95,7 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getByText(longText)).toBeInTheDocument()
   })
 
-  it('renders a focused empty state', () => {
+  it('renders a focused empty state inside the document page', () => {
     render(
       <PublicationPreviewPage
         publication={createPublicationFixture()}
@@ -95,6 +104,11 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
+    expect(
+      screen.getByRole('region', {
+        name: 'Print-oriented publication preview',
+      }),
+    ).toBeInTheDocument()
     expect(screen.getByText('Nothing to preview yet')).toBeInTheDocument()
   })
 
