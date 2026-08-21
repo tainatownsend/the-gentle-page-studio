@@ -4,7 +4,7 @@ import { createPublicationFixture } from '../testing'
 import { createPublicationLayout } from './publicationLayout'
 
 describe('createPublicationLayout', () => {
-  it('projects publication content into a derived content page', () => {
+  it('projects a fixed cover followed by numbered publication content', () => {
     const publication = createPublicationFixture({
       id: 'journal-1',
       content: {
@@ -28,9 +28,16 @@ describe('createPublicationLayout', () => {
       settings: publication.documentSettings,
       pages: [
         {
-          id: 'journal-1-content-page-1',
+          id: 'journal-1-cover',
           sequence: 1,
+          kind: 'cover',
+          blocks: [],
+        },
+        {
+          id: 'journal-1-content-page-1',
+          sequence: 2,
           kind: 'content',
+          pageNumber: 1,
           blocks: publication.content.blocks,
         },
       ],
@@ -51,23 +58,29 @@ describe('createPublicationLayout', () => {
     })
 
     const layout = createPublicationLayout(publication)
+    const contentPage = layout.pages.find((page) => page.kind === 'content')
 
     expect(layout.settings).not.toBe(publication.documentSettings)
     expect(layout.settings.margins).not.toBe(publication.documentSettings.margins)
-    expect(layout.pages[0]?.blocks).not.toBe(publication.content.blocks)
-    expect(layout.pages[0]?.blocks[0]).not.toBe(publication.content.blocks[0])
+    expect(contentPage?.blocks).not.toBe(publication.content.blocks)
+    expect(contentPage?.blocks[0]).not.toBe(publication.content.blocks[0])
   })
 
-  it('creates an empty content page for an empty publication', () => {
+  it('keeps the cover unnumbered and creates an empty numbered content page', () => {
     const publication = createPublicationFixture()
+    const layout = createPublicationLayout(publication)
 
-    expect(createPublicationLayout(publication).pages).toEqual([
-      {
-        id: 'publication-1-content-page-1',
-        sequence: 1,
-        kind: 'content',
-        blocks: [],
-      },
-    ])
+    expect(layout.pages[0]).toMatchObject({
+      kind: 'cover',
+      pageNumber: undefined,
+    })
+
+    expect(layout.pages[1]).toEqual({
+      id: 'publication-1-content-page-1',
+      sequence: 2,
+      kind: 'content',
+      pageNumber: 1,
+      blocks: [],
+    })
   })
 })
