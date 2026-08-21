@@ -83,6 +83,39 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getAllByRole('article')).toHaveLength(2)
   })
 
+  it('renders automatically derived content pages in sequence', () => {
+    const blocks = Array.from({ length: 5 }, (_, index) => ({
+      id: `paragraph-${index + 1}`,
+      type: 'paragraph' as const,
+      text: `${index + 1}-${'a'.repeat(198)}`,
+    }))
+
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          content: {
+            blocks,
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    const firstContentPage = screen.getByRole('article', {
+      name: 'Publication content page 1',
+    })
+    const secondContentPage = screen.getByRole('article', {
+      name: 'Publication content page 2',
+    })
+
+    expect(within(firstContentPage).getByText(blocks[0].text)).toBeInTheDocument()
+    expect(within(firstContentPage).getByText(blocks[3].text)).toBeInTheDocument()
+    expect(within(secondContentPage).getByText(blocks[4].text)).toBeInTheDocument()
+    expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
+    expect(screen.getByLabelText('Page 2')).toHaveTextContent('2')
+  })
+
   it('renders long unbroken content without changing its text', () => {
     const longText = 'vatt'.repeat(80)
 
