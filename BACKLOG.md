@@ -61,32 +61,34 @@ This backlog separates work that has already been processed, implementation-read
 
 ## Processed in PR0027J
 
-### Fillable PDF serialization investigation
+- [x] **Fillable serialization strategy** — static browser print remains separate; `pdf-lib` selected for binary form serialization; field identity uses publication ID + durable block ID.
 
-- [x] **Separate static and fillable export responsibilities**
-  - browser `window.print()` remains the static Print / Save as PDF path
-  - fillable PDF generation becomes an explicit binary serializer instead of relying on print behavior
+## Processed in PR0027K
 
-- [x] **Select initial form serialization dependency**
-  - `pdf-lib` selected for the first implementation
-  - runs in the browser and supports creation of PDF text fields and checkboxes
-  - dependency remains behind the export boundary; editor, persistence, revisions, and preview stay library-agnostic
+### Fillable export planning boundary
 
-- [x] **Define fillable field identity**
-  - deterministic field names use publication ID plus durable block ID
-  - prompt/label edits do not change PDF field identity
-  - reader responses remain outside Studio publication state
+- [x] **Library-independent field plan**
+  - derives fillable fields from the existing `PublicationLayout`
+  - maps only authored interactive blocks
+  - records layout page sequence, content page number, and block position for each field
+  - preserves prompt/label separately from stable field identity
+
+- [x] **Deterministic field naming**
+  - field names are based on publication ID and durable block ID
+  - unsafe field-name characters are normalized
+  - changing prompt text does not change field identity
+  - static-only publications produce no fillable fields
 
 ## Ready to implement next
 
 ### Fillable PDF foundation
 
 1. **Fillable PDF serializer foundation**
-   - add `pdf-lib` at the export boundary
+   - add `pdf-lib` at the export adapter boundary
    - create US Letter PDF pages from `PublicationLayout`
+   - consume the fillable export plan rather than re-interpreting publication content
    - map multiline response fields to multiline PDF text fields
    - map checkbox fields to PDF checkboxes
-   - use stable, unique field names based on publication/block IDs
    - preserve cover, content order, page numbering, margins, and Gentle Page identity
 
 2. **Fillable export action**
