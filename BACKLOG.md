@@ -93,40 +93,61 @@ This backlog separates work that has already been processed, implementation-read
   - oversized single blocks remain intact for future measurement-based refinement
   - content pages receive sequential numbering after the unnumbered cover
 
+## Processed in PR0027F
+
+### Print and static PDF foundation
+
+- [x] **Print stylesheet foundation**
+  - Studio preview controls are removed from print output
+  - each output page uses exact US Letter portrait geometry
+  - fixed 0.75 inch document padding is preserved
+  - deterministic page breaks separate derived publication pages
+  - screen-only borders, gaps, backgrounds, and shadows are removed
+  - print colors are explicitly preserved
+
+- [x] **Static PDF export foundation**
+  - preview exposes `Print / Save as PDF`
+  - browser native print is used as the first PDF serialization path
+  - print and PDF reuse the same derived publication layout and document markup
+  - no additional PDF rendering dependency is introduced for the MVP
+
 ## Ready to implement next
 
-### Editorial document foundation
+### Publication versioning foundation
 
-1. **Print stylesheet foundation**
-   - create print-only layout rules
-   - remove Studio chrome from printed output
-   - establish deterministic page breaks
-   - preserve US Letter geometry
-   - force publication paper/ink colors suitable for print
+1. **Published revision domain model**
+   - capture an immutable publication snapshot on explicit transition to Published
+   - do not create revisions for ordinary Draft saves
+   - keep revision data independent from the editable current publication
 
-2. **Static PDF export foundation**
-   - expose a clear Print / Save as PDF action from preview
-   - make the print-oriented document suitable for browser PDF export
-   - validate page geometry, page numbers, cover, and content flow
-   - treat static PDF as the first export milestone
+2. **Revision persistence and history**
+   - persist published revisions locally
+   - retain all published snapshots for the MVP
+   - expose revision history for a publication
+   - restore a historical revision as a new Draft without rewriting history
+
+### Fillable publication foundation — after static print validation
+
+3. **Interactive content domain model**
+   - add multiline text and checkbox field blocks
+   - keep them explicit in the authored content model
+   - preserve backward-compatible persistence migration
+
+4. **Interactive editor and preview**
+   - add editor controls for multiline fields and checkboxes
+   - render field affordances in the publication preview
+   - keep static print output understandable before PDF form serialization is added
+
+5. **Fillable PDF serialization investigation**
+   - evaluate whether browser print can preserve required interactivity
+   - if not, introduce a PDF form library behind the existing derived publication layout
+   - keep binary PDF generation separate from editorial authoring concerns
 
 ## Architectural note on automatic pagination
 
 The MVP uses automatic pagination, so authored content remains a semantic ordered stream rather than storing manual page boundaries in the publication domain. Page objects belong to the derived editorial layout used by preview and export. This avoids persisting layout artifacts that would become stale whenever typography, margins, or content changes.
 
-## Recommended later decisions
-
-### Fillable output
-
-Defer fillable PDF until the static PDF path is stable. When introduced, start with the smallest useful set:
-
-- multiline text field
-- checkbox
-- author them as explicit field blocks in the editor rather than inferring fields during export
-
-Short text, radio/select, date, and additional field types can follow after the first fillable workflow is validated.
-
-### Versioning
+## Versioning decision
 
 Use publish events as the version boundary:
 
@@ -135,7 +156,15 @@ Use publish events as the version boundary:
 - retain all published snapshots locally during the MVP
 - restoring a historical version creates a new draft rather than overwriting current history
 
-This keeps the initial versioning model understandable while preserving a durable record of what was actually published.
+## Fillable output decision
+
+Start with the smallest useful interactive set after the static print path is validated:
+
+- multiline text field
+- checkbox
+- author both as explicit field blocks in the editor rather than inferring fields during export
+
+Short text, radio/select, date, and additional field types can follow after the first fillable workflow is validated.
 
 ## Intentionally deferred
 
