@@ -56,7 +56,15 @@ describe('publicationsStorage', () => {
   })
 
   it('migrates a version 2 workspace with default document settings', () => {
-    const { documentSettings: _documentSettings, ...legacyPublication } = publication
+    const legacyPublication = {
+      id: publication.id,
+      title: publication.title,
+      description: publication.description,
+      status: publication.status,
+      content: publication.content,
+      createdAt: publication.createdAt,
+      updatedAt: publication.updatedAt,
+    }
 
     localStorage.setItem(
       LEGACY_PUBLICATIONS_STORAGE_KEY_V2,
