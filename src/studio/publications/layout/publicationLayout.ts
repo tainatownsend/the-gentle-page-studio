@@ -20,6 +20,8 @@ export type PublicationLayout = {
 }
 
 const CONTENT_PAGE_CAPACITY_UNITS = 48
+const MULTILINE_RESPONSE_AREA_UNITS = 18
+const CHECKBOX_FIELD_BASE_UNITS = 5
 
 function cloneDocumentSettings(
   settings: PublicationDocumentSettings,
@@ -35,11 +37,16 @@ function cloneDocumentSettings(
 function estimateBlockUnits(block: PublicationBlock): number {
   const textLength = Math.max(block.text.trim().length, 1)
 
-  if (block.type === 'heading') {
-    return 5 + Math.ceil(textLength / 45) * 2
+  switch (block.type) {
+    case 'heading':
+      return 5 + Math.ceil(textLength / 45) * 2
+    case 'multiline-text-field':
+      return MULTILINE_RESPONSE_AREA_UNITS + Math.ceil(textLength / 70) * 3
+    case 'checkbox-field':
+      return CHECKBOX_FIELD_BASE_UNITS + Math.ceil(textLength / 90) * 2
+    case 'paragraph':
+      return 3 + Math.ceil(textLength / 70) * 3
   }
-
-  return 3 + Math.ceil(textLength / 70) * 3
 }
 
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
