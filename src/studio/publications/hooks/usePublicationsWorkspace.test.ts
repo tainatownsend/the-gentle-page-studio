@@ -40,7 +40,7 @@ describe('usePublicationsWorkspace', () => {
     localStorage.setItem(
       PUBLICATIONS_STORAGE_KEY,
       JSON.stringify({
-        version: 3,
+        version: 4,
         publications: [publication],
       }),
     )
@@ -98,7 +98,7 @@ describe('usePublicationsWorkspace', () => {
 
     const workspace = JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '{}')
 
-    expect(workspace.version).toBe(3)
+    expect(workspace.version).toBe(4)
     expect(workspace.publications).toHaveLength(1)
     expect(workspace.publications[0].title).toBe('Persistent publication')
     expect(workspace.publications[0].documentSettings.pageSize).toBe('us-letter')
