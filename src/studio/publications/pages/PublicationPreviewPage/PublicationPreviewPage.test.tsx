@@ -1,8 +1,12 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { vi } from 'vitest'
+import { afterEach, vi } from 'vitest'
 
 import { createPublicationFixture } from '../../testing'
 import { PublicationPreviewPage } from './PublicationPreviewPage'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('PublicationPreviewPage', () => {
   it('renders a fixed Gentle Page cover followed by numbered publication content', () => {
@@ -161,6 +165,26 @@ describe('PublicationPreviewPage', () => {
         name: 'Publication content page 1',
       }),
     ).toBeInTheDocument()
+  })
+
+  it('opens the browser print dialog for print and PDF export', () => {
+    const print = vi.spyOn(globalThis, 'print').mockImplementation(() => undefined)
+
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture()}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Print / Save as PDF',
+      }),
+    )
+
+    expect(print).toHaveBeenCalledTimes(1)
   })
 
   it('connects navigation actions', () => {
