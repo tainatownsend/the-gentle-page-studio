@@ -64,32 +64,42 @@ This backlog separates work that has already been processed, implementation-read
   - page size and orientation are exposed on the page surface
   - bottom-center page-number area is reserved and rendered
 
+## Processed in PR0027D
+
+### Gentle Page editorial identity
+
+- [x] **Typography settings foundation**
+  - dedicated publication typography tokens
+  - publication typography separated from Studio UI `Text` primitives
+  - semantic native document headings and paragraphs
+  - fixed Gentle Page display/body typography for the MVP
+
+- [x] **Cover foundation**
+  - fixed Gentle Page cover generated as the first derived page
+  - cover title and description derived from publication metadata
+  - Gentle Page brand name and tagline included
+  - cover remains unnumbered
+  - content numbering begins at page 1
+
 ## Ready to implement next
 
 ### Editorial document foundation
 
-1. **Typography settings foundation**
-   - define fixed Gentle Page document typography tokens
-   - keep document typography separate from Studio UI typography
-
-2. **Cover foundation**
-   - render a fixed Gentle Page cover as the first publication page
-   - derive initial cover content from publication metadata
-   - defer user-customizable cover layouts
-
-3. **Automatic multi-page flow refinement**
+1. **Automatic multi-page flow refinement**
    - split overflowing semantic content into derived layout pages
    - keep page boundaries out of persisted publication data
    - preserve stable block order across derived pages
    - avoid splitting blocks when practical
 
-4. **Print stylesheet foundation**
+2. **Print stylesheet foundation**
    - create print-only layout rules
    - remove Studio chrome from printed output
    - establish deterministic page breaks
    - preserve US Letter geometry
+   - force publication paper/ink colors suitable for print
 
-5. **Static PDF export foundation**
+3. **Static PDF export foundation**
+   - expose a clear Print / Save as PDF action from preview
    - make the print-oriented document suitable for browser PDF export
    - validate page geometry, page numbers, cover, and content flow
    - treat static PDF as the first export milestone
