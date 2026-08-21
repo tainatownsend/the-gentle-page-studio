@@ -44,6 +44,7 @@
 .heading2,
 .heading3,
 .paragraph,
+.fieldLabel,
 .emptyTitle,
 .emptyDescription {
   margin: 0;
@@ -126,13 +127,54 @@
   font-size: var(--publication-font-size-heading-3);
 }
 
-.paragraph {
+.paragraph,
+.fieldLabel {
   max-width: 68ch;
   font-size: var(--publication-font-size-body);
   line-height: var(--publication-line-height-body);
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.paragraph {
+  white-space: pre-wrap;
+}
+
+.multilineField {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fieldLabel {
+  font-weight: 600;
+}
+
+.responseArea {
+  min-height: 7.5rem;
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.5rem;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 1.65rem,
+    var(--publication-rule) 1.65rem,
+    var(--publication-rule) calc(1.65rem + 1px)
+  );
+}
+
+.checkboxField {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.checkboxMark {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 1.1rem;
+  margin-top: 0.2rem;
+  border: 1.5px solid var(--publication-ink);
+  border-radius: 0.2rem;
 }
 
 .emptyState {
