@@ -36,109 +36,59 @@ This backlog separates work that has already been processed, implementation-read
 
 ## Processed in PR0027B
 
-### Editorial document foundation
-
-- [x] **Document settings domain model**
-  - durable US Letter page settings
-  - portrait-only MVP orientation
-  - fixed 0.75 inch Gentle Page margins / safe area
-  - defaults independent from the UI
-  - version 3 persistence migration and fixtures
-  - independent settings for new and duplicated publications
+- [x] **Document settings domain model** — US Letter, portrait, fixed 0.75 inch margins, v3 persistence migration, independent settings for copies.
 
 ## Processed in PR0027C
 
-### Derived layout and preview
-
-- [x] **Automatic page layout foundation**
-  - authored content remains a semantic ordered stream
-  - output pages are derived rather than persisted
-  - preview/export share a `PublicationLayout` projection boundary
-  - layout data is copied independently from persisted publication data
-  - future measurement-based pagination can replace the initial single-page projection without a storage migration
-
-- [x] **Print-oriented preview shell**
-  - responsive US Letter portrait canvas
-  - stable 8.5:11 page proportions
-  - document geometry scales on narrow screens without changing its ratio
-  - page size and orientation are exposed on the page surface
-  - bottom-center page-number area is reserved and rendered
+- [x] **Derived publication layout** — page layout is projected from semantic authored content instead of persisted.
+- [x] **Print-oriented preview shell** — responsive Letter portrait pages with bottom-center numbering.
 
 ## Processed in PR0027D
 
-### Gentle Page editorial identity
-
-- [x] **Typography settings foundation**
-  - dedicated publication typography tokens
-  - publication typography separated from Studio UI `Text` primitives
-  - semantic native document headings and paragraphs
-  - fixed Gentle Page display/body typography for the MVP
-
-- [x] **Cover foundation**
-  - fixed Gentle Page cover generated as the first derived page
-  - cover title and description derived from publication metadata
-  - Gentle Page brand name and tagline included
-  - cover remains unnumbered
-  - content numbering begins at page 1
+- [x] **Gentle Page document typography** — publication-specific typography tokens and semantic document elements.
+- [x] **Cover foundation** — fixed unnumbered Gentle Page cover followed by numbered content.
 
 ## Processed in PR0027E
 
-### Automatic multi-page flow
-
-- [x] **Automatic multi-page flow refinement**
-  - deterministic content-capacity estimation derives additional pages
-  - page boundaries remain outside persisted publication data
-  - stable block order is preserved across pages
-  - complete blocks move to the next page instead of being split
-  - oversized single blocks remain intact for future measurement-based refinement
-  - content pages receive sequential numbering after the unnumbered cover
+- [x] **Automatic multi-page flow** — deterministic page-capacity estimation preserves complete block order across derived pages.
 
 ## Processed in PR0027F
 
-### Print and static PDF foundation
+- [x] **Print stylesheet foundation** — exact Letter geometry, fixed page breaks, print-only cleanup, preserved print colors.
+- [x] **Static PDF export foundation** — `Print / Save as PDF` uses the browser-native print pipeline without a second rendering engine.
 
-- [x] **Print stylesheet foundation**
-  - Studio preview controls are removed from print output
-  - each output page uses exact US Letter portrait geometry
-  - fixed 0.75 inch document padding is preserved
-  - deterministic page breaks separate derived publication pages
-  - screen-only borders, gaps, backgrounds, and shadows are removed
-  - print colors are explicitly preserved
+## Processed in PR0027G
 
-- [x] **Static PDF export foundation**
-  - preview exposes `Print / Save as PDF`
-  - browser native print is used as the first PDF serialization path
-  - print and PDF reuse the same derived publication layout and document markup
-  - no additional PDF rendering dependency is introduced for the MVP
+### Publication versioning
+
+- [x] **Published revision domain model**
+  - explicit Draft → Published transitions create immutable snapshots
+  - ordinary Draft saves do not create revisions
+  - saving an already Published publication as Published does not create duplicate history
+  - publishing again after returning to Draft creates a new revision
+
+- [x] **Revision persistence and history**
+  - revisions persist independently from editable publications
+  - all published snapshots are retained locally for the MVP
+  - `/publications/:publicationId/history` exposes newest-first history
+  - restoring a revision creates a new Draft and preserves historical snapshots
+  - permanent publication deletion also removes its associated local history
 
 ## Ready to implement next
 
-### Publication versioning foundation
-
-1. **Published revision domain model**
-   - capture an immutable publication snapshot on explicit transition to Published
-   - do not create revisions for ordinary Draft saves
-   - keep revision data independent from the editable current publication
-
-2. **Revision persistence and history**
-   - persist published revisions locally
-   - retain all published snapshots for the MVP
-   - expose revision history for a publication
-   - restore a historical revision as a new Draft without rewriting history
-
 ### Fillable publication foundation — after static print validation
 
-3. **Interactive content domain model**
+1. **Interactive content domain model**
    - add multiline text and checkbox field blocks
    - keep them explicit in the authored content model
    - preserve backward-compatible persistence migration
 
-4. **Interactive editor and preview**
+2. **Interactive editor and preview**
    - add editor controls for multiline fields and checkboxes
    - render field affordances in the publication preview
    - keep static print output understandable before PDF form serialization is added
 
-5. **Fillable PDF serialization investigation**
+3. **Fillable PDF serialization investigation**
    - evaluate whether browser print can preserve required interactivity
    - if not, introduce a PDF form library behind the existing derived publication layout
    - keep binary PDF generation separate from editorial authoring concerns
@@ -149,22 +99,11 @@ The MVP uses automatic pagination, so authored content remains a semantic ordere
 
 ## Versioning decision
 
-Use publish events as the version boundary:
-
-- each explicit publish creates an immutable published snapshot
-- ordinary draft saves do not create versions
-- retain all published snapshots locally during the MVP
-- restoring a historical version creates a new draft rather than overwriting current history
+Use publish events as the version boundary: explicit publish creates an immutable snapshot, Draft saves do not version, all MVP snapshots remain local, and restore creates a new Draft.
 
 ## Fillable output decision
 
-Start with the smallest useful interactive set after the static print path is validated:
-
-- multiline text field
-- checkbox
-- author both as explicit field blocks in the editor rather than inferring fields during export
-
-Short text, radio/select, date, and additional field types can follow after the first fillable workflow is validated.
+Start with multiline text and checkbox blocks authored explicitly in the editor. Additional interactive field types follow only after the first fillable workflow is validated.
 
 ## Intentionally deferred
 
