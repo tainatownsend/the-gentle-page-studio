@@ -16,8 +16,11 @@ export type { PublicationRevision } from './publicationRevision'
 export type {
   PublicationBlock,
   PublicationBlockId,
+  PublicationCheckboxFieldBlock,
   PublicationContent,
   PublicationHeadingBlock,
   PublicationHeadingLevel,
+  PublicationInteractiveBlock,
+  PublicationMultilineTextFieldBlock,
   PublicationParagraphBlock,
 } from './publicationContent'
