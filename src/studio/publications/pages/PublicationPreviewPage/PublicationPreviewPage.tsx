@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, Pencil, Printer } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -50,26 +50,38 @@ export function PublicationPreviewPage({
 }: PublicationPreviewPageProps): ReactElement {
   const layout = createPublicationLayout(publication)
 
+  function handlePrint() {
+    globalThis.print()
+  }
+
   return (
     <main className={styles.page}>
-      <Container size="lg">
-        <Stack gap="xl">
-          <PageHeader
-            eyebrow="Publication preview"
-            title={publication.title}
-            description={publication.status === 'published' ? 'Published preview' : 'Draft preview'}
-            actions={
-              <Cluster gap="sm">
-                <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
-                  Back to publications
-                </Button>
+      <Container size="lg" className={styles.previewContainer}>
+        <Stack gap="xl" className={styles.previewStack}>
+          <div className={styles.previewControls}>
+            <PageHeader
+              eyebrow="Publication preview"
+              title={publication.title}
+              description={
+                publication.status === 'published' ? 'Published preview' : 'Draft preview'
+              }
+              actions={
+                <Cluster gap="sm">
+                  <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
+                    Back to publications
+                  </Button>
 
-                <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
-                  Edit publication
-                </Button>
-              </Cluster>
-            }
-          />
+                  <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
+                    Edit publication
+                  </Button>
+
+                  <Button startIcon={<Printer size={18} />} onClick={handlePrint}>
+                    Print / Save as PDF
+                  </Button>
+                </Cluster>
+              }
+            />
+          </div>
 
           <section className={styles.previewViewport} aria-label="Print-oriented publication preview">
             {layout.pages.map((layoutPage) => {
