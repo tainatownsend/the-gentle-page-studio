@@ -10,7 +10,6 @@ import type { Publication, PublicationBlock } from '../types'
 import {
   createPublicationPdfPlan,
   PUBLICATION_MARGIN_POINTS,
-  US_LETTER_HEIGHT_POINTS,
   type PublicationPdfBlockPlacement,
   type PublicationPdfInteractiveField,
 } from './publicationPdfPlan'
