@@ -35,11 +35,16 @@ function cloneDocumentSettings(
 function estimateBlockUnits(block: PublicationBlock): number {
   const textLength = Math.max(block.text.trim().length, 1)
 
-  if (block.type === 'heading') {
-    return 5 + Math.ceil(textLength / 45) * 2
+  switch (block.type) {
+    case 'heading':
+      return 5 + Math.ceil(textLength / 45) * 2
+    case 'paragraph':
+      return 3 + Math.ceil(textLength / 70) * 3
+    case 'multiline-text-field':
+      return 14 + Math.ceil(textLength / 70) * 2
+    case 'checkbox-field':
+      return 5 + Math.ceil(textLength / 70) * 2
   }
-
-  return 3 + Math.ceil(textLength / 70) * 3
 }
 
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
