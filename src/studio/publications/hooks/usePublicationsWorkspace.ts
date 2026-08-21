@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PublicationCreateValues } from '../components'
 import type { PublicationEditorValues } from '../pages'
 import { loadPublications, savePublications } from '../persistence'
-import type { Publication } from '../types'
+import {
+  createDefaultPublicationDocumentSettings,
+  type Publication,
+} from '../types'
 import { createPublicationId } from '../utils'
 
 function createPublication(values: PublicationCreateValues): Publication {
@@ -17,6 +20,7 @@ function createPublication(values: PublicationCreateValues): Publication {
     content: {
       blocks: [],
     },
+    documentSettings: createDefaultPublicationDocumentSettings(),
     createdAt: timestamp,
     updatedAt: timestamp,
   }
@@ -70,6 +74,12 @@ function createPublicationCopy(
       blocks: publication.content.blocks.map((block) => ({
         ...block,
       })),
+    },
+    documentSettings: {
+      ...publication.documentSettings,
+      margins: {
+        ...publication.documentSettings.margins,
+      },
     },
     title: getNextPublicationCopyTitle(publication, publications),
     status: 'draft',
