@@ -41,6 +41,24 @@ function PublicationBlockPreview({ block }: PublicationBlockPreviewProps): React
     )
   }
 
+  if (block.type === 'multiline-text-field') {
+    return (
+      <section className={styles.multilineField} aria-label={block.text || 'Response field'}>
+        <p className={styles.fieldLabel}>{block.text || 'Response'}</p>
+        <div className={styles.responseArea} aria-hidden="true" />
+      </section>
+    )
+  }
+
+  if (block.type === 'checkbox-field') {
+    return (
+      <div className={styles.checkboxField}>
+        <span className={styles.checkboxMark} aria-hidden="true" />
+        <p className={styles.fieldLabel}>{block.text || 'Checkbox'}</p>
+      </div>
+    )
+  }
+
   return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
 }
 
@@ -143,7 +161,7 @@ export function PublicationPreviewPage({
                         <div className={styles.emptyState}>
                           <p className={styles.emptyTitle}>Nothing to preview yet</p>
                           <p className={styles.emptyDescription}>
-                            Add headings and paragraphs in the editor to build this publication.
+                            Add content blocks in the editor to build this publication.
                           </p>
                         </div>
                       )}
