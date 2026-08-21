@@ -1,3 +1,4 @@
+export { generateFillablePublicationPdf } from './generateFillablePublicationPdf'
 export {
   createPublicationPdfPlan,
   PDF_POINTS_PER_INCH,
