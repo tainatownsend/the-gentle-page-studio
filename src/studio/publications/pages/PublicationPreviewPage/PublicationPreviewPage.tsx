@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { ArrowLeft, Pencil, Printer } from 'lucide-react'
+import { ArrowLeft, History, Pencil, Printer } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -17,6 +17,7 @@ export type PublicationPreviewPageProps = {
   publication: Publication
   onBack: () => void
   onEdit: () => void
+  onHistory?: () => void
 }
 
 type PublicationBlockPreviewProps = {
@@ -47,6 +48,7 @@ export function PublicationPreviewPage({
   publication,
   onBack,
   onEdit,
+  onHistory,
 }: PublicationPreviewPageProps): ReactElement {
   const layout = createPublicationLayout(publication)
 
@@ -74,6 +76,16 @@ export function PublicationPreviewPage({
                   <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
                     Edit publication
                   </Button>
+
+                  {onHistory ? (
+                    <Button
+                      variant="secondary"
+                      startIcon={<History size={18} />}
+                      onClick={onHistory}
+                    >
+                      Version history
+                    </Button>
+                  ) : null}
 
                   <Button startIcon={<Printer size={18} />} onClick={handlePrint}>
                     Print / Save as PDF
