@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPublicationFixture } from '../testing'
 import {
   LEGACY_PUBLICATIONS_STORAGE_KEY,
+  LEGACY_PUBLICATIONS_STORAGE_KEY_V2,
   loadPublications,
   PUBLICATIONS_STORAGE_KEY,
   savePublications,
@@ -42,11 +43,11 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([])
   })
 
-  it('loads a valid version 2 workspace', () => {
+  it('loads a valid version 3 workspace', () => {
     localStorage.setItem(
       PUBLICATIONS_STORAGE_KEY,
       JSON.stringify({
-        version: 2,
+        version: 3,
         publications: [publication],
       }),
     )
@@ -54,7 +55,35 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([publication])
   })
 
-  it('migrates a version 1 workspace with empty content', () => {
+  it('migrates a version 2 workspace with default document settings', () => {
+    const { documentSettings: _documentSettings, ...legacyPublication } = publication
+
+    localStorage.setItem(
+      LEGACY_PUBLICATIONS_STORAGE_KEY_V2,
+      JSON.stringify({
+        version: 2,
+        publications: [legacyPublication],
+      }),
+    )
+
+    expect(loadPublications()).toEqual([
+      {
+        ...legacyPublication,
+        documentSettings: {
+          pageSize: 'us-letter',
+          orientation: 'portrait',
+          margins: {
+            top: 0.75,
+            right: 0.75,
+            bottom: 0.75,
+            left: 0.75,
+          },
+        },
+      },
+    ])
+  })
+
+  it('migrates a version 1 workspace with empty content and default document settings', () => {
     const legacyPublication = {
       id: publication.id,
       title: publication.title,
@@ -78,6 +107,16 @@ describe('publicationsStorage', () => {
         content: {
           blocks: [],
         },
+        documentSettings: {
+          pageSize: 'us-letter',
+          orientation: 'portrait',
+          margins: {
+            top: 0.75,
+            right: 0.75,
+            bottom: 0.75,
+            left: 0.75,
+          },
+        },
       },
     ])
   })
@@ -87,21 +126,21 @@ describe('publicationsStorage', () => {
     [
       'unknown version',
       JSON.stringify({
-        version: 3,
+        version: 4,
         publications: [publication],
       }),
     ],
     [
       'invalid collection',
       JSON.stringify({
-        version: 2,
+        version: 3,
         publications: {},
       }),
     ],
     [
       'invalid publication content',
       JSON.stringify({
-        version: 2,
+        version: 3,
         publications: [
           {
             ...publication,
@@ -113,6 +152,21 @@ describe('publicationsStorage', () => {
                   text: 'Invalid block',
                 },
               ],
+            },
+          },
+        ],
+      }),
+    ],
+    [
+      'invalid document settings',
+      JSON.stringify({
+        version: 3,
+        publications: [
+          {
+            ...publication,
+            documentSettings: {
+              ...publication.documentSettings,
+              orientation: 'landscape',
             },
           },
         ],
@@ -132,11 +186,11 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([])
   })
 
-  it('writes a version 2 workspace', () => {
+  it('writes a version 3 workspace', () => {
     savePublications([publication])
 
     expect(JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '')).toEqual({
-      version: 2,
+      version: 3,
       publications: [publication],
     })
   })
