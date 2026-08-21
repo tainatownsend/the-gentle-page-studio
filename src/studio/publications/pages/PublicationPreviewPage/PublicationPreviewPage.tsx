@@ -1,5 +1,5 @@
-import type { ReactElement } from 'react'
-import { ArrowLeft, History, Pencil, Printer } from 'lucide-react'
+import { useState, type ReactElement } from 'react'
+import { ArrowLeft, Download, History, Pencil, Printer } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -7,6 +7,7 @@ import { Cluster } from '@/design-system/primitives/Cluster'
 import { Container } from '@/design-system/primitives/Container'
 import { Stack } from '@/design-system/primitives/Stack'
 
+import { downloadFillablePublicationPdf } from '../../export'
 import { createPublicationLayout } from '../../layout'
 import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
 import type { Publication, PublicationBlock } from '../../types'
@@ -68,10 +69,24 @@ export function PublicationPreviewPage({
   onEdit,
   onHistory,
 }: PublicationPreviewPageProps): ReactElement {
+  const [isDownloadingFillablePdf, setIsDownloadingFillablePdf] = useState(false)
   const layout = createPublicationLayout(publication)
+  const hasInteractiveFields = publication.content.blocks.some(
+    (block) => block.type === 'multiline-text-field' || block.type === 'checkbox-field',
+  )
 
   function handlePrint() {
     globalThis.print()
+  }
+
+  async function handleDownloadFillablePdf() {
+    setIsDownloadingFillablePdf(true)
+
+    try {
+      await downloadFillablePublicationPdf(publication)
+    } finally {
+      setIsDownloadingFillablePdf(false)
+    }
   }
 
   return (
@@ -102,6 +117,17 @@ export function PublicationPreviewPage({
                       onClick={onHistory}
                     >
                       Version history
+                    </Button>
+                  ) : null}
+
+                  {hasInteractiveFields ? (
+                    <Button
+                      variant="secondary"
+                      startIcon={<Download size={18} />}
+                      disabled={isDownloadingFillablePdf}
+                      onClick={() => void handleDownloadFillablePdf()}
+                    >
+                      {isDownloadingFillablePdf ? 'Preparing fillable PDF…' : 'Download fillable PDF'}
                     </Button>
                   ) : null}
 
