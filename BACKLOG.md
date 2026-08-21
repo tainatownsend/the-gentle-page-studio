@@ -6,134 +6,119 @@ This backlog separates work that has already been processed, implementation-read
 
 ### Engineering quality
 
-- [x] **Unified quality command**
-  - `npm run quality` runs lint, tests, and production build
-  - GitHub Actions uses the same command as the local workflow
+- [x] **Unified quality command** — `npm run quality` runs lint, tests, and production build; GitHub Actions uses the same command.
+- [x] **Snapshot-first repair workflow** — inspect exact affected files before deterministic repair.
+- [x] **Deterministic test interaction guidance** — avoid character-by-character interaction where it is not behavior under test.
+- [x] **Roadmap refresh** — planning reflects the current Studio rather than foundation-era work.
 
-- [x] **Snapshot-first repair workflow**
-  - when a format-sensitive implementation script fails, capture the exact affected files before producing a repair script
-  - prefer deterministic rewrites over repeated heuristic patching
-  - contributor guidance documents the workflow
+### Editorial MVP decisions
 
-- [x] **Test interaction guidance**
-  - use deterministic input events when character-by-character typing behavior is not itself under test
-  - reserve browser-like interaction helpers for behavior where interaction sequencing matters
-
-- [x] **Roadmap refresh**
-  - replace the stale foundation-era roadmap with the actual Studio state
-  - make the transition into editorial production explicit
-
-### Product decisions resolved for the editorial foundation
-
-- [x] **Primary page size:** US Letter
-- [x] **Orientation:** portrait only for the MVP
-- [x] **Margins / safe area:** fixed Gentle Page defaults for the MVP
-- [x] **Pagination:** automatic content flow for the MVP
-- [x] **Page numbering:** bottom center
-- [x] **Typography:** fixed Gentle Page identity for the MVP
-- [x] **Cover model:** a fixed Gentle Page cover generated as the first publication page
-- [x] **Brand customization:** Gentle Page identity only for the MVP
+- [x] US Letter
+- [x] portrait only
+- [x] fixed Gentle Page margins / safe area
+- [x] automatic pagination
+- [x] bottom-center page numbering
+- [x] fixed Gentle Page document typography
+- [x] fixed Gentle Page cover
+- [x] Gentle Page identity only for the MVP
 
 ## Processed in PR0027B
 
-- [x] **Document settings domain model** — US Letter, portrait, fixed 0.75 inch margins, v3 persistence migration, independent settings for copies.
+- [x] **Document settings domain model** — Letter, portrait, 0.75 inch margins, durable settings, persistence migration.
 
 ## Processed in PR0027C
 
-- [x] **Derived publication layout** — page layout is projected from semantic authored content instead of persisted.
-- [x] **Print-oriented preview shell** — responsive Letter portrait pages with bottom-center numbering.
+- [x] **Derived publication layout** — page boundaries are output projections rather than persisted authoring data.
+- [x] **Print-oriented preview shell** — responsive Letter portrait pages and page-number area.
 
 ## Processed in PR0027D
 
-- [x] **Gentle Page document typography** — publication-specific typography tokens and semantic document elements.
-- [x] **Cover foundation** — fixed unnumbered Gentle Page cover followed by numbered content.
+- [x] **Gentle Page document typography** — publication-specific typography separated from Studio UI typography.
+- [x] **Cover foundation** — fixed unnumbered cover followed by numbered content.
 
 ## Processed in PR0027E
 
-- [x] **Automatic multi-page flow** — deterministic page-capacity estimation preserves complete block order across derived pages.
+- [x] **Automatic multi-page flow** — deterministic capacity estimation preserves block order and complete blocks across derived pages.
 
 ## Processed in PR0027F
 
-- [x] **Print stylesheet foundation** — exact Letter geometry, fixed page breaks, print-only cleanup, preserved print colors.
-- [x] **Static PDF export foundation** — `Print / Save as PDF` uses the browser-native print pipeline without a second rendering engine.
+- [x] **Print stylesheet** — exact Letter print geometry, deterministic page breaks, print-only cleanup and preserved print colors.
+- [x] **Static PDF export** — browser `Print / Save as PDF` remains the static serialization path.
 
 ## Processed in PR0027G
 
-### Publication versioning
-
-- [x] **Published revision domain model**
-  - explicit Draft → Published transitions create immutable snapshots
-  - ordinary Draft saves do not create revisions
-  - saving an already Published publication as Published does not create duplicate history
-  - publishing again after returning to Draft creates a new revision
-
-- [x] **Revision persistence and history**
-  - revisions persist independently from editable publications
-  - all published snapshots are retained locally for the MVP
-  - `/publications/:publicationId/history` exposes newest-first history
-  - restoring a revision creates a new Draft and preserves historical snapshots
-  - permanent publication deletion also removes its associated local history
+- [x] **Published revision model** — explicit Draft → Published transitions create immutable snapshots.
+- [x] **Revision persistence and history** — local history, newest-first route, restore as new Draft, cleanup on permanent deletion.
 
 ## Processed in PR0027H
 
-### Fillable publication domain foundation
-
-- [x] **Interactive content domain model**
-  - adds explicit multiline text-field blocks
-  - adds explicit checkbox-field blocks
-  - keeps interactive prompts in the same ordered semantic content stream as headings and paragraphs
-  - advances publication persistence to version 4 while retaining v1-v3 migration support
-  - advances revision persistence to version 2 while retaining v1 migration support
-  - validates interactive blocks before hydration
+- [x] **Interactive content domain model** — explicit multiline response and checkbox blocks with backward-compatible publication and revision persistence.
 
 ## Processed in PR0027I
 
-### Interactive authoring and static preview
+- [x] **Interactive editor controls** — add/edit multiline response fields and checkboxes using existing block structure controls and lifecycle behavior.
+- [x] **Interactive static preview** — printable response areas and checkboxes participate in derived layout and remain understandable in static output.
 
-- [x] **Interactive editor controls**
-  - adds multiline response fields and checkbox fields from the publication editor
-  - supports field-specific prompt / label editing
-  - interactive blocks reuse move, duplicate, delete, save, Draft transition, and unsaved-change behavior
+## Processed in PR0027J
 
-- [x] **Interactive preview affordances**
-  - multiline response fields render a prompt plus printable lined writing area
-  - checkbox fields render a printable empty checkbox plus label
-  - interactive field footprint participates in automatic pagination estimates
-  - static print output remains understandable without storing reader responses
+### Fillable PDF planning foundation
+
+- [x] **Serializer boundary investigation**
+  - browser print remains the static-output path
+  - genuine fillable output is a separate binary export path
+  - `pdf-lib` is the initial browser-compatible AcroForm serializer candidate behind the export boundary
+
+- [x] **Library-independent PDF plan**
+  - exact US Letter geometry: 612 × 792 PDF points
+  - fixed 54-point Gentle Page margins
+  - 24-point page-number reserve
+  - shared pagination estimates between layout and PDF planning
+  - deterministic block rectangles
+  - deterministic multiline and checkbox widget rectangles
+  - stable form-field identity from publication ID + durable block ID
+  - field page assignment preserved from automatic pagination
 
 ## Ready to implement next
 
-### Fillable PDF foundation
+### Binary fillable PDF
 
-1. **Fillable PDF serialization investigation**
-   - verify whether browser Save as PDF preserves editable form semantics
-   - document the result independently from the existing static print path
-   - if browser output is static, select the smallest PDF form serialization approach that can reuse publication layout data
-   - keep binary PDF generation separate from editorial authoring concerns
+1. **Serializer dependency and adapter**
+   - add `pdf-lib` behind `src/studio/publications/export`
+   - create one PDF page for each `PublicationPdfPagePlan`
+   - create AcroForm multiline text fields from `multiline-text-field` blocks
+   - create AcroForm checkboxes from `checkbox-field` blocks
+   - consume planned widget rectangles rather than calculating layout inside the library adapter
+   - generate `Uint8Array` PDF bytes
 
-2. **Fillable PDF serializer foundation**
-   - map multiline response fields to PDF text areas
-   - map checkbox fields to PDF checkboxes
-   - preserve cover, US Letter geometry, Gentle Page identity, page numbering, and static content
-   - avoid storing filled responses in the Studio publication model
+2. **Generated-PDF verification**
+   - load generated bytes back into the serializer during tests
+   - verify Letter page count and geometry
+   - verify stable field names and field types
+   - verify multiline behavior
+   - verify checkbox widgets
+   - verify multi-page field assignment
 
-3. **Fillable export validation**
-   - verify fields are editable in common PDF viewers
-   - verify field names are stable and unique
-   - verify printed/static appearance remains understandable
-   - verify multi-page field placement
+3. **Fillable export action**
+   - add `Download fillable PDF` separately from `Print / Save as PDF`
+   - use a deterministic filename derived from publication title
+   - keep reader responses outside Studio publication state
+
+4. **Visual / viewer validation**
+   - validate generated PDF in common PDF viewers
+   - confirm fields are editable and printable
+   - confirm cover, page numbering, margins and content order
 
 ## Architectural note on automatic pagination
 
-The MVP uses automatic pagination, so authored content remains a semantic ordered stream rather than storing manual page boundaries in the publication domain. Page objects belong to the derived editorial layout used by preview and export. This avoids persisting layout artifacts that would become stale whenever typography, margins, or content changes.
+Authored content remains a semantic ordered stream. Page objects belong to derived layout used by preview and export, preventing persisted page boundaries from becoming stale after content or typography changes.
 
 ## Versioning decision
 
-Use publish events as the version boundary: explicit publish creates an immutable snapshot, Draft saves do not version, all MVP snapshots remain local, and restore creates a new Draft.
+Explicit publish creates an immutable snapshot; Draft saves do not version; all MVP snapshots remain local; restore creates a new Draft.
 
 ## Fillable output decision
 
-Start with multiline text and checkbox blocks authored explicitly in the editor. Reader response data is not part of publication authoring state. Additional interactive field types follow only after the first fillable workflow is validated.
+Start with multiline text and checkbox blocks authored explicitly in the editor. Reader response data is not publication authoring state. Additional field types follow only after the first fillable workflow is validated.
 
 ## Intentionally deferred
 
