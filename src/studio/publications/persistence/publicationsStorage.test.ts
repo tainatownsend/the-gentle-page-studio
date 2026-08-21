@@ -56,7 +56,15 @@ describe('publicationsStorage', () => {
   })
 
   it('migrates a version 2 workspace with default document settings', () => {
-    const { documentSettings: _documentSettings, ...legacyPublication } = publication
+    const legacyPublication = {
+      id: publication.id,
+      title: publication.title,
+      description: publication.description,
+      status: publication.status,
+      content: publication.content,
+      createdAt: publication.createdAt,
+      updatedAt: publication.updatedAt,
+    }
 
     localStorage.setItem(
       LEGACY_PUBLICATIONS_STORAGE_KEY_V2,
@@ -123,20 +131,8 @@ describe('publicationsStorage', () => {
 
   it.each([
     ['invalid JSON', '{invalid-json'],
-    [
-      'unknown version',
-      JSON.stringify({
-        version: 4,
-        publications: [publication],
-      }),
-    ],
-    [
-      'invalid collection',
-      JSON.stringify({
-        version: 3,
-        publications: {},
-      }),
-    ],
+    ['unknown version', JSON.stringify({ version: 4, publications: [publication] })],
+    ['invalid collection', JSON.stringify({ version: 3, publications: {} })],
     [
       'invalid publication content',
       JSON.stringify({
@@ -144,15 +140,7 @@ describe('publicationsStorage', () => {
         publications: [
           {
             ...publication,
-            content: {
-              blocks: [
-                {
-                  id: '',
-                  type: 'paragraph',
-                  text: 'Invalid block',
-                },
-              ],
-            },
+            content: { blocks: [{ id: '', type: 'paragraph', text: 'Invalid block' }] },
           },
         ],
       }),
@@ -164,17 +152,13 @@ describe('publicationsStorage', () => {
         publications: [
           {
             ...publication,
-            documentSettings: {
-              ...publication.documentSettings,
-              orientation: 'landscape',
-            },
+            documentSettings: { ...publication.documentSettings, orientation: 'landscape' },
           },
         ],
       }),
     ],
   ])('falls back safely for %s', (_label, payload) => {
     localStorage.setItem(PUBLICATIONS_STORAGE_KEY, payload)
-
     expect(loadPublications()).toEqual([])
   })
 
@@ -182,13 +166,11 @@ describe('publicationsStorage', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('Storage unavailable')
     })
-
     expect(loadPublications()).toEqual([])
   })
 
   it('writes a version 3 workspace', () => {
     savePublications([publication])
-
     expect(JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '')).toEqual({
       version: 3,
       publications: [publication],
@@ -199,7 +181,6 @@ describe('publicationsStorage', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Quota exceeded')
     })
-
     expect(() => savePublications([publication])).not.toThrow()
   })
 })
