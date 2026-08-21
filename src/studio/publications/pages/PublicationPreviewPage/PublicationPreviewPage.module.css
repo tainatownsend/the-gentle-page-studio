@@ -5,11 +5,29 @@
   background: var(--color-surface-secondary, #f6f8f7);
 }
 
-.document {
-  width: min(100%, 52rem);
+.previewViewport {
+  display: grid;
   min-width: 0;
-  margin-inline: auto;
-  overflow: hidden;
+  justify-items: center;
+}
+
+.documentPage {
+  box-sizing: border-box;
+  display: flex;
+  width: min(100%, 51rem);
+  min-width: 0;
+  aspect-ratio: 8.5 / 11;
+  flex-direction: column;
+  padding: 8.8235%;
+  color: var(--color-text-primary, #1f2522);
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border-primary, #d5ddd9);
+  box-shadow: var(--shadow-md, 0 10px 30px rgb(20 35 28 / 12%));
+}
+
+.documentBody {
+  min-width: 0;
+  flex: 1;
 }
 
 .documentHeader {
@@ -45,6 +63,15 @@
   border: 1px dashed var(--color-border-primary, #d5ddd9);
   border-radius: var(--radius-md, 12px);
   background: var(--color-surface-secondary, #f6f8f7);
+}
+
+.pageNumber {
+  padding-top: var(--space-xl, 32px);
+  margin-top: auto;
+  font-size: var(--font-size-sm, 14px);
+  line-height: var(--line-height-sm, 20px);
+  color: var(--color-text-secondary, #66736d);
+  text-align: center;
 }
 
 @media (min-width: 48rem) {
