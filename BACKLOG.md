@@ -46,38 +46,50 @@ This backlog separates work that has already been processed, implementation-read
   - version 3 persistence migration and fixtures
   - independent settings for new and duplicated publications
 
+## Processed in PR0027C
+
+### Derived layout and preview
+
+- [x] **Automatic page layout foundation**
+  - authored content remains a semantic ordered stream
+  - output pages are derived rather than persisted
+  - preview/export share a `PublicationLayout` projection boundary
+  - layout data is copied independently from persisted publication data
+  - future measurement-based pagination can replace the initial single-page projection without a storage migration
+
+- [x] **Print-oriented preview shell**
+  - responsive US Letter portrait canvas
+  - stable 8.5:11 page proportions
+  - document geometry scales on narrow screens without changing its ratio
+  - page size and orientation are exposed on the page surface
+  - bottom-center page-number area is reserved and rendered
+
 ## Ready to implement next
 
 ### Editorial document foundation
 
-1. **Automatic page layout foundation**
-   - keep authored publication content as one semantic ordered stream
-   - derive output pages from content plus document settings rather than persisting manual page assignments
-   - introduce a page-layout projection for preview and export
-   - keep the model compatible with automatic pagination and future measurement-based page splitting
-
-2. **Print-oriented preview shell**
-   - render a US Letter portrait document canvas rather than a generic content card
-   - establish predictable page proportions
-   - support narrow-screen scaling without changing document geometry
-   - reserve a bottom-center page-number area
-
-3. **Typography settings foundation**
+1. **Typography settings foundation**
    - define fixed Gentle Page document typography tokens
    - keep document typography separate from Studio UI typography
 
-4. **Cover foundation**
+2. **Cover foundation**
    - render a fixed Gentle Page cover as the first publication page
    - derive initial cover content from publication metadata
    - defer user-customizable cover layouts
 
-5. **Print stylesheet foundation**
+3. **Automatic multi-page flow refinement**
+   - split overflowing semantic content into derived layout pages
+   - keep page boundaries out of persisted publication data
+   - preserve stable block order across derived pages
+   - avoid splitting blocks when practical
+
+4. **Print stylesheet foundation**
    - create print-only layout rules
    - remove Studio chrome from printed output
    - establish deterministic page breaks
    - preserve US Letter geometry
 
-6. **Static PDF export foundation**
+5. **Static PDF export foundation**
    - make the print-oriented document suitable for browser PDF export
    - validate page geometry, page numbers, cover, and content flow
    - treat static PDF as the first export milestone
