@@ -1,6 +1,6 @@
 # Backlog
 
-This backlog separates work that has already been processed, work that is technically sequenced but depends on product decisions, and intentionally deferred items.
+This backlog separates work that has already been processed, implementation-ready work, and intentionally deferred items.
 
 ## Processed in PR0027A
 
@@ -23,12 +23,25 @@ This backlog separates work that has already been processed, work that is techni
   - replace the stale foundation-era roadmap with the actual Studio state
   - make the transition into editorial production explicit
 
-## Sequenced next — requires product input first
+### Product decisions resolved for the editorial foundation
+
+- [x] **Primary page size:** US Letter
+- [x] **Orientation:** portrait only for the MVP
+- [x] **Margins / safe area:** fixed Gentle Page defaults for the MVP
+- [x] **Pagination:** automatic content flow for the MVP
+- [x] **Page numbering:** bottom center
+- [x] **Typography:** fixed Gentle Page identity for the MVP
+- [x] **Cover model:** a fixed Gentle Page cover generated as the first publication page
+- [x] **Brand customization:** Gentle Page identity only for the MVP
+
+## Ready to implement next
 
 ### Editorial document foundation
 
 1. **Document settings domain model**
-   - add durable page size, orientation, and margin settings
+   - add durable US Letter page settings
+   - set portrait as the only MVP orientation
+   - define fixed Gentle Page margins / safe area
    - keep defaults independent from the UI
    - include persistence migration and fixtures
 
@@ -36,45 +49,56 @@ This backlog separates work that has already been processed, work that is techni
    - introduce an explicit page layer above content blocks
    - preserve ordered blocks within each page
    - migrate existing single-stream publications safely
+   - support automatic content flow into pages
 
 3. **Print-oriented preview shell**
-   - render a document canvas rather than a generic content card
+   - render a US Letter portrait document canvas rather than a generic content card
    - establish predictable page proportions
    - support narrow-screen scaling without changing document geometry
+   - reserve a bottom-center page-number area
 
 4. **Typography settings foundation**
-   - define document-level typography options
-   - keep editor controls separate from design-system primitives
+   - define fixed Gentle Page document typography tokens
+   - keep document typography separate from Studio UI typography
 
-5. **Print stylesheet foundation**
+5. **Cover foundation**
+   - render a fixed Gentle Page cover as the first publication page
+   - derive initial cover content from publication metadata
+   - defer user-customizable cover layouts
+
+6. **Print stylesheet foundation**
    - create print-only layout rules
    - remove Studio chrome from printed output
    - establish deterministic page breaks
+   - preserve US Letter geometry
 
-### Product decisions required for the editorial foundation
+7. **Static PDF export foundation**
+   - make the print-oriented document suitable for browser PDF export
+   - validate page geometry, page numbers, cover, and content flow
+   - treat static PDF as the first export milestone
 
-- **Primary page size:** US Letter, A4, or another format
-- **Orientation defaults:** portrait only for MVP or selectable portrait/landscape
-- **Margins / safe area:** fixed Gentle Page defaults or user-configurable in MVP
-- **Pagination behavior:** automatic flow, manually managed pages, or hybrid
-- **Page numbering:** whether numbers are shown and where they appear
-- **Typography choices:** fixed Gentle Page typography or selectable presets
-- **Cover model:** cover as a special page, separate publication metadata, or template-driven artifact
-- **Brand customization:** whether MVP supports only Gentle Page styling or per-publication themes
-
-## Later — requires product input before implementation
+## Recommended later decisions
 
 ### Fillable output
 
-- **First interactive field types:** text, multiline text, checkbox, radio/select, date, or a smaller subset
-- **Authoring experience:** explicit field blocks in the editor versus converting designated content into fields during export
+Defer fillable PDF until the static PDF path is stable. When introduced, start with the smallest useful set:
+
+- multiline text field
+- checkbox
+- author them as explicit field blocks in the editor rather than inferring fields during export
+
+Short text, radio/select, date, and additional field types can follow after the first fillable workflow is validated.
 
 ### Versioning
 
-- **Version trigger:** every save, explicit publish events, or both
-- **Published snapshot rule:** whether each publish must preserve an immutable revision
-- **Retention:** unlimited history or a capped number of revisions
-- **Restore semantics:** restore as a new draft or overwrite the current draft
+Use publish events as the version boundary:
+
+- each explicit publish creates an immutable published snapshot
+- ordinary draft saves do not create versions
+- retain all published snapshots locally during the MVP
+- restoring a historical version creates a new draft rather than overwriting current history
+
+This keeps the initial versioning model understandable while preserving a durable record of what was actually published.
 
 ## Intentionally deferred
 
@@ -84,6 +108,12 @@ This backlog separates work that has already been processed, work that is techni
 - rich text formatting
 - autosave
 - draft recovery
+- user-selectable page sizes and orientation
+- custom margins
+- manual pagination
+- custom page-number placement
+- per-publication visual themes
+- customizable cover layouts
 - templates
 - asset library
 - authentication
