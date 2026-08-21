@@ -74,23 +74,31 @@ This backlog separates work that has already been processed, implementation-read
   - restoring a revision creates a new Draft and preserves historical snapshots
   - permanent publication deletion also removes its associated local history
 
+## Processed in PR0027H
+
+### Fillable publication domain foundation
+
+- [x] **Interactive content domain model**
+  - adds explicit multiline text-field blocks
+  - adds explicit checkbox-field blocks
+  - keeps interactive prompts in the same ordered semantic content stream as headings and paragraphs
+  - advances publication persistence to version 4 while retaining v1-v3 migration support
+  - advances revision persistence to version 2 while retaining v1 migration support
+  - validates interactive blocks before hydration
+
 ## Ready to implement next
 
-### Fillable publication foundation — after static print validation
+### Fillable publication foundation
 
-1. **Interactive content domain model**
-   - add multiline text and checkbox field blocks
-   - keep them explicit in the authored content model
-   - preserve backward-compatible persistence migration
-
-2. **Interactive editor and preview**
+1. **Interactive editor and preview**
    - add editor controls for multiline fields and checkboxes
    - render field affordances in the publication preview
    - keep static print output understandable before PDF form serialization is added
 
-3. **Fillable PDF serialization investigation**
-   - evaluate whether browser print can preserve required interactivity
-   - if not, introduce a PDF form library behind the existing derived publication layout
+2. **Fillable PDF serialization investigation**
+   - verify browser print behavior with interactive controls
+   - treat browser print as static output only when form interactivity is not preserved
+   - if needed, introduce a PDF form library behind the existing derived publication layout
    - keep binary PDF generation separate from editorial authoring concerns
 
 ## Architectural note on automatic pagination
