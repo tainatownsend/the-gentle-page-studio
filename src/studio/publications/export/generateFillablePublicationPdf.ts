@@ -253,7 +253,6 @@ function addInteractiveField(
   if (field.kind === 'multiline-text') {
     const textField = form.createTextField(field.name)
     textField.enableMultiline()
-    textField.setFontSize(11)
     textField.addToPage(page, {
       ...field.rect,
       font: bodyFont,
