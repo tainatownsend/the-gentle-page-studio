@@ -19,7 +19,7 @@ export type PublicationLayout = {
   pages: PublicationLayoutPage[]
 }
 
-const CONTENT_PAGE_CAPACITY_UNITS = 48
+export const PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS = 48
 const MULTILINE_RESPONSE_AREA_UNITS = 18
 const CHECKBOX_FIELD_BASE_UNITS = 5
 
@@ -34,7 +34,7 @@ function cloneDocumentSettings(
   }
 }
 
-function estimateBlockUnits(block: PublicationBlock): number {
+export function estimatePublicationBlockUnits(block: PublicationBlock): number {
   const textLength = Math.max(block.text.trim().length, 1)
 
   switch (block.type) {
@@ -59,9 +59,10 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
   let currentUnits = 0
 
   for (const block of blocks) {
-    const blockUnits = estimateBlockUnits(block)
+    const blockUnits = estimatePublicationBlockUnits(block)
     const shouldStartNewPage =
-      currentPage.length > 0 && currentUnits + blockUnits > CONTENT_PAGE_CAPACITY_UNITS
+      currentPage.length > 0 &&
+      currentUnits + blockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
     if (shouldStartNewPage) {
       pages.push(currentPage)
