@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactElement } from 'react'
-import { ArrowDown, ArrowLeft, ArrowUp, Copy, Plus, Save, Trash2 } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  CheckSquare,
+  Copy,
+  MessageSquareText,
+  Plus,
+  Save,
+  Trash2,
+} from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -16,9 +26,11 @@ import { Textarea } from '@/design-system/primitives/Textarea'
 import type {
   Publication,
   PublicationBlock,
+  PublicationCheckboxFieldBlock,
   PublicationContent,
   PublicationHeadingBlock,
   PublicationHeadingLevel,
+  PublicationMultilineTextFieldBlock,
   PublicationStatus,
 } from '../../types'
 
@@ -67,6 +79,22 @@ function createParagraphBlock(): PublicationBlock {
   }
 }
 
+function createMultilineTextFieldBlock(): PublicationMultilineTextFieldBlock {
+  return {
+    id: createBlockId(),
+    type: 'multiline-text-field',
+    text: '',
+  }
+}
+
+function createCheckboxFieldBlock(): PublicationCheckboxFieldBlock {
+  return {
+    id: createBlockId(),
+    type: 'checkbox-field',
+    text: '',
+  }
+}
+
 function cloneContent(content: PublicationContent): PublicationContent {
   return {
     blocks: content.blocks.map((block) => ({
@@ -110,6 +138,19 @@ function contentMatches(
 
     return true
   })
+}
+
+function getBlockTypeLabel(block: PublicationBlock): string {
+  switch (block.type) {
+    case 'heading':
+      return 'Heading'
+    case 'paragraph':
+      return 'Paragraph'
+    case 'multiline-text-field':
+      return 'Response field'
+    case 'checkbox-field':
+      return 'Checkbox'
+  }
 }
 
 function UnsavedChangesConfirmation({
@@ -385,7 +426,7 @@ export function PublicationEditorPage({
                         </Text>
 
                         <Text tone="secondary">
-                          Build the first version of your publication with headings and paragraphs.
+                          Build the publication with editorial content and response fields.
                         </Text>
                       </Stack>
 
@@ -407,6 +448,24 @@ export function PublicationEditorPage({
                         >
                           Add paragraph
                         </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          startIcon={<MessageSquareText size={18} />}
+                          onClick={() => addBlock(createMultilineTextFieldBlock())}
+                        >
+                          Add response field
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          startIcon={<CheckSquare size={18} />}
+                          onClick={() => addBlock(createCheckboxFieldBlock())}
+                        >
+                          Add checkbox
+                        </Button>
                       </Cluster>
                     </div>
 
@@ -415,7 +474,7 @@ export function PublicationEditorPage({
                         <Stack gap="xs">
                           <Text weight="semibold">No content blocks yet</Text>
                           <Text tone="secondary">
-                            Add a heading or paragraph to begin shaping this publication.
+                            Add editorial content or a response field to begin shaping this publication.
                           </Text>
                         </Stack>
                       </div>
@@ -423,8 +482,7 @@ export function PublicationEditorPage({
                       <ol className={styles.blockList} aria-label="Publication content blocks">
                         {content.blocks.map((block, index) => {
                           const blockNumber = index + 1
-                          const blockTypeLabel = block.type === 'heading' ? 'Heading' : 'Paragraph'
-                          const blockLabel = `Block ${blockNumber} · ${blockTypeLabel}`
+                          const blockLabel = `Block ${blockNumber} · ${getBlockTypeLabel(block)}`
 
                           return (
                             <li key={block.id} className={styles.blockItem}>
@@ -511,11 +569,44 @@ export function PublicationEditorPage({
                                       />
                                     </Field>
                                   </div>
-                                ) : (
+                                ) : block.type === 'paragraph' ? (
                                   <Field label={`Block ${blockNumber} paragraph text`}>
                                     <Textarea
                                       fullWidth
                                       rows={5}
+                                      value={block.text}
+                                      onChange={(event) =>
+                                        updateBlock(block.id, (currentBlock) => ({
+                                          ...currentBlock,
+                                          text: event.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </Field>
+                                ) : block.type === 'multiline-text-field' ? (
+                                  <Field
+                                    label={`Block ${blockNumber} response prompt`}
+                                    description="This prompt appears above a multiline response area in the publication."
+                                  >
+                                    <Textarea
+                                      fullWidth
+                                      rows={3}
+                                      value={block.text}
+                                      onChange={(event) =>
+                                        updateBlock(block.id, (currentBlock) => ({
+                                          ...currentBlock,
+                                          text: event.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </Field>
+                                ) : (
+                                  <Field
+                                    label={`Block ${blockNumber} checkbox label`}
+                                    description="This label appears beside an empty checkbox in the publication."
+                                  >
+                                    <Input
+                                      fullWidth
                                       value={block.text}
                                       onChange={(event) =>
                                         updateBlock(block.id, (currentBlock) => ({
