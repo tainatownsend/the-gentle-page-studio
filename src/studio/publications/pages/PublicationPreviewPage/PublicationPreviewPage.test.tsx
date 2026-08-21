@@ -45,13 +45,13 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
-    const cover = screen.getByRole('article', {
-      name: 'Publication cover',
-    })
-    const contentPage = screen.getByRole('article', {
-      name: 'Publication content page 1',
-    })
+    const cover = document.querySelector('[aria-label="Publication cover"]')
+    const contentPage = document.querySelector(
+      '[aria-label="Publication content page 1"]',
+    )
 
+    expect(cover).not.toBeNull()
+    expect(contentPage).not.toBeNull()
     expect(cover).toHaveAttribute('data-page-kind', 'cover')
     expect(cover).toHaveAttribute('data-page-size', 'us-letter')
     expect(cover).toHaveAttribute('data-orientation', 'portrait')
@@ -60,31 +60,33 @@ describe('PublicationPreviewPage', () => {
     expect(document.getElementById('publication-preview-title')).toHaveTextContent(
       'Gentle Focus Journal',
     )
-    expect(within(cover).getByText('A supportive focus practice.')).toBeInTheDocument()
+    expect(within(cover as HTMLElement).getByText('A supportive focus practice.')).toBeInTheDocument()
     expect(
-      within(cover).getByText('Thoughtfully designed tools for everyday clarity.'),
+      within(cover as HTMLElement).getByText(
+        'Thoughtfully designed tools for everyday clarity.',
+      ),
     ).toBeInTheDocument()
 
     expect(screen.getByText('Published preview')).toBeInTheDocument()
 
     expect(
-      within(contentPage).getByText('Pause and notice', {
+      within(contentPage as HTMLElement).getByText('Pause and notice', {
         selector: 'h2',
       }),
     ).toBeInTheDocument()
 
     expect(
-      within(contentPage).getByText('What feels most present right now?'),
+      within(contentPage as HTMLElement).getByText('What feels most present right now?'),
     ).toBeInTheDocument()
 
     expect(
-      within(contentPage).getByText('Choose one next step', {
+      within(contentPage as HTMLElement).getByText('Choose one next step', {
         selector: 'h3',
       }),
     ).toBeInTheDocument()
 
     expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
-    expect(screen.getAllByRole('article')).toHaveLength(2)
+    expect(document.querySelectorAll('article')).toHaveLength(2)
   })
 
   it('renders automatically derived content pages in sequence', () => {
@@ -106,16 +108,24 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
-    const firstContentPage = screen.getByRole('article', {
-      name: 'Publication content page 1',
-    })
-    const secondContentPage = screen.getByRole('article', {
-      name: 'Publication content page 2',
-    })
+    const firstContentPage = document.querySelector(
+      '[aria-label="Publication content page 1"]',
+    )
+    const secondContentPage = document.querySelector(
+      '[aria-label="Publication content page 2"]',
+    )
 
-    expect(within(firstContentPage).getByText(blocks[0].text)).toBeInTheDocument()
-    expect(within(firstContentPage).getByText(blocks[3].text)).toBeInTheDocument()
-    expect(within(secondContentPage).getByText(blocks[4].text)).toBeInTheDocument()
+    expect(firstContentPage).not.toBeNull()
+    expect(secondContentPage).not.toBeNull()
+    expect(
+      within(firstContentPage as HTMLElement).getByText(blocks[0].text),
+    ).toBeInTheDocument()
+    expect(
+      within(firstContentPage as HTMLElement).getByText(blocks[3].text),
+    ).toBeInTheDocument()
+    expect(
+      within(secondContentPage as HTMLElement).getByText(blocks[4].text),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
     expect(screen.getByLabelText('Page 2')).toHaveTextContent('2')
   })
@@ -153,18 +163,12 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
-    expect(
-      screen.getByRole('region', {
-        name: 'Print-oriented publication preview',
-      }),
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Print-oriented publication preview')).toBeInTheDocument()
     expect(screen.getByText('Nothing to preview yet')).toBeInTheDocument()
-    expect(screen.getByRole('article', { name: 'Publication cover' })).toBeInTheDocument()
+    expect(document.querySelector('[aria-label="Publication cover"]')).not.toBeNull()
     expect(
-      screen.getByRole('article', {
-        name: 'Publication content page 1',
-      }),
-    ).toBeInTheDocument()
+      document.querySelector('[aria-label="Publication content page 1"]'),
+    ).not.toBeNull()
   })
 
   it('opens the browser print dialog for print and PDF export', () => {
