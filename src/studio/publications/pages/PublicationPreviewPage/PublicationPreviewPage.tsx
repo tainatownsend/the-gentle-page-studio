@@ -6,9 +6,9 @@ import { Button } from '@/design-system/primitives/Button'
 import { Cluster } from '@/design-system/primitives/Cluster'
 import { Container } from '@/design-system/primitives/Container'
 import { Stack } from '@/design-system/primitives/Stack'
-import { Text } from '@/design-system/primitives/Text'
 
 import { createPublicationLayout } from '../../layout'
+import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
 import type { Publication, PublicationBlock } from '../../types'
 
 import styles from './PublicationPreviewPage.module.css'
@@ -26,23 +26,21 @@ type PublicationBlockPreviewProps = {
 function PublicationBlockPreview({ block }: PublicationBlockPreviewProps): ReactElement {
   if (block.type === 'heading') {
     const HeadingTag = `h${block.level + 1}` as 'h2' | 'h3' | 'h4'
+    const headingClassName =
+      block.level === 1
+        ? styles.heading1
+        : block.level === 2
+          ? styles.heading2
+          : styles.heading3
 
     return (
-      <Text
-        as={HeadingTag}
-        variant={block.level === 1 ? 'h2' : block.level === 2 ? 'h3' : 'body'}
-        weight="semibold"
-      >
+      <HeadingTag className={headingClassName}>
         {block.text || 'Untitled heading'}
-      </Text>
+      </HeadingTag>
     )
   }
 
-  return (
-    <Text as="p" className={styles.paragraph}>
-      {block.text || 'Empty paragraph'}
-    </Text>
-  )
+  return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
 }
 
 export function PublicationPreviewPage({
@@ -51,8 +49,6 @@ export function PublicationPreviewPage({
   onEdit,
 }: PublicationPreviewPageProps): ReactElement {
   const layout = createPublicationLayout(publication)
-  const contentPage = layout.pages[0]
-  const hasContent = (contentPage?.blocks.length ?? 0) > 0
 
   return (
     <main className={styles.page}>
@@ -76,55 +72,71 @@ export function PublicationPreviewPage({
           />
 
           <section className={styles.previewViewport} aria-label="Print-oriented publication preview">
-            {layout.pages.map((layoutPage) => (
-              <article
-                key={layoutPage.id}
-                className={styles.documentPage}
-                aria-label={`Publication page ${layoutPage.sequence}`}
-                data-page-size={layout.settings.pageSize}
-                data-orientation={layout.settings.orientation}
-              >
-                <div className={styles.documentBody}>
-                  <Stack gap="xl">
-                    <header className={styles.documentHeader}>
-                      <Text
-                        as="h1"
-                        id="publication-preview-title"
-                        variant="h1"
-                        weight="semibold"
-                      >
-                        {publication.title}
-                      </Text>
+            {layout.pages.map((layoutPage) => {
+              const isCover = layoutPage.kind === 'cover'
+              const hasContent = layoutPage.blocks.length > 0
 
-                      {publication.description ? (
-                        <Text tone="secondary">{publication.description}</Text>
-                      ) : null}
-                    </header>
+              return (
+                <article
+                  key={layoutPage.id}
+                  className={`${styles.documentPage} ${documentTheme.theme}`}
+                  aria-label={
+                    isCover
+                      ? 'Publication cover'
+                      : `Publication content page ${layoutPage.pageNumber ?? layoutPage.sequence}`
+                  }
+                  data-page-kind={layoutPage.kind}
+                  data-page-size={layout.settings.pageSize}
+                  data-orientation={layout.settings.orientation}
+                >
+                  {isCover ? (
+                    <div className={styles.coverBody}>
+                      <p className={styles.coverBrand}>The Gentle Page</p>
 
-                    {hasContent ? (
-                      <div className={styles.content}>
-                        {layoutPage.blocks.map((block) => (
-                          <PublicationBlockPreview key={block.id} block={block} />
-                        ))}
+                      <div className={styles.coverTitleGroup}>
+                        <h1 id="publication-preview-title" className={styles.coverTitle}>
+                          {publication.title}
+                        </h1>
+
+                        {publication.description ? (
+                          <p className={styles.coverDescription}>{publication.description}</p>
+                        ) : null}
                       </div>
-                    ) : (
-                      <div className={styles.emptyState}>
-                        <Stack gap="xs">
-                          <Text weight="semibold">Nothing to preview yet</Text>
-                          <Text tone="secondary">
+
+                      <p className={styles.coverTagline}>
+                        Thoughtfully designed tools for everyday clarity.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className={styles.documentBody}>
+                      {hasContent ? (
+                        <div className={styles.content}>
+                          {layoutPage.blocks.map((block) => (
+                            <PublicationBlockPreview key={block.id} block={block} />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={styles.emptyState}>
+                          <p className={styles.emptyTitle}>Nothing to preview yet</p>
+                          <p className={styles.emptyDescription}>
                             Add headings and paragraphs in the editor to build this publication.
-                          </Text>
-                        </Stack>
-                      </div>
-                    )}
-                  </Stack>
-                </div>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                <footer className={styles.pageNumber} aria-label={`Page ${layoutPage.sequence}`}>
-                  {layoutPage.sequence}
-                </footer>
-              </article>
-            ))}
+                  {layoutPage.pageNumber !== undefined ? (
+                    <footer
+                      className={styles.pageNumber}
+                      aria-label={`Page ${layoutPage.pageNumber}`}
+                    >
+                      {layoutPage.pageNumber}
+                    </footer>
+                  ) : null}
+                </article>
+              )
+            })}
           </section>
         </Stack>
       </Container>
