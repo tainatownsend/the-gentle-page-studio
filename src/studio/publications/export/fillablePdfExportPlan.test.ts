@@ -97,6 +97,35 @@ describe('fillable PDF export plan', () => {
     )
   })
 
+  it('preserves derived multi-page field association', () => {
+    const blocks = Array.from({ length: 4 }, (_, index) => ({
+      id: `response-${index + 1}`,
+      type: 'multiline-text-field' as const,
+      text: `Prompt ${index + 1}`,
+    }))
+
+    const plan = createFillablePdfExportPlan(
+      createPublicationFixture({
+        id: 'journal-1',
+        content: { blocks },
+      }),
+    )
+
+    expect(plan.pages).toHaveLength(2)
+    expect(plan.pages[0]?.fields.map((field) => field.blockId)).toEqual([
+      'response-1',
+      'response-2',
+      'response-3',
+    ])
+    expect(plan.pages[1]?.fields.map((field) => field.blockId)).toEqual(['response-4'])
+    expect(plan.fields[3]).toMatchObject({
+      blockId: 'response-4',
+      layoutPageSequence: 3,
+      contentPageNumber: 2,
+      blockIndexOnPage: 0,
+    })
+  })
+
   it('creates no fields for static-only publications', () => {
     const plan = createFillablePdfExportPlan(
       createPublicationFixture({
