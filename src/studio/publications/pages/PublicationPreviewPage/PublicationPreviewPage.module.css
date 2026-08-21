@@ -166,3 +166,58 @@
     padding-block: var(--space-2xl, 48px);
   }
 }
+
+@page {
+  size: Letter portrait;
+  margin: 0;
+}
+
+@media print {
+  .page {
+    min-height: auto;
+    padding: 0;
+    color: #1f2522;
+    background: #ffffff;
+  }
+
+  .previewContainer {
+    width: auto;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .previewStack {
+    gap: 0 !important;
+  }
+
+  .previewControls {
+    display: none;
+  }
+
+  .previewViewport {
+    display: block;
+  }
+
+  .documentPage {
+    width: 8.5in;
+    height: 11in;
+    min-height: 11in;
+    aspect-ratio: auto;
+    padding: 0.75in;
+    margin: 0;
+    color: #1f2522;
+    background: #ffffff;
+    border: 0;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .documentPage:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
