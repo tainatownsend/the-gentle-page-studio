@@ -81,24 +81,30 @@ This backlog separates work that has already been processed, implementation-read
   - cover remains unnumbered
   - content numbering begins at page 1
 
+## Processed in PR0027E
+
+### Automatic multi-page flow
+
+- [x] **Automatic multi-page flow refinement**
+  - deterministic content-capacity estimation derives additional pages
+  - page boundaries remain outside persisted publication data
+  - stable block order is preserved across pages
+  - complete blocks move to the next page instead of being split
+  - oversized single blocks remain intact for future measurement-based refinement
+  - content pages receive sequential numbering after the unnumbered cover
+
 ## Ready to implement next
 
 ### Editorial document foundation
 
-1. **Automatic multi-page flow refinement**
-   - split overflowing semantic content into derived layout pages
-   - keep page boundaries out of persisted publication data
-   - preserve stable block order across derived pages
-   - avoid splitting blocks when practical
-
-2. **Print stylesheet foundation**
+1. **Print stylesheet foundation**
    - create print-only layout rules
    - remove Studio chrome from printed output
    - establish deterministic page breaks
    - preserve US Letter geometry
    - force publication paper/ink colors suitable for print
 
-3. **Static PDF export foundation**
+2. **Static PDF export foundation**
    - expose a clear Print / Save as PDF action from preview
    - make the print-oriented document suitable for browser PDF export
    - validate page geometry, page numbers, cover, and content flow
