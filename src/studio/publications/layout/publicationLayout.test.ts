@@ -71,6 +71,60 @@ describe('createPublicationLayout', () => {
     expect(contentPages[1]?.blocks).toHaveLength(1)
   })
 
+  it('reserves page capacity for multiline response areas', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'response-1',
+            type: 'multiline-text-field',
+            text: 'Describe what feels most important today.',
+          },
+          {
+            id: 'response-2',
+            type: 'multiline-text-field',
+            text: 'What would support your next step?',
+          },
+          {
+            id: 'response-3',
+            type: 'multiline-text-field',
+            text: 'What do you want to remember?',
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual([
+      'response-1',
+      'response-2',
+    ])
+    expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual(['response-3'])
+  })
+
+  it('keeps compact checkbox fields together when capacity allows', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: Array.from({ length: 6 }, (_, index) => ({
+          id: `checkbox-${index + 1}`,
+          type: 'checkbox-field' as const,
+          text: `Reflection item ${index + 1}`,
+        })),
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(1)
+    expect(contentPages[0]?.blocks).toHaveLength(6)
+  })
+
   it('keeps a single oversized block intact instead of splitting authored content', () => {
     const publication = createPublicationFixture({
       content: {
