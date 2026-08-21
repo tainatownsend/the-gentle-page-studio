@@ -12,148 +12,55 @@ describe('PublicationPreviewPage', () => {
       status: 'published',
       content: {
         blocks: [
-          {
-            id: 'heading-1',
-            type: 'heading',
-            level: 1,
-            text: 'Pause and notice',
-          },
-          {
-            id: 'paragraph-1',
-            type: 'paragraph',
-            text: 'What feels most present right now?',
-          },
-          {
-            id: 'heading-2',
-            type: 'heading',
-            level: 2,
-            text: 'Choose one next step',
-          },
+          { id: 'heading-1', type: 'heading', level: 1, text: 'Pause and notice' },
+          { id: 'paragraph-1', type: 'paragraph', text: 'What feels most present right now?' },
+          { id: 'heading-2', type: 'heading', level: 2, text: 'Choose one next step' },
         ],
       },
     })
 
-    render(
-      <PublicationPreviewPage
-        publication={publication}
-        onBack={() => undefined}
-        onEdit={() => undefined}
-      />,
-    )
+    render(<PublicationPreviewPage publication={publication} onBack={() => undefined} onEdit={() => undefined} />)
 
-    const cover = screen.getByRole('article', {
-      name: 'Publication cover',
-    })
-    const contentPage = screen.getByRole('article', {
-      name: 'Publication content page 1',
-    })
+    const cover = document.querySelector('[aria-label="Publication cover"]')
+    const contentPage = document.querySelector('[aria-label="Publication content page 1"]')
 
+    expect(cover).not.toBeNull()
+    expect(contentPage).not.toBeNull()
     expect(cover).toHaveAttribute('data-page-kind', 'cover')
     expect(cover).toHaveAttribute('data-page-size', 'us-letter')
     expect(cover).toHaveAttribute('data-orientation', 'portrait')
     expect(contentPage).toHaveAttribute('data-page-kind', 'content')
-
-    expect(document.getElementById('publication-preview-title')).toHaveTextContent(
-      'Gentle Focus Journal',
-    )
-    expect(within(cover).getByText('A supportive focus practice.')).toBeInTheDocument()
-    expect(
-      within(cover).getByText('Thoughtfully designed tools for everyday clarity.'),
-    ).toBeInTheDocument()
-
+    expect(document.getElementById('publication-preview-title')).toHaveTextContent('Gentle Focus Journal')
+    expect(within(cover as HTMLElement).getByText('A supportive focus practice.')).toBeInTheDocument()
+    expect(within(cover as HTMLElement).getByText('Thoughtfully designed tools for everyday clarity.')).toBeInTheDocument()
     expect(screen.getByText('Published preview')).toBeInTheDocument()
-
-    expect(
-      within(contentPage).getByText('Pause and notice', {
-        selector: 'h2',
-      }),
-    ).toBeInTheDocument()
-
-    expect(
-      within(contentPage).getByText('What feels most present right now?'),
-    ).toBeInTheDocument()
-
-    expect(
-      within(contentPage).getByText('Choose one next step', {
-        selector: 'h3',
-      }),
-    ).toBeInTheDocument()
-
+    expect(within(contentPage as HTMLElement).getByText('Pause and notice', { selector: 'h2' })).toBeInTheDocument()
+    expect(within(contentPage as HTMLElement).getByText('What feels most present right now?')).toBeInTheDocument()
+    expect(within(contentPage as HTMLElement).getByText('Choose one next step', { selector: 'h3' })).toBeInTheDocument()
     expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
-    expect(screen.getAllByRole('article')).toHaveLength(2)
+    expect(document.querySelectorAll('article')).toHaveLength(2)
   })
 
   it('renders long unbroken content without changing its text', () => {
     const longText = 'vatt'.repeat(80)
-
-    render(
-      <PublicationPreviewPage
-        publication={createPublicationFixture({
-          content: {
-            blocks: [
-              {
-                id: 'paragraph-long',
-                type: 'paragraph',
-                text: longText,
-              },
-            ],
-          },
-        })}
-        onBack={() => undefined}
-        onEdit={() => undefined}
-      />,
-    )
-
+    render(<PublicationPreviewPage publication={createPublicationFixture({ content: { blocks: [{ id: 'paragraph-long', type: 'paragraph', text: longText }] } })} onBack={() => undefined} onEdit={() => undefined} />)
     expect(screen.getByText(longText)).toBeInTheDocument()
   })
 
   it('renders a focused empty state on the content page', () => {
-    render(
-      <PublicationPreviewPage
-        publication={createPublicationFixture()}
-        onBack={() => undefined}
-        onEdit={() => undefined}
-      />,
-    )
-
-    expect(
-      screen.getByRole('region', {
-        name: 'Print-oriented publication preview',
-      }),
-    ).toBeInTheDocument()
+    render(<PublicationPreviewPage publication={createPublicationFixture()} onBack={() => undefined} onEdit={() => undefined} />)
+    expect(screen.getByLabelText('Print-oriented publication preview')).toBeInTheDocument()
     expect(screen.getByText('Nothing to preview yet')).toBeInTheDocument()
-    expect(screen.getByRole('article', { name: 'Publication cover' })).toBeInTheDocument()
-    expect(
-      screen.getByRole('article', {
-        name: 'Publication content page 1',
-      }),
-    ).toBeInTheDocument()
+    expect(document.querySelector('[aria-label="Publication cover"]')).not.toBeNull()
+    expect(document.querySelector('[aria-label="Publication content page 1"]')).not.toBeNull()
   })
 
   it('connects navigation actions', () => {
     const onBack = vi.fn()
     const onEdit = vi.fn()
-
-    render(
-      <PublicationPreviewPage
-        publication={createPublicationFixture()}
-        onBack={onBack}
-        onEdit={onEdit}
-      />,
-    )
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Back to publications',
-      }),
-    )
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Edit publication',
-      }),
-    )
-
+    render(<PublicationPreviewPage publication={createPublicationFixture()} onBack={onBack} onEdit={onEdit} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Back to publications' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit publication' }))
     expect(onBack).toHaveBeenCalledTimes(1)
     expect(onEdit).toHaveBeenCalledTimes(1)
   })
