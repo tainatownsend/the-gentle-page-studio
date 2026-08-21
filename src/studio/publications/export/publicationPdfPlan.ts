@@ -1,10 +1,39 @@
-import { createPublicationLayout } from '../layout'
+import {
+  createPublicationLayout,
+  estimatePublicationBlockUnits,
+  PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
+} from '../layout'
 import type { Publication, PublicationBlock } from '../types'
 
 export const PDF_POINTS_PER_INCH = 72
 export const US_LETTER_WIDTH_POINTS = 8.5 * PDF_POINTS_PER_INCH
 export const US_LETTER_HEIGHT_POINTS = 11 * PDF_POINTS_PER_INCH
 export const PUBLICATION_MARGIN_POINTS = 0.75 * PDF_POINTS_PER_INCH
+export const PUBLICATION_PAGE_NUMBER_RESERVE_POINTS = 24
+export const PUBLICATION_CONTENT_WIDTH_POINTS =
+  US_LETTER_WIDTH_POINTS - PUBLICATION_MARGIN_POINTS * 2
+export const PUBLICATION_CONTENT_HEIGHT_POINTS =
+  US_LETTER_HEIGHT_POINTS -
+  PUBLICATION_MARGIN_POINTS * 2 -
+  PUBLICATION_PAGE_NUMBER_RESERVE_POINTS
+
+const PUBLICATION_CAPACITY_UNIT_HEIGHT_POINTS =
+  PUBLICATION_CONTENT_HEIGHT_POINTS / PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
+const MULTILINE_PROMPT_RESERVE_POINTS = 30
+const CHECKBOX_SIZE_POINTS = 14
+
+export type PublicationPdfRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type PublicationPdfBlockPlacement = {
+  blockId: string
+  type: PublicationBlock['type']
+  rect: PublicationPdfRect
+}
 
 export type PublicationPdfInteractiveFieldKind = 'multiline-text' | 'checkbox'
 
@@ -14,6 +43,7 @@ export type PublicationPdfInteractiveField = {
   pageNumber: number
   kind: PublicationPdfInteractiveFieldKind
   label: string
+  rect: PublicationPdfRect
 }
 
 export type PublicationPdfPagePlan = {
@@ -24,6 +54,7 @@ export type PublicationPdfPagePlan = {
   height: number
   margin: number
   blocks: PublicationBlock[]
+  blockPlacements: PublicationPdfBlockPlacement[]
 }
 
 export type PublicationPdfPlan = {
@@ -37,30 +68,92 @@ function createFieldName(publicationId: string, blockId: string): string {
   return `publication.${publicationId}.block.${blockId}`
 }
 
+function createBlockPlacements(
+  blocks: readonly PublicationBlock[],
+): PublicationPdfBlockPlacement[] {
+  let top = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+
+  return blocks.map((block) => {
+    const height =
+      estimatePublicationBlockUnits(block) * PUBLICATION_CAPACITY_UNIT_HEIGHT_POINTS
+    const rect = {
+      x: PUBLICATION_MARGIN_POINTS,
+      y: top - height,
+      width: PUBLICATION_CONTENT_WIDTH_POINTS,
+      height,
+    }
+
+    top -= height
+
+    return {
+      blockId: block.id,
+      type: block.type,
+      rect,
+    }
+  })
+}
+
+function createInteractiveFieldRect(
+  block: PublicationBlock,
+  placement: PublicationPdfBlockPlacement,
+): PublicationPdfRect | undefined {
+  if (block.type === 'multiline-text-field') {
+    return {
+      x: placement.rect.x,
+      y: placement.rect.y,
+      width: placement.rect.width,
+      height: Math.max(72, placement.rect.height - MULTILINE_PROMPT_RESERVE_POINTS),
+    }
+  }
+
+  if (block.type === 'checkbox-field') {
+    return {
+      x: placement.rect.x,
+      y: placement.rect.y + placement.rect.height - CHECKBOX_SIZE_POINTS - 2,
+      width: CHECKBOX_SIZE_POINTS,
+      height: CHECKBOX_SIZE_POINTS,
+    }
+  }
+
+  return undefined
+}
+
 export function createPublicationPdfPlan(publication: Publication): PublicationPdfPlan {
   const layout = createPublicationLayout(publication)
   const interactiveFields: PublicationPdfInteractiveField[] = []
 
   const pages = layout.pages.map((page) => {
+    const blockPlacements = createBlockPlacements(page.blocks)
+
     if (page.kind === 'content' && page.pageNumber !== undefined) {
-      page.blocks.forEach((block) => {
-        if (block.type === 'multiline-text-field') {
+      page.blocks.forEach((block, index) => {
+        const placement = blockPlacements[index]
+
+        if (!placement) {
+          return
+        }
+
+        const rect = createInteractiveFieldRect(block, placement)
+
+        if (block.type === 'multiline-text-field' && rect) {
           interactiveFields.push({
             name: createFieldName(publication.id, block.id),
             blockId: block.id,
             pageNumber: page.pageNumber as number,
             kind: 'multiline-text',
             label: block.text,
+            rect,
           })
         }
 
-        if (block.type === 'checkbox-field') {
+        if (block.type === 'checkbox-field' && rect) {
           interactiveFields.push({
             name: createFieldName(publication.id, block.id),
             blockId: block.id,
             pageNumber: page.pageNumber as number,
             kind: 'checkbox',
             label: block.text,
+            rect,
           })
         }
       })
@@ -74,6 +167,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
       height: US_LETTER_HEIGHT_POINTS,
       margin: PUBLICATION_MARGIN_POINTS,
       blocks: page.blocks.map((block) => ({ ...block })),
+      blockPlacements,
     }
   })
 
