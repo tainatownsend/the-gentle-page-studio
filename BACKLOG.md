@@ -86,20 +86,46 @@ This backlog separates work that has already been processed, implementation-read
   - advances revision persistence to version 2 while retaining v1 migration support
   - validates interactive blocks before hydration
 
+## Processed in PR0027I
+
+### Interactive publication preview
+
+- [x] **Interactive field preview foundation**
+  - multiline response fields render an authored prompt and lined response area
+  - checkbox fields render a printable checkbox and authored label
+  - static print output remains understandable before binary form-field serialization
+  - interactive blocks remain part of the derived publication layout and automatic pagination flow
+
+## Processed in PR0027J
+
+### Interactive publication authoring
+
+- [x] **Interactive editor controls**
+  - authors can add multiline response fields and checkbox fields
+  - prompts and checkbox labels are edited explicitly in the publication editor
+  - interactive edits participate in existing normalization, unsaved-changes protection, duplication, movement, deletion, and Draft transition behavior
+  - focused tests cover authoring, normalization, and Published → Draft behavior
+
 ## Ready to implement next
 
-### Fillable publication foundation
+### Fillable PDF foundation
 
-1. **Interactive editor and preview**
-   - add editor controls for multiline fields and checkboxes
-   - render field affordances in the publication preview
-   - keep static print output understandable before PDF form serialization is added
+1. **Interactive pagination calibration**
+   - account for the fixed visual height of multiline response areas when deriving content pages
+   - account for checkbox field height explicitly rather than treating all non-heading blocks like paragraphs
+   - preserve deterministic page boundaries before binary PDF serialization
 
 2. **Fillable PDF serialization investigation**
-   - verify browser print behavior with interactive controls
-   - treat browser print as static output only when form interactivity is not preserved
-   - if needed, introduce a PDF form library behind the existing derived publication layout
-   - keep binary PDF generation separate from editorial authoring concerns
+   - treat browser print as the static-output path
+   - evaluate maintained JavaScript/TypeScript PDF form libraries for direct AcroForm generation
+   - map the existing derived Letter layout to PDF point coordinates
+   - preserve cover, page numbering, typography hierarchy, multiline fields, and checkboxes
+   - keep binary PDF generation behind the publication layout boundary rather than coupling it to the editor
+
+3. **Binary fillable PDF export foundation**
+   - add a dedicated fillable-PDF export action only after serializer feasibility is validated
+   - generate multiline text widgets and checkbox widgets from explicit interactive publication blocks
+   - leave static `Print / Save as PDF` available as a separate export path
 
 ## Architectural note on automatic pagination
 
