@@ -15,7 +15,26 @@ export type PublicationParagraphBlock = {
   text: string
 }
 
-export type PublicationBlock = PublicationHeadingBlock | PublicationParagraphBlock
+export type PublicationMultilineTextFieldBlock = {
+  id: PublicationBlockId
+  type: 'multiline-text-field'
+  text: string
+}
+
+export type PublicationCheckboxFieldBlock = {
+  id: PublicationBlockId
+  type: 'checkbox-field'
+  text: string
+}
+
+export type PublicationInteractiveBlock =
+  | PublicationMultilineTextFieldBlock
+  | PublicationCheckboxFieldBlock
+
+export type PublicationBlock =
+  | PublicationHeadingBlock
+  | PublicationParagraphBlock
+  | PublicationInteractiveBlock
 
 export type PublicationContent = {
   blocks: PublicationBlock[]
