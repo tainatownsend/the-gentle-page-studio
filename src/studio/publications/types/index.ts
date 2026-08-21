@@ -11,6 +11,8 @@ export type {
   PublicationPageSize,
 } from './publicationDocumentSettings'
 
+export type { PublicationRevision } from './publicationRevision'
+
 export type {
   PublicationBlock,
   PublicationBlockId,
