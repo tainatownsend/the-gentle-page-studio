@@ -19,6 +19,8 @@ export type PublicationLayout = {
   pages: PublicationLayoutPage[]
 }
 
+const CONTENT_PAGE_CAPACITY_UNITS = 48
+
 function cloneDocumentSettings(
   settings: PublicationDocumentSettings,
 ): PublicationDocumentSettings {
@@ -30,9 +32,52 @@ function cloneDocumentSettings(
   }
 }
 
+function estimateBlockUnits(block: PublicationBlock): number {
+  const textLength = Math.max(block.text.trim().length, 1)
+
+  if (block.type === 'heading') {
+    return 5 + Math.ceil(textLength / 45) * 2
+  }
+
+  return 3 + Math.ceil(textLength / 70) * 3
+}
+
+function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
+  if (blocks.length === 0) {
+    return [[]]
+  }
+
+  const pages: PublicationBlock[][] = []
+  let currentPage: PublicationBlock[] = []
+  let currentUnits = 0
+
+  for (const block of blocks) {
+    const blockUnits = estimateBlockUnits(block)
+    const shouldStartNewPage =
+      currentPage.length > 0 && currentUnits + blockUnits > CONTENT_PAGE_CAPACITY_UNITS
+
+    if (shouldStartNewPage) {
+      pages.push(currentPage)
+      currentPage = []
+      currentUnits = 0
+    }
+
+    currentPage.push({
+      ...block,
+    })
+    currentUnits += blockUnits
+  }
+
+  pages.push(currentPage)
+
+  return pages
+}
+
 export function createPublicationLayout(
   publication: Publication,
 ): PublicationLayout {
+  const contentPages = paginateBlocks(publication.content.blocks)
+
   return {
     settings: cloneDocumentSettings(publication.documentSettings),
     pages: [
@@ -42,15 +87,13 @@ export function createPublicationLayout(
         kind: 'cover',
         blocks: [],
       },
-      {
-        id: `${publication.id}-content-page-1`,
-        sequence: 2,
-        kind: 'content',
-        pageNumber: 1,
-        blocks: publication.content.blocks.map((block) => ({
-          ...block,
-        })),
-      },
+      ...contentPages.map((blocks, index) => ({
+        id: `${publication.id}-content-page-${index + 1}`,
+        sequence: index + 2,
+        kind: 'content' as const,
+        pageNumber: index + 1,
+        blocks,
+      })),
     ],
   }
 }
