@@ -12,6 +12,7 @@ export type {
 } from './publicationDocumentSettings'
 
 export type { PublicationRevision } from './publicationRevision'
+export type { PublicationTemplate } from './publicationTemplate'
 
 export type {
   PublicationBlock,
