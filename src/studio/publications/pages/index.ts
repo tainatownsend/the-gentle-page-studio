@@ -1,4 +1,5 @@
 export * from './PublicationCreatePage'
 export * from './PublicationEditorPage'
+export * from './PublicationHistoryPage'
 export * from './PublicationPreviewPage'
 export * from './PublicationsPage'

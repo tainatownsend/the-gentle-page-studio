@@ -2,9 +2,47 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { PublicationCreateValues } from '../components'
 import type { PublicationEditorValues } from '../pages'
-import { loadPublications, savePublications } from '../persistence'
-import type { Publication } from '../types'
+import {
+  loadPublicationRevisions,
+  loadPublications,
+  savePublicationRevisions,
+  savePublications,
+} from '../persistence'
+import {
+  createDefaultPublicationDocumentSettings,
+  type Publication,
+  type PublicationContent,
+  type PublicationDocumentSettings,
+  type PublicationRevision,
+} from '../types'
 import { createPublicationId } from '../utils'
+
+function cloneContent(content: PublicationContent): PublicationContent {
+  return {
+    blocks: content.blocks.map((block) => ({
+      ...block,
+    })),
+  }
+}
+
+function cloneDocumentSettings(
+  settings: PublicationDocumentSettings,
+): PublicationDocumentSettings {
+  return {
+    ...settings,
+    margins: {
+      ...settings.margins,
+    },
+  }
+}
+
+function createRevisionId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return `revision-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
 
 function createPublication(values: PublicationCreateValues): Publication {
   const timestamp = new Date().toISOString()
@@ -17,8 +55,25 @@ function createPublication(values: PublicationCreateValues): Publication {
     content: {
       blocks: [],
     },
+    documentSettings: createDefaultPublicationDocumentSettings(),
     createdAt: timestamp,
     updatedAt: timestamp,
+  }
+}
+
+function createPublishedRevision(
+  publication: Publication,
+  values: PublicationEditorValues,
+  publishedAt: string,
+): PublicationRevision {
+  return {
+    id: createRevisionId(),
+    publicationId: publication.id,
+    title: values.title,
+    description: values.description,
+    content: cloneContent(values.content),
+    documentSettings: cloneDocumentSettings(publication.documentSettings),
+    publishedAt,
   }
 }
 
@@ -66,11 +121,8 @@ function createPublicationCopy(
   return {
     ...publication,
     id: createPublicationId(),
-    content: {
-      blocks: publication.content.blocks.map((block) => ({
-        ...block,
-      })),
-    },
+    content: cloneContent(publication.content),
+    documentSettings: cloneDocumentSettings(publication.documentSettings),
     title: getNextPublicationCopyTitle(publication, publications),
     status: 'draft',
     createdAt: timestamp,
@@ -78,21 +130,44 @@ function createPublicationCopy(
   }
 }
 
+function createRestoredDraft(revision: PublicationRevision): Publication {
+  const timestamp = new Date().toISOString()
+
+  return {
+    id: createPublicationId(),
+    title: revision.title,
+    description: revision.description,
+    status: 'draft',
+    content: cloneContent(revision.content),
+    documentSettings: cloneDocumentSettings(revision.documentSettings),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }
+}
+
 export type PublicationsWorkspace = {
   publications: readonly Publication[]
+  revisions: readonly PublicationRevision[]
   createDraft: (values: PublicationCreateValues) => Publication
   duplicatePublication: (publicationId: string) => Publication | undefined
   deletePublication: (publicationId: string) => void
   updatePublication: (publicationId: string, values: PublicationEditorValues) => void
   getPublication: (publicationId: string | undefined) => Publication | undefined
+  getPublicationRevisions: (publicationId: string) => PublicationRevision[]
+  restorePublicationRevision: (revisionId: string) => Publication | undefined
 }
 
 export function usePublicationsWorkspace(): PublicationsWorkspace {
   const [publications, setPublications] = useState<Publication[]>(loadPublications)
+  const [revisions, setRevisions] = useState<PublicationRevision[]>(loadPublicationRevisions)
 
   useEffect(() => {
     savePublications(publications)
   }, [publications])
+
+  useEffect(() => {
+    savePublicationRevisions(revisions)
+  }, [revisions])
 
   const createDraft = useCallback((values: PublicationCreateValues): Publication => {
     const createdPublication = createPublication(values)
@@ -118,29 +193,47 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
     },
     [publications],
   )
+
   const deletePublication = useCallback((publicationId: string): void => {
     setPublications((current) => {
       const nextPublications = current.filter((publication) => publication.id !== publicationId)
 
       return nextPublications.length === current.length ? current : nextPublications
     })
+    setRevisions((current) =>
+      current.filter((revision) => revision.publicationId !== publicationId),
+    )
   }, [])
 
   const updatePublication = useCallback(
     (publicationId: string, values: PublicationEditorValues) => {
+      const currentPublication = publications.find((publication) => publication.id === publicationId)
+
+      if (!currentPublication) {
+        return
+      }
+
+      const timestamp = new Date().toISOString()
+      const isPublishing = currentPublication.status !== 'published' && values.status === 'published'
+
+      if (isPublishing) {
+        const revision = createPublishedRevision(currentPublication, values, timestamp)
+        setRevisions((current) => [revision, ...current])
+      }
+
       setPublications((current) =>
         current.map((publication) =>
           publication.id === publicationId
             ? {
                 ...publication,
                 ...values,
-                updatedAt: new Date().toISOString(),
+                updatedAt: timestamp,
               }
             : publication,
         ),
       )
     },
-    [],
+    [publications],
   )
 
   const getPublication = useCallback(
@@ -149,22 +242,50 @@ export function usePublicationsWorkspace(): PublicationsWorkspace {
     [publications],
   )
 
+  const getPublicationRevisions = useCallback(
+    (publicationId: string) =>
+      revisions.filter((revision) => revision.publicationId === publicationId),
+    [revisions],
+  )
+
+  const restorePublicationRevision = useCallback(
+    (revisionId: string): Publication | undefined => {
+      const revision = revisions.find((candidate) => candidate.id === revisionId)
+
+      if (!revision) {
+        return undefined
+      }
+
+      const restoredDraft = createRestoredDraft(revision)
+      setPublications((current) => [restoredDraft, ...current])
+
+      return restoredDraft
+    },
+    [revisions],
+  )
+
   return useMemo(
     () => ({
       publications,
+      revisions,
       createDraft,
       duplicatePublication,
       deletePublication,
       updatePublication,
       getPublication,
+      getPublicationRevisions,
+      restorePublicationRevision,
     }),
     [
       publications,
+      revisions,
       createDraft,
       duplicatePublication,
       deletePublication,
       updatePublication,
       getPublication,
+      getPublicationRevisions,
+      restorePublicationRevision,
     ],
   )
 }

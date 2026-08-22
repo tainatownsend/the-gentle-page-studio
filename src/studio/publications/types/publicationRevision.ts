@@ -1,15 +1,12 @@
 import type { PublicationContent } from './publicationContent'
 import type { PublicationDocumentSettings } from './publicationDocumentSettings'
 
-export type PublicationStatus = 'draft' | 'published'
-
-export type Publication = {
+export type PublicationRevision = {
   id: string
+  publicationId: string
   title: string
   description?: string
-  status: PublicationStatus
   content: PublicationContent
   documentSettings: PublicationDocumentSettings
-  createdAt: string
-  updatedAt: string
+  publishedAt: string
 }

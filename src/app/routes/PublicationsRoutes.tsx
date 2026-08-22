@@ -10,6 +10,7 @@ import {
 import {
   PublicationCreatePage,
   PublicationEditorPage,
+  PublicationHistoryPage,
   PublicationPreviewPage,
   PublicationsPage,
   usePublicationsWorkspace,
@@ -41,10 +42,7 @@ function PublicationEditorRoute({
   const resolvedPublicationId = publicationId
 
   function handleSave(values: PublicationEditorValues) {
-    workspace.updatePublication(
-      resolvedPublicationId,
-      values,
-    )
+    workspace.updatePublication(resolvedPublicationId, values)
     navigate('/publications')
   }
 
@@ -72,18 +70,55 @@ function PublicationPreviewRoute({
     return <Navigate to="/publications" replace />
   }
 
-  const encodedPublicationId =
-    encodeURIComponent(publicationId)
+  const encodedPublicationId = encodeURIComponent(publicationId)
 
   return (
     <PublicationPreviewPage
       publication={publication}
       onBack={() => navigate('/publications')}
-      onEdit={() =>
-        navigate(
-          `/publications/${encodedPublicationId}/edit`,
-        )
-      }
+      onEdit={() => navigate(`/publications/${encodedPublicationId}/edit`)}
+      onHistory={() => navigate(`/publications/${encodedPublicationId}/history`)}
+    />
+  )
+}
+
+type PublicationHistoryRouteProps = {
+  workspace: Pick<
+    PublicationsWorkspace,
+    'getPublication' | 'getPublicationRevisions' | 'restorePublicationRevision'
+  >
+}
+
+function PublicationHistoryRoute({
+  workspace,
+}: PublicationHistoryRouteProps): ReactElement {
+  const navigate = useNavigate()
+  const { publicationId } = useParams()
+  const publication = workspace.getPublication(publicationId)
+
+  if (!publication || !publicationId) {
+    return <Navigate to="/publications" replace />
+  }
+
+  const encodedPublicationId = encodeURIComponent(publicationId)
+  const revisions = workspace.getPublicationRevisions(publicationId)
+
+  function handleRestore(revisionId: string) {
+    const restoredDraft = workspace.restorePublicationRevision(revisionId)
+
+    if (!restoredDraft) {
+      return
+    }
+
+    navigate(`/publications/${encodeURIComponent(restoredDraft.id)}/edit`)
+  }
+
+  return (
+    <PublicationHistoryPage
+      publication={publication}
+      revisions={revisions}
+      onBack={() => navigate(`/publications/${encodedPublicationId}/preview`)}
+      onRestore={handleRestore}
     />
   )
 }
@@ -95,19 +130,12 @@ export function PublicationsRoutes(): ReactElement {
   function handleCreate(values: PublicationCreateValues) {
     const publication = workspace.createDraft(values)
 
-    navigate(
-      `/publications/${encodeURIComponent(
-        publication.id,
-      )}/edit`,
-    )
+    navigate(`/publications/${encodeURIComponent(publication.id)}/edit`)
   }
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={<Navigate to="/publications" replace />}
-      />
+      <Route path="/" element={<Navigate to="/publications" replace />} />
 
       <Route
         path="/publications"
@@ -116,18 +144,10 @@ export function PublicationsRoutes(): ReactElement {
             publications={workspace.publications}
             onCreate={() => navigate('/publications/new')}
             onOpen={(publicationId) =>
-              navigate(
-                `/publications/${encodeURIComponent(
-                  publicationId,
-                )}/edit`,
-              )
+              navigate(`/publications/${encodeURIComponent(publicationId)}/edit`)
             }
             onPreview={(publicationId) =>
-              navigate(
-                `/publications/${encodeURIComponent(
-                  publicationId,
-                )}/preview`,
-              )
+              navigate(`/publications/${encodeURIComponent(publicationId)}/preview`)
             }
             onDuplicate={workspace.duplicatePublication}
             onDelete={workspace.deletePublication}
@@ -147,22 +167,20 @@ export function PublicationsRoutes(): ReactElement {
 
       <Route
         path="/publications/:publicationId/edit"
-        element={
-          <PublicationEditorRoute workspace={workspace} />
-        }
+        element={<PublicationEditorRoute workspace={workspace} />}
       />
 
       <Route
         path="/publications/:publicationId/preview"
-        element={
-          <PublicationPreviewRoute workspace={workspace} />
-        }
+        element={<PublicationPreviewRoute workspace={workspace} />}
       />
 
       <Route
-        path="*"
-        element={<Navigate to="/publications" replace />}
+        path="/publications/:publicationId/history"
+        element={<PublicationHistoryRoute workspace={workspace} />}
       />
+
+      <Route path="*" element={<Navigate to="/publications" replace />} />
     </Routes>
   )
 }
