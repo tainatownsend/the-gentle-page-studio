@@ -43,7 +43,8 @@ function PublicationEditorRoute({
   }
 
   const resolvedPublicationId = publicationId
-  const recoveredDraft = loadPublicationDraftRecovery(publication.id, publication.updatedAt)
+  const publicationUpdatedAt = publication.updatedAt
+  const recoveredDraft = loadPublicationDraftRecovery(publication.id, publicationUpdatedAt)
 
   function handleSave(values: PublicationEditorValues) {
     workspace.updatePublication(resolvedPublicationId, values)
@@ -52,7 +53,7 @@ function PublicationEditorRoute({
   }
 
   function handleDraftAutosave(values: PublicationEditorValues) {
-    savePublicationDraftRecovery(resolvedPublicationId, publication.updatedAt, values)
+    savePublicationDraftRecovery(resolvedPublicationId, publicationUpdatedAt, values)
   }
 
   return (
