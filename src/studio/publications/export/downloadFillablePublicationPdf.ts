@@ -1,5 +1,4 @@
 import type { Publication } from '../types'
-import { generateFillablePublicationPdf } from './generateFillablePublicationPdf'
 
 export function createPublicationPdfFilename(title: string): string {
   const slug = title
@@ -16,6 +15,9 @@ export function createPublicationPdfFilename(title: string): string {
 export async function downloadFillablePublicationPdf(
   publication: Publication,
 ): Promise<void> {
+  const { generateFillablePublicationPdf } = await import(
+    './generateFillablePublicationPdf'
+  )
   const bytes = await generateFillablePublicationPdf(publication)
   const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' })
   const url = URL.createObjectURL(blob)
