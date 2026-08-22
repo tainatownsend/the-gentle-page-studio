@@ -17,24 +17,21 @@ This backlog separates work that has already been processed, implementation-read
 
 ## Processed in PR0027O
 
-### Revision comparison foundation
+- [x] deterministic revision comparison utility
+- [x] title and description comparison
+- [x] added, removed, changed, and moved block detection using durable block IDs
+- [x] revision comparison regression coverage
+- [x] roadmap synchronization through current implementation status
 
-- [x] **Deterministic revision diff** — compares two immutable snapshots without mutating either revision.
-- [x] **Metadata comparison** — reports title and description changes.
-- [x] **Durable block comparison** — reports block additions, removals, content/type changes, and movement using stable block IDs.
-- [x] **Regression coverage** — covers equivalent snapshots plus mixed metadata and block changes.
-- [x] **Roadmap synchronization** — reflects the actual implementation status through fillable export and revision comparison.
+## Processed in PR0027P
+
+- [x] **Adjacent revision comparison UI** — each published version can be compared with its previous snapshot.
+- [x] **Read-only change summary** — metadata and block changes are surfaced without mutating either revision.
+- [x] **Restore separation** — restore-as-new-draft remains an independent action.
+- [x] **Accessible comparison region** — comparison output uses explicit headings and a labeled change list.
+- [x] **History-page coverage** — tests verify comparison activation and mixed revision changes.
 
 ## Ready to implement next
-
-### Revision comparison UI
-
-1. add a Compare action to published version history
-2. select two revisions deterministically
-3. render metadata changes separately from block changes
-4. show added, removed, changed, and moved blocks without editing either snapshot
-5. preserve restore-as-new-draft as a separate action
-6. add route/page tests and accessibility coverage
 
 ### Dependency security follow-up
 
@@ -42,6 +39,12 @@ This backlog separates work that has already been processed, implementation-read
 - identify whether findings affect runtime or development dependencies
 - apply only reviewed, non-breaking remediation
 - keep PDF export behavior unchanged
+
+### Studio evolution candidates after MVP acceptance
+
+- autosave and draft recovery
+- templates
+- asset library
 
 ## Ready to validate manually
 
