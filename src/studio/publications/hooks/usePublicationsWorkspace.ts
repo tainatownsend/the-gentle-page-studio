@@ -8,6 +8,7 @@ import {
   savePublicationRevisions,
   savePublications,
 } from '../persistence'
+import { cloneTemplateContent, getPublicationTemplate } from '../templates'
 import {
   createDefaultPublicationDocumentSettings,
   type Publication,
@@ -46,15 +47,14 @@ function createRevisionId(): string {
 
 function createPublication(values: PublicationCreateValues): Publication {
   const timestamp = new Date().toISOString()
+  const template = getPublicationTemplate(values.templateId)
 
   return {
     id: createPublicationId(),
     title: values.title,
     description: values.description,
     status: 'draft',
-    content: {
-      blocks: [],
-    },
+    content: cloneTemplateContent(template),
     documentSettings: createDefaultPublicationDocumentSettings(),
     createdAt: timestamp,
     updatedAt: timestamp,
