@@ -1,90 +1,137 @@
 # Backlog
 
-This backlog separates work that has already been processed, implementation-ready work, and intentionally deferred items.
+This backlog reflects the consolidated MVP release candidate in `release/mvp-manual-acceptance` / PR0028.
 
-## Processed through PR0027M
+## Implemented in the MVP release candidate
 
-- [x] Platform quality gate, snapshot-first repair workflow, and roadmap refresh
-- [x] US Letter portrait document settings with fixed Gentle Page margins
-- [x] Derived page layout, print preview, typography, cover, automatic pagination, and page numbering
-- [x] Static Print / Save as PDF path
-- [x] Immutable published revisions with local history and restore-as-new-draft behavior
-- [x] Multiline response and checkbox block model, authoring controls, and preview affordances
-- [x] Fillable PDF planning with deterministic US Letter geometry and stable field identities
-- [x] Binary `pdf-lib` AcroForm serializer with round-trip verification
-- [x] Browser `Download fillable PDF` action with deterministic filenames
-- [x] Fillable export error handling, retry behavior, and duplicate-click protection
+### Platform and quality
 
-## Processed in PR0027O
+- [x] project architecture and design-system foundation
+- [x] light/dark theme support
+- [x] unified `npm run quality` gate
+- [x] snapshot-first repair workflow
+- [x] deterministic test interaction guidance
+- [x] repository hygiene cleanup
+- [x] reviewed high-severity dependency remediation without forced upgrades
+- [x] weekly Dependabot npm maintenance
+- [x] lazy loading of the fillable-PDF serializer
 
-- [x] deterministic revision comparison utility
-- [x] title and description comparison
-- [x] added, removed, changed, and moved block detection using durable block IDs
-- [x] revision comparison regression coverage
-- [x] roadmap synchronization through current implementation status
+### Publication lifecycle
 
-## Processed in PR0027P
+- [x] local publication persistence and migrations
+- [x] dedicated publication creation route
+- [x] Draft / Published lifecycle
+- [x] edit, save, duplicate, delete, and preview flows
+- [x] unsaved-change protection
+- [x] autosave and best-effort draft recovery
+- [x] recovery invalidation when the canonical saved publication is newer
 
-- [x] **Adjacent revision comparison UI** — each published version can be compared with its previous snapshot.
-- [x] **Read-only change summary** — metadata and block changes are surfaced without mutating either revision.
-- [x] **Restore separation** — restore-as-new-draft remains an independent action.
-- [x] **Accessible comparison region** — comparison output uses explicit headings and a labeled change list.
-- [x] **History-page coverage** — tests verify comparison activation and mixed revision changes.
+### Content authoring
 
-## Ready to implement next
+- [x] heading blocks
+- [x] paragraph blocks
+- [x] multiline response fields
+- [x] checkbox fields
+- [x] add, remove, duplicate, and move block controls
+- [x] heading levels
+- [x] starter templates: Blank publication, Guided journal, and Daily check-in
 
-### Dependency security follow-up
+### Editorial document output
 
-- investigate issue #60 with `npm audit --json`
-- identify whether findings affect runtime or development dependencies
-- apply only reviewed, non-breaking remediation
-- keep PDF export behavior unchanged
+- [x] US Letter portrait defaults
+- [x] fixed Gentle Page margins
+- [x] Gentle Page cover and typography
+- [x] automatic derived pagination
+- [x] bottom-center page numbers
+- [x] print-oriented preview
+- [x] static browser Print / Save as PDF
 
-### Studio evolution candidates after MVP acceptance
+### Fillable PDF
 
-- autosave and draft recovery
-- templates
-- asset library
+- [x] deterministic PDF layout planning
+- [x] stable interactive field identities
+- [x] binary `pdf-lib` serializer
+- [x] multiline AcroForm text fields
+- [x] AcroForm checkboxes
+- [x] deterministic download filenames
+- [x] browser Download fillable PDF action
+- [x] export error handling and retry behavior
+- [x] duplicate-export protection
 
-## Ready to validate manually
+### Publication history
 
-### Fillable export acceptance
+- [x] immutable snapshots on explicit publish transitions
+- [x] local revision persistence
+- [x] version history UI
+- [x] restore historical version as a new Draft
+- [x] deterministic revision comparison
+- [x] adjacent published-version comparison UI
 
-1. create a publication containing a multiline response field and a checkbox
-2. download the fillable PDF from preview and verify its filename
-3. open it in a common PDF viewer
-4. type into multiline fields and toggle checkboxes
-5. save, close, and reopen the PDF; confirm values persist
-6. print/export the filled PDF and confirm cover, margins, page numbers, content order, and field appearance
-7. record only reproducible viewer compatibility issues for follow-up
+### Studio assets
 
-## Architectural notes
+- [x] local image asset library
+- [x] PNG, JPEG, and WebP upload validation
+- [x] local persistence and preview
+- [x] permanent asset deletion
 
-Authored content remains a semantic ordered stream. Page objects belong to derived layout used by preview and export, preventing persisted page boundaries from becoming stale after content or typography changes.
+## Current release gate — manual acceptance
 
-Explicit publish creates an immutable snapshot; Draft saves do not version; all MVP snapshots remain local; restore creates a new Draft.
+Run `docs/MVP_ACCEPTANCE.md` against PR0028.
 
-Reader response data is not publication authoring state. Additional fillable field types follow only after the first fillable workflow is validated.
+The MVP remains a release candidate until browser and real PDF-viewer acceptance is complete.
 
-## Intentionally deferred
+Required manual evidence:
 
+1. publication creation and template smoke test
+2. autosave/recovery smoke test
+3. editor and automatic-pagination smoke test
+4. local asset-library smoke test
+5. static Print / Save as PDF validation
+6. fillable PDF download, edit, save, close, reopen, and print validation
+7. version history, comparison, and restore validation
+8. light/dark and desktop/narrow viewport smoke test
+
+Acceptance outcome must be one of:
+
+- **PASS**
+- **PASS WITH FOLLOW-UP** with no blocking defects
+- **FAIL** with reproducible blocking defects recorded
+
+## Follow-up only if acceptance exposes a defect
+
+- [ ] remediate reproducible browser print incompatibilities
+- [ ] remediate reproducible PDF-viewer compatibility issues
+- [ ] adjust pagination or field geometry only when a real acceptance case demonstrates a problem
+
+## Post-MVP evolution
+
+These items are intentionally outside the current manual-acceptance gate:
+
+- authentication
+- backend synchronization
+- collaboration
+- cloud asset storage
+- placing library assets directly into publication pages
+- additional fillable field types
+- richer text formatting
 - drag-and-drop block reordering
 - keyboard shortcuts for block movement
 - bulk block selection
-- rich text formatting
-- autosave
-- draft recovery
 - user-selectable page sizes and orientation
 - custom margins
 - manual pagination
 - custom page-number placement
 - per-publication visual themes
 - customizable cover layouts
-- templates
-- asset library
-- authentication
-- backend synchronization
-- collaboration
+- multiple export formats
+- publishing/distribution integrations
 - scheduled publishing
-- distribution integrations
 - AI-assisted creation
+
+## Architectural notes
+
+Authored content remains a semantic ordered stream. Page objects belong to derived layout used by preview and export, preventing persisted page boundaries from becoming stale after content or typography changes.
+
+Explicit publish creates an immutable snapshot; ordinary Draft saves do not create versions; restore creates a new Draft rather than rewriting history.
+
+Reader response data remains outside publication authoring state. Fillable PDF fields are output controls derived from durable authored blocks.
