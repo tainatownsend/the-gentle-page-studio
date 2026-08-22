@@ -60,14 +60,14 @@ MVP defaults are locked: US Letter, portrait, fixed Gentle Page margins, automat
 - [ ] Validate the first complete Gentle Page journal end to end in a real PDF viewer
 - [ ] Record and remediate any reproducible viewer compatibility issues
 
-## 6. Publication history — active
+## 6. Publication history — complete for current MVP scope
 
 - [x] Immutable publish snapshots
 - [x] Local revision persistence
 - [x] Version history route
 - [x] Restore historical version as a new Draft
 - [x] Revision comparison domain utility
-- [ ] Revision comparison UI
+- [x] Compare each published revision with its previous snapshot
 
 ## 7. Studio evolution — later
 
