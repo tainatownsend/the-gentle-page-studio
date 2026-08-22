@@ -18,16 +18,19 @@ import styles from './PublicationCreateForm.module.css'
 export type PublicationCreateValues = {
   title: string
   description?: string
+  templateId?: string
 }
 
 export type PublicationCreateFormProps = {
   onSubmit: (values: PublicationCreateValues) => void
   onCancel: () => void
+  templateId?: string
 }
 
 export function PublicationCreateForm({
   onSubmit,
   onCancel,
+  templateId,
 }: PublicationCreateFormProps): ReactElement {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -49,6 +52,7 @@ export function PublicationCreateForm({
     onSubmit({
       title: normalizedTitle,
       description: normalizedDescription || undefined,
+      templateId,
     })
   }
 
@@ -57,18 +61,11 @@ export function PublicationCreateForm({
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="lg">
           <Stack gap="xs">
-            <Text
-              as="h2"
-              id="create-publication-title"
-              variant="h2"
-              weight="semibold"
-            >
+            <Text as="h2" id="create-publication-title" variant="h2" weight="semibold">
               Create publication
             </Text>
-
             <Text tone="secondary">
-              Start with the essentials. You can shape the full publication in
-              the editor afterward.
+              Start with the essentials. You can shape the full publication in the editor afterward.
             </Text>
           </Stack>
 
@@ -84,19 +81,13 @@ export function PublicationCreateForm({
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value)
-
-                if (titleError) {
-                  setTitleError(undefined)
-                }
+                if (titleError) setTitleError(undefined)
               }}
               placeholder="e.g. ADHD Emotional Regulation Journal"
             />
           </Field>
 
-          <Field
-            label="Description"
-            description="Add a short note about the purpose of this publication."
-          >
+          <Field label="Description" description="Add a short note about the purpose of this publication.">
             <Textarea
               fullWidth
               rows={4}
@@ -110,7 +101,6 @@ export function PublicationCreateForm({
             <Button type="button" variant="ghost" onClick={onCancel}>
               Cancel
             </Button>
-
             <Button type="submit">Create draft</Button>
           </Cluster>
         </Stack>
