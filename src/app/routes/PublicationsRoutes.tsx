@@ -9,11 +9,14 @@ import {
 
 import { AssetsPage } from '@/studio/assets'
 import {
+  clearPublicationDraftRecovery,
+  loadPublicationDraftRecovery,
   PublicationCreatePage,
   PublicationEditorPage,
   PublicationHistoryPage,
   PublicationPreviewPage,
   PublicationsPage,
+  savePublicationDraftRecovery,
   usePublicationsWorkspace,
   type PublicationCreateValues,
   type PublicationEditorValues,
@@ -41,17 +44,27 @@ function PublicationEditorRoute({
   }
 
   const resolvedPublicationId = publicationId
+  const publicationUpdatedAt = publication.updatedAt
+  const recoveredDraft = loadPublicationDraftRecovery(publication.id, publicationUpdatedAt)
 
   function handleSave(values: PublicationEditorValues) {
     workspace.updatePublication(resolvedPublicationId, values)
+    clearPublicationDraftRecovery(resolvedPublicationId)
     navigate('/publications')
+  }
+
+  function handleDraftAutosave(values: PublicationEditorValues) {
+    savePublicationDraftRecovery(resolvedPublicationId, publicationUpdatedAt, values)
   }
 
   return (
     <PublicationEditorPage
       publication={publication}
+      recoveredDraft={recoveredDraft}
       onBack={() => navigate('/publications')}
       onSave={handleSave}
+      onDraftAutosave={handleDraftAutosave}
+      onDraftDiscard={() => clearPublicationDraftRecovery(resolvedPublicationId)}
     />
   )
 }
