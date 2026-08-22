@@ -1,21 +1,15 @@
 import type { ReactElement } from 'react'
-import {
-  Navigate,
-  Route,
-  Routes,
-  useNavigate,
-  useParams,
-} from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
 import { AssetsPage } from '@/studio/assets'
 import {
-  clearPublicationDraftRecovery,
-  loadPublicationDraftRecovery,
   PublicationCreatePage,
   PublicationEditorPage,
   PublicationHistoryPage,
   PublicationPreviewPage,
   PublicationsPage,
+  clearPublicationDraftRecovery,
+  loadPublicationDraftRecovery,
   savePublicationDraftRecovery,
   usePublicationsWorkspace,
   type PublicationCreateValues,
@@ -23,18 +17,13 @@ import {
   type PublicationsWorkspace,
 } from '@/studio/publications'
 
-type PublicationRouteWorkspace = Pick<
-  PublicationsWorkspace,
-  'getPublication' | 'updatePublication'
->
+type PublicationRouteWorkspace = Pick<PublicationsWorkspace, 'getPublication' | 'updatePublication'>
 
 type PublicationEditorRouteProps = {
   workspace: PublicationRouteWorkspace
 }
 
-function PublicationEditorRoute({
-  workspace,
-}: PublicationEditorRouteProps): ReactElement {
+function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): ReactElement {
   const navigate = useNavigate()
   const { publicationId } = useParams()
   const publication = workspace.getPublication(publicationId)
@@ -44,8 +33,8 @@ function PublicationEditorRoute({
   }
 
   const resolvedPublicationId = publicationId
-  const publicationUpdatedAt = publication.updatedAt
-  const recoveredDraft = loadPublicationDraftRecovery(publication.id, publicationUpdatedAt)
+  const baseUpdatedAt = publication.updatedAt
+  const recoveredDraft = loadPublicationDraftRecovery(resolvedPublicationId, baseUpdatedAt)
 
   function handleSave(values: PublicationEditorValues) {
     workspace.updatePublication(resolvedPublicationId, values)
@@ -54,7 +43,7 @@ function PublicationEditorRoute({
   }
 
   function handleDraftAutosave(values: PublicationEditorValues) {
-    savePublicationDraftRecovery(resolvedPublicationId, publicationUpdatedAt, values)
+    savePublicationDraftRecovery(resolvedPublicationId, baseUpdatedAt, values)
   }
 
   return (
@@ -73,9 +62,7 @@ type PublicationPreviewRouteProps = {
   workspace: Pick<PublicationsWorkspace, 'getPublication'>
 }
 
-function PublicationPreviewRoute({
-  workspace,
-}: PublicationPreviewRouteProps): ReactElement {
+function PublicationPreviewRoute({ workspace }: PublicationPreviewRouteProps): ReactElement {
   const navigate = useNavigate()
   const { publicationId } = useParams()
   const publication = workspace.getPublication(publicationId)
@@ -103,9 +90,7 @@ type PublicationHistoryRouteProps = {
   >
 }
 
-function PublicationHistoryRoute({
-  workspace,
-}: PublicationHistoryRouteProps): ReactElement {
+function PublicationHistoryRoute({ workspace }: PublicationHistoryRouteProps): ReactElement {
   const navigate = useNavigate()
   const { publicationId } = useParams()
   const publication = workspace.getPublication(publicationId)
@@ -143,7 +128,6 @@ export function PublicationsRoutes(): ReactElement {
 
   function handleCreate(values: PublicationCreateValues) {
     const publication = workspace.createDraft(values)
-
     navigate(`/publications/${encodeURIComponent(publication.id)}/edit`)
   }
 
@@ -158,12 +142,8 @@ export function PublicationsRoutes(): ReactElement {
             publications={workspace.publications}
             onCreate={() => navigate('/publications/new')}
             onAssets={() => navigate('/assets')}
-            onOpen={(publicationId) =>
-              navigate(`/publications/${encodeURIComponent(publicationId)}/edit`)
-            }
-            onPreview={(publicationId) =>
-              navigate(`/publications/${encodeURIComponent(publicationId)}/preview`)
-            }
+            onOpen={(id) => navigate(`/publications/${encodeURIComponent(id)}/edit`)}
+            onPreview={(id) => navigate(`/publications/${encodeURIComponent(id)}/preview`)}
             onDuplicate={workspace.duplicatePublication}
             onDelete={workspace.deletePublication}
           />
@@ -175,10 +155,7 @@ export function PublicationsRoutes(): ReactElement {
       <Route
         path="/publications/new"
         element={
-          <PublicationCreatePage
-            onBack={() => navigate('/publications')}
-            onCreate={handleCreate}
-          />
+          <PublicationCreatePage onBack={() => navigate('/publications')} onCreate={handleCreate} />
         }
       />
 
