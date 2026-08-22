@@ -1,5 +1,5 @@
 import { useState, type ReactElement } from 'react'
-import { ArrowLeft, Download, History, Pencil, Printer } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Download, History, Pencil, Printer } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -70,6 +70,7 @@ export function PublicationPreviewPage({
   onHistory,
 }: PublicationPreviewPageProps): ReactElement {
   const [isDownloadingFillablePdf, setIsDownloadingFillablePdf] = useState(false)
+  const [fillablePdfError, setFillablePdfError] = useState<string>()
   const layout = createPublicationLayout(publication)
   const hasInteractiveFields = publication.content.blocks.some(
     (block) => block.type === 'multiline-text-field' || block.type === 'checkbox-field',
@@ -80,10 +81,19 @@ export function PublicationPreviewPage({
   }
 
   async function handleDownloadFillablePdf() {
+    if (isDownloadingFillablePdf) {
+      return
+    }
+
+    setFillablePdfError(undefined)
     setIsDownloadingFillablePdf(true)
 
     try {
       await downloadFillablePublicationPdf(publication)
+    } catch {
+      setFillablePdfError(
+        'The fillable PDF could not be prepared. Your publication is unchanged. Please try again.',
+      )
     } finally {
       setIsDownloadingFillablePdf(false)
     }
@@ -94,49 +104,60 @@ export function PublicationPreviewPage({
       <Container size="lg" className={styles.previewContainer}>
         <Stack gap="xl" className={styles.previewStack}>
           <div className={styles.previewControls}>
-            <PageHeader
-              eyebrow="Publication preview"
-              title={publication.title}
-              description={
-                publication.status === 'published' ? 'Published preview' : 'Draft preview'
-              }
-              actions={
-                <Cluster gap="sm">
-                  <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
-                    Back to publications
-                  </Button>
-
-                  <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
-                    Edit publication
-                  </Button>
-
-                  {onHistory ? (
-                    <Button
-                      variant="secondary"
-                      startIcon={<History size={18} />}
-                      onClick={onHistory}
-                    >
-                      Version history
+            <Stack gap="md">
+              <PageHeader
+                eyebrow="Publication preview"
+                title={publication.title}
+                description={
+                  publication.status === 'published' ? 'Published preview' : 'Draft preview'
+                }
+                actions={
+                  <Cluster gap="sm">
+                    <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
+                      Back to publications
                     </Button>
-                  ) : null}
 
-                  {hasInteractiveFields ? (
-                    <Button
-                      variant="secondary"
-                      startIcon={<Download size={18} />}
-                      disabled={isDownloadingFillablePdf}
-                      onClick={() => void handleDownloadFillablePdf()}
-                    >
-                      {isDownloadingFillablePdf ? 'Preparing fillable PDF…' : 'Download fillable PDF'}
+                    <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
+                      Edit publication
                     </Button>
-                  ) : null}
 
-                  <Button startIcon={<Printer size={18} />} onClick={handlePrint}>
-                    Print / Save as PDF
-                  </Button>
-                </Cluster>
-              }
-            />
+                    {onHistory ? (
+                      <Button
+                        variant="secondary"
+                        startIcon={<History size={18} />}
+                        onClick={onHistory}
+                      >
+                        Version history
+                      </Button>
+                    ) : null}
+
+                    {hasInteractiveFields ? (
+                      <Button
+                        variant="secondary"
+                        startIcon={<Download size={18} />}
+                        disabled={isDownloadingFillablePdf}
+                        onClick={() => void handleDownloadFillablePdf()}
+                      >
+                        {isDownloadingFillablePdf
+                          ? 'Preparing fillable PDF…'
+                          : 'Download fillable PDF'}
+                      </Button>
+                    ) : null}
+
+                    <Button startIcon={<Printer size={18} />} onClick={handlePrint}>
+                      Print / Save as PDF
+                    </Button>
+                  </Cluster>
+                }
+              />
+
+              {fillablePdfError ? (
+                <div className={styles.exportError} role="alert">
+                  <AlertCircle size={18} aria-hidden="true" />
+                  <p>{fillablePdfError}</p>
+                </div>
+              ) : null}
+            </Stack>
           </div>
 
           <section className={styles.previewViewport} aria-label="Print-oriented publication preview">
