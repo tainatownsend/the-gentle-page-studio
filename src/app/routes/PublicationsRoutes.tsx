@@ -7,6 +7,7 @@ import {
   useParams,
 } from 'react-router-dom'
 
+import { AssetsPage } from '@/studio/assets'
 import {
   PublicationCreatePage,
   PublicationEditorPage,
@@ -143,6 +144,7 @@ export function PublicationsRoutes(): ReactElement {
           <PublicationsPage
             publications={workspace.publications}
             onCreate={() => navigate('/publications/new')}
+            onAssets={() => navigate('/assets')}
             onOpen={(publicationId) =>
               navigate(`/publications/${encodeURIComponent(publicationId)}/edit`)
             }
@@ -154,6 +156,8 @@ export function PublicationsRoutes(): ReactElement {
           />
         }
       />
+
+      <Route path="/assets" element={<AssetsPage onBack={() => navigate('/publications')} />} />
 
       <Route
         path="/publications/new"
