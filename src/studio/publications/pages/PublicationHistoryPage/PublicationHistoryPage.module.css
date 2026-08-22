@@ -9,17 +9,27 @@
   text-align: center;
 }
 
-.revisionList {
+.revisionList,
+.changeList {
   display: grid;
   gap: var(--space-md, 16px);
   padding: 0;
   margin: 0;
+}
+
+.revisionList {
   list-style: none;
+}
+
+.changeList {
+  padding-inline-start: 1.25rem;
 }
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: var(--space-sm, 12px);
 }
 
 @media (min-width: 48rem) {
