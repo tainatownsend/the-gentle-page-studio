@@ -33,8 +33,11 @@ export type PublicationEditorValues = {
 
 export type PublicationEditorPageProps = {
   publication: Publication
+  recoveredDraft?: PublicationEditorValues
   onBack: () => void
   onSave: (values: PublicationEditorValues) => void
+  onDraftAutosave?: (values: PublicationEditorValues) => void
+  onDraftDiscard?: () => void
 }
 
 type UnsavedChangesConfirmationProps = {
@@ -200,14 +203,21 @@ function UnsavedChangesConfirmation({
 
 export function PublicationEditorPage({
   publication,
+  recoveredDraft,
   onBack,
   onSave,
+  onDraftAutosave,
+  onDraftDiscard,
 }: PublicationEditorPageProps): ReactElement {
-  const [title, setTitle] = useState(publication.title)
-  const [description, setDescription] = useState(publication.description ?? '')
-  const [status, setStatus] = useState<PublicationStatus>(publication.status)
+  const [title, setTitle] = useState(recoveredDraft?.title ?? publication.title)
+  const [description, setDescription] = useState(
+    recoveredDraft?.description ?? publication.description ?? '',
+  )
+  const [status, setStatus] = useState<PublicationStatus>(
+    recoveredDraft?.status ?? publication.status,
+  )
   const [content, setContent] = useState<PublicationContent>(() =>
-    cloneContent(publication.content),
+    cloneContent(recoveredDraft?.content ?? publication.content),
   )
   const [titleError, setTitleError] = useState<string>()
   const [isConfirmingExit, setIsConfirmingExit] = useState(false)
@@ -221,6 +231,23 @@ export function PublicationEditorPage({
     normalizedDescription !== savedDescription ||
     status !== publication.status ||
     !contentMatches(content, publication.content)
+
+  useEffect(() => {
+    if (!hasUnsavedChanges || !onDraftAutosave) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      onDraftAutosave({
+        title,
+        description: description || undefined,
+        status,
+        content: cloneContent(content),
+      })
+    }, 700)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [content, description, hasUnsavedChanges, onDraftAutosave, status, title])
 
   function markAsDraftAfterEdit() {
     setStatus((currentStatus) => (currentStatus === 'published' ? 'draft' : currentStatus))
@@ -331,7 +358,11 @@ export function PublicationEditorPage({
             <PageHeader
               eyebrow="Publication editor"
               title={publication.title}
-              description={`Status: ${status === 'published' ? 'Published' : 'Draft'}`}
+              description={
+                recoveredDraft
+                  ? `Status: ${status === 'published' ? 'Published' : 'Draft'} · Recovered unsaved changes`
+                  : `Status: ${status === 'published' ? 'Published' : 'Draft'}`
+              }
               actions={
                 <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={requestExit}>
                   Back to publications
@@ -632,7 +663,10 @@ export function PublicationEditorPage({
       {isConfirmingExit ? (
         <UnsavedChangesConfirmation
           onKeepEditing={() => setIsConfirmingExit(false)}
-          onDiscard={onBack}
+          onDiscard={() => {
+            onDraftDiscard?.()
+            onBack()
+          }}
         />
       ) : null}
     </>
