@@ -5,6 +5,12 @@
   background: var(--color-surface-secondary, #f6f8f7);
 }
 
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm, 12px);
+}
+
 @media (min-width: 48rem) {
   .page {
     padding-block: var(--space-2xl, 48px);
@@ -38,10 +44,12 @@
 }
 
 @media (max-width: 30rem) {
+  .headerActions,
   .dialogActions {
     flex-direction: column-reverse;
   }
 
+  .headerActions > *,
   .dialogActions > * {
     width: 100%;
   }
