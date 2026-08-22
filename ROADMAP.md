@@ -1,6 +1,6 @@
 # Roadmap
 
-The Gentle Page Studio is moving from platform foundation into editorial production: turning structured publication content into page-based, printable products.
+The Gentle Page Studio has completed its core editorial-production foundation and is now moving through export acceptance and Studio-evolution capabilities.
 
 ## 1. Platform foundation — complete
 
@@ -27,8 +27,8 @@ The Gentle Page Studio is moving from platform foundation into editorial product
 ## 3. Content editor foundation — complete
 
 - [x] Durable ordered content blocks
-- [x] Heading blocks with semantic levels
-- [x] Paragraph blocks
+- [x] Heading and paragraph blocks
+- [x] Multiline response and checkbox blocks
 - [x] Add and remove blocks
 - [x] Move blocks up and down
 - [x] Duplicate blocks
@@ -36,32 +36,41 @@ The Gentle Page Studio is moving from platform foundation into editorial product
 - [x] Return Published publications to Draft after content edits
 - [x] Render saved content in preview
 
-## 4. Editorial document foundation — next
+## 4. Editorial document foundation — complete
 
 MVP defaults are locked: US Letter, portrait, fixed Gentle Page margins, automatic pagination, bottom-center page numbers, fixed Gentle Page typography, and a fixed Gentle Page cover as page one.
 
-- [ ] Add durable document settings defaults
-- [ ] Introduce page-based publication structure
-- [ ] Add US Letter portrait geometry and Gentle Page safe area
-- [ ] Add Gentle Page document typography tokens
-- [ ] Build print-oriented document preview
-- [ ] Add automatic content flow and deterministic page breaks
-- [ ] Add fixed cover rendering
-- [ ] Add bottom-center page numbering
+- [x] Durable document settings defaults
+- [x] Derived page-based publication layout
+- [x] US Letter portrait geometry and Gentle Page safe area
+- [x] Gentle Page document typography tokens
+- [x] Print-oriented document preview
+- [x] Automatic content flow and deterministic page breaks
+- [x] Fixed cover rendering
+- [x] Bottom-center page numbering
 
-## 5. Product export — upcoming
+## 5. Product export — implementation complete, acceptance pending
 
-- [ ] Print stylesheet and print validation
-- [ ] Static PDF export foundation
-- [ ] Validate the first complete Gentle Page journal end to end
-- [ ] Add explicit fillable field blocks after static export is stable
-- [ ] Add first fillable PDF export with multiline text and checkbox fields
+- [x] Print stylesheet and static browser PDF path
+- [x] Fillable field authoring and preview
+- [x] Library-independent fillable PDF planning
+- [x] Binary AcroForm serializer using `pdf-lib`
+- [x] Browser `Download fillable PDF` action
+- [x] Recoverable fillable-export error handling
+- [ ] Validate the first complete Gentle Page journal end to end in a real PDF viewer
+- [ ] Record and remediate any reproducible viewer compatibility issues
 
-## 6. Studio evolution — later
+## 6. Publication history — active
 
-- [ ] Publication revision model based on immutable publish snapshots
-- [ ] Version history and restore-as-new-draft flow
-- [ ] Compare revisions
+- [x] Immutable publish snapshots
+- [x] Local revision persistence
+- [x] Version history route
+- [x] Restore historical version as a new Draft
+- [x] Revision comparison domain utility
+- [ ] Revision comparison UI
+
+## 7. Studio evolution — later
+
 - [ ] Autosave and draft recovery
 - [ ] Templates
 - [ ] Asset library
@@ -70,4 +79,8 @@ MVP defaults are locked: US Letter, portrait, fixed Gentle Page margins, automat
 - [ ] Publishing/distribution workflows
 - [ ] AI-assisted creation
 
-See `BACKLOG.md` for prioritized implementation work and ADR-0006 for the accepted editorial-output defaults.
+## Engineering follow-up
+
+- [ ] Investigate and safely remediate the high-severity dependency findings tracked in issue #60
+
+See `BACKLOG.md` for prioritized implementation work and the ADR series for accepted architecture decisions.
