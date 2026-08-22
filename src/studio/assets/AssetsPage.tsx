@@ -66,7 +66,7 @@ export function AssetsPage({ onBack }: AssetsPageProps): ReactElement {
               </label>
 
               {error ? (
-                <Text role="alert" tone="danger">
+                <Text role="alert" className={styles.errorText}>
                   {error}
                 </Text>
               ) : null}
