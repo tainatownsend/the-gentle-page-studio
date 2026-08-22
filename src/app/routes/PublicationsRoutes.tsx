@@ -8,11 +8,14 @@ import {
 } from 'react-router-dom'
 
 import {
+  clearPublicationDraftRecovery,
+  loadPublicationDraftRecovery,
   PublicationCreatePage,
   PublicationEditorPage,
   PublicationHistoryPage,
   PublicationPreviewPage,
   PublicationsPage,
+  savePublicationDraftRecovery,
   usePublicationsWorkspace,
   type PublicationCreateValues,
   type PublicationEditorValues,
@@ -40,17 +43,26 @@ function PublicationEditorRoute({
   }
 
   const resolvedPublicationId = publicationId
+  const recoveredDraft = loadPublicationDraftRecovery(publication.id, publication.updatedAt)
 
   function handleSave(values: PublicationEditorValues) {
     workspace.updatePublication(resolvedPublicationId, values)
+    clearPublicationDraftRecovery(resolvedPublicationId)
     navigate('/publications')
+  }
+
+  function handleDraftAutosave(values: PublicationEditorValues) {
+    savePublicationDraftRecovery(resolvedPublicationId, publication.updatedAt, values)
   }
 
   return (
     <PublicationEditorPage
       publication={publication}
+      recoveredDraft={recoveredDraft}
       onBack={() => navigate('/publications')}
       onSave={handleSave}
+      onDraftAutosave={handleDraftAutosave}
+      onDraftDiscard={() => clearPublicationDraftRecovery(resolvedPublicationId)}
     />
   )
 }
