@@ -1,0 +1,70 @@
+name: Draft recovery implementation
+
+on:
+  push:
+    branches: [feature/publication-draft-recovery]
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/publication-draft-recovery
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply draft recovery
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          persistence = Path('src/studio/publications/persistence/publicationDraftRecovery.ts')
+          persistence.write_text('''import type { PublicationContent, PublicationStatus } from '../types'\n\nexport const PUBLICATION_DRAFT_RECOVERY_STORAGE_KEY =\n  'the-gentle-page-studio.publication-draft-recovery.v1'\n\nexport type PublicationDraftRecoveryValues = {\n  title: string\n  description?: string\n  status: PublicationStatus\n  content: PublicationContent\n}\n\ntype PublicationDraftRecoveryEntry = {\n  publicationId: string\n  baseUpdatedAt: string\n  savedAt: string\n  values: PublicationDraftRecoveryValues\n}\n\nfunction loadEntries(): PublicationDraftRecoveryEntry[] {\n  try {\n    const raw = localStorage.getItem(PUBLICATION_DRAFT_RECOVERY_STORAGE_KEY)\n    if (!raw) return []\n    const parsed = JSON.parse(raw)\n    return Array.isArray(parsed) ? parsed : []\n  } catch {\n    return []\n  }\n}\n\nfunction saveEntries(entries: PublicationDraftRecoveryEntry[]): void {\n  try {\n    localStorage.setItem(PUBLICATION_DRAFT_RECOVERY_STORAGE_KEY, JSON.stringify(entries))\n  } catch {\n    // Draft recovery is best-effort and must never block authoring.\n  }\n}\n\nexport function loadPublicationDraftRecovery(\n  publicationId: string,\n  baseUpdatedAt: string,\n): PublicationDraftRecoveryValues | undefined {\n  const entry = loadEntries().find((candidate) => candidate.publicationId === publicationId)\n  if (!entry || entry.baseUpdatedAt !== baseUpdatedAt) return undefined\n  return {\n    ...entry.values,\n    content: { blocks: entry.values.content.blocks.map((block) => ({ ...block })) },\n  }\n}\n\nexport function savePublicationDraftRecovery(\n  publicationId: string,\n  baseUpdatedAt: string,\n  values: PublicationDraftRecoveryValues,\n): void {\n  const nextEntry: PublicationDraftRecoveryEntry = {\n    publicationId,\n    baseUpdatedAt,\n    savedAt: new Date().toISOString(),\n    values: {\n      ...values,\n      content: { blocks: values.content.blocks.map((block) => ({ ...block })) },\n    },\n  }\n  const entries = loadEntries().filter((entry) => entry.publicationId !== publicationId)\n  saveEntries([nextEntry, ...entries])\n}\n\nexport function clearPublicationDraftRecovery(publicationId: string): void {\n  saveEntries(loadEntries().filter((entry) => entry.publicationId !== publicationId))\n}\n''')
+
+          test = Path('src/studio/publications/persistence/publicationDraftRecovery.test.ts')
+          test.write_text('''import { beforeEach, describe, expect, it } from 'vitest'\n\nimport {\n  clearPublicationDraftRecovery,\n  loadPublicationDraftRecovery,\n  savePublicationDraftRecovery,\n} from './publicationDraftRecovery'\n\nconst values = {\n  title: 'Recovered journal',\n  description: 'Unsaved work',\n  status: 'draft' as const,\n  content: { blocks: [{ id: 'block-1', type: 'paragraph' as const, text: 'Hello' }] },\n}\n\ndescribe('publicationDraftRecovery', () => {\n  beforeEach(() => localStorage.clear())\n\n  it('restores a recovery only for the matching saved publication version', () => {\n    savePublicationDraftRecovery('pub-1', 'v1', values)\n    expect(loadPublicationDraftRecovery('pub-1', 'v1')).toEqual(values)\n    expect(loadPublicationDraftRecovery('pub-1', 'v2')).toBeUndefined()\n  })\n\n  it('replaces the prior recovery for the same publication', () => {\n    savePublicationDraftRecovery('pub-1', 'v1', values)\n    savePublicationDraftRecovery('pub-1', 'v1', { ...values, title: 'Newer' })\n    expect(loadPublicationDraftRecovery('pub-1', 'v1')?.title).toBe('Newer')\n  })\n\n  it('clears recovery without affecting other publications', () => {\n    savePublicationDraftRecovery('pub-1', 'v1', values)\n    savePublicationDraftRecovery('pub-2', 'v2', values)\n    clearPublicationDraftRecovery('pub-1')\n    expect(loadPublicationDraftRecovery('pub-1', 'v1')).toBeUndefined()\n    expect(loadPublicationDraftRecovery('pub-2', 'v2')).toEqual(values)\n  })\n})\n''')
+
+          p = Path('src/studio/publications/persistence/index.ts')
+          text = p.read_text()
+          text += "\nexport {\n  clearPublicationDraftRecovery,\n  loadPublicationDraftRecovery,\n  PUBLICATION_DRAFT_RECOVERY_STORAGE_KEY,\n  savePublicationDraftRecovery,\n} from './publicationDraftRecovery'\nexport type { PublicationDraftRecoveryValues } from './publicationDraftRecovery'\n"
+          p.write_text(text)
+
+          route = Path('src/app/routes/PublicationsRoutes.tsx')
+          text = route.read_text()
+          text = text.replace("  PublicationCreatePage,\n", "  PublicationCreatePage,\n  clearPublicationDraftRecovery,\n  loadPublicationDraftRecovery,\n")
+          text = text.replace("  PublicationsPage,\n", "  PublicationsPage,\n  savePublicationDraftRecovery,\n")
+          text = text.replace("  const resolvedPublicationId = publicationId\n\n  function handleSave(values: PublicationEditorValues) {\n    workspace.updatePublication(resolvedPublicationId, values)\n    navigate('/publications')\n  }", "  const resolvedPublicationId = publicationId\n  const recoveredDraft = loadPublicationDraftRecovery(publication.id, publication.updatedAt)\n\n  function handleSave(values: PublicationEditorValues) {\n    workspace.updatePublication(resolvedPublicationId, values)\n    clearPublicationDraftRecovery(resolvedPublicationId)\n    navigate('/publications')\n  }\n\n  function handleDraftAutosave(values: PublicationEditorValues) {\n    savePublicationDraftRecovery(resolvedPublicationId, publication.updatedAt, values)\n  }")
+          text = text.replace("      publication={publication}\n      onBack={() => navigate('/publications')}\n      onSave={handleSave}\n", "      publication={publication}\n      recoveredDraft={recoveredDraft}\n      onBack={() => navigate('/publications')}\n      onSave={handleSave}\n      onDraftAutosave={handleDraftAutosave}\n      onDraftDiscard={() => clearPublicationDraftRecovery(resolvedPublicationId)}\n")
+          route.write_text(text)
+
+          editor = Path('src/studio/publications/pages/PublicationEditorPage/PublicationEditorPage.tsx')
+          text = editor.read_text()
+          text = text.replace("export type PublicationEditorPageProps = {\n  publication: Publication\n  onBack: () => void\n  onSave: (values: PublicationEditorValues) => void\n}", "export type PublicationEditorPageProps = {\n  publication: Publication\n  recoveredDraft?: PublicationEditorValues\n  onBack: () => void\n  onSave: (values: PublicationEditorValues) => void\n  onDraftAutosave?: (values: PublicationEditorValues) => void\n  onDraftDiscard?: () => void\n}")
+          text = text.replace("  publication,\n  onBack,\n  onSave,\n}: PublicationEditorPageProps): ReactElement {\n  const [title, setTitle] = useState(publication.title)\n  const [description, setDescription] = useState(publication.description ?? '')\n  const [status, setStatus] = useState<PublicationStatus>(publication.status)\n  const [content, setContent] = useState<PublicationContent>(() =>\n    cloneContent(publication.content),\n  )", "  publication,\n  recoveredDraft,\n  onBack,\n  onSave,\n  onDraftAutosave,\n  onDraftDiscard,\n}: PublicationEditorPageProps): ReactElement {\n  const initialDraft = recoveredDraft\n  const [title, setTitle] = useState(initialDraft?.title ?? publication.title)\n  const [description, setDescription] = useState(\n    initialDraft?.description ?? publication.description ?? '',\n  )\n  const [status, setStatus] = useState<PublicationStatus>(\n    initialDraft?.status ?? publication.status,\n  )\n  const [content, setContent] = useState<PublicationContent>(() =>\n    cloneContent(initialDraft?.content ?? publication.content),\n  )")
+          marker = "  function markAsDraftAfterEdit() {"
+          effect = """  useEffect(() => {\n    if (!hasUnsavedChanges || !onDraftAutosave) {\n      return\n    }\n\n    const timeoutId = window.setTimeout(() => {\n      onDraftAutosave({\n        title,\n        description: description || undefined,\n        status,\n        content: cloneContent(content),\n      })\n    }, 700)\n\n    return () => window.clearTimeout(timeoutId)\n  }, [content, description, hasUnsavedChanges, onDraftAutosave, status, title])\n\n"""
+          text = text.replace(marker, effect + marker)
+          text = text.replace("              actions={", "              description={\n                recoveredDraft\n                  ? `Status: ${status === 'published' ? 'Published' : 'Draft'} · Recovered unsaved changes`\n                  : `Status: ${status === 'published' ? 'Published' : 'Draft'}`\n              }\n              actions={", 1)
+          text = text.replace("              description={`Status: ${status === 'published' ? 'Published' : 'Draft'}`}\n", "", 1)
+          text = text.replace("            <Button variant=\"ghost\" onClick={onDiscard}>\n              Discard changes\n            </Button>", "            <Button\n              variant=\"ghost\"\n              onClick={() => {\n                onDiscard()\n              }}\n            >\n              Discard changes\n            </Button>")
+          # Replace confirmation invocation to clear recovery before leaving.
+          text = text.replace("          onDiscard={onBack}\n", "          onDiscard={() => {\n            onDraftDiscard?.()\n            onBack()\n          }}\n")
+          editor.write_text(text)
+          PY
+      - run: npx prettier --write src/app/routes/PublicationsRoutes.tsx src/studio/publications/persistence src/studio/publications/pages/PublicationEditorPage/PublicationEditorPage.tsx
+      - run: npm run quality
+      - name: Commit implementation
+        run: |
+          rm .github/workflows/tmp-draft-recovery.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "feat(publications): add autosave draft recovery"
+          git push origin HEAD:feature/publication-draft-recovery
