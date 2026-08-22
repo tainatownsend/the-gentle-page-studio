@@ -2,132 +2,66 @@
 
 This backlog separates work that has already been processed, implementation-ready work, and intentionally deferred items.
 
-## Processed in PR0027A
+## Processed through PR0027M
 
-### Engineering quality
+- [x] Platform quality gate, snapshot-first repair workflow, and roadmap refresh
+- [x] US Letter portrait document settings with fixed Gentle Page margins
+- [x] Derived page layout, print preview, typography, cover, automatic pagination, and page numbering
+- [x] Static Print / Save as PDF path
+- [x] Immutable published revisions with local history and restore-as-new-draft behavior
+- [x] Multiline response and checkbox block model, authoring controls, and preview affordances
+- [x] Fillable PDF planning with deterministic US Letter geometry and stable field identities
+- [x] Binary `pdf-lib` AcroForm serializer with round-trip verification
+- [x] Browser `Download fillable PDF` action with deterministic filenames
+- [x] Fillable export error handling, retry behavior, and duplicate-click protection
 
-- [x] **Unified quality command** — `npm run quality` runs lint, tests, and production build; GitHub Actions uses the same command.
-- [x] **Snapshot-first repair workflow** — inspect exact affected files before deterministic repair.
-- [x] **Deterministic test interaction guidance** — avoid character-by-character interaction where it is not behavior under test.
-- [x] **Roadmap refresh** — planning reflects the current Studio rather than foundation-era work.
+## Processed in PR0027O
 
-### Editorial MVP decisions
+### Revision comparison foundation
 
-- [x] US Letter
-- [x] portrait only
-- [x] fixed Gentle Page margins / safe area
-- [x] automatic pagination
-- [x] bottom-center page numbering
-- [x] fixed Gentle Page document typography
-- [x] fixed Gentle Page cover
-- [x] Gentle Page identity only for the MVP
+- [x] **Deterministic revision diff** — compares two immutable snapshots without mutating either revision.
+- [x] **Metadata comparison** — reports title and description changes.
+- [x] **Durable block comparison** — reports block additions, removals, content/type changes, and movement using stable block IDs.
+- [x] **Regression coverage** — covers equivalent snapshots plus mixed metadata and block changes.
+- [x] **Roadmap synchronization** — reflects the actual implementation status through fillable export and revision comparison.
 
-## Processed in PR0027B
+## Ready to implement next
 
-- [x] **Document settings domain model** — Letter, portrait, 0.75 inch margins, durable settings, persistence migration.
+### Revision comparison UI
 
-## Processed in PR0027C
+1. add a Compare action to published version history
+2. select two revisions deterministically
+3. render metadata changes separately from block changes
+4. show added, removed, changed, and moved blocks without editing either snapshot
+5. preserve restore-as-new-draft as a separate action
+6. add route/page tests and accessibility coverage
 
-- [x] **Derived publication layout** — page boundaries are output projections rather than persisted authoring data.
-- [x] **Print-oriented preview shell** — responsive Letter portrait pages and page-number area.
+### Dependency security follow-up
 
-## Processed in PR0027D
+- investigate issue #60 with `npm audit --json`
+- identify whether findings affect runtime or development dependencies
+- apply only reviewed, non-breaking remediation
+- keep PDF export behavior unchanged
 
-- [x] **Gentle Page document typography** — publication-specific typography separated from Studio UI typography.
-- [x] **Cover foundation** — fixed unnumbered cover followed by numbered content.
-
-## Processed in PR0027E
-
-- [x] **Automatic multi-page flow** — deterministic capacity estimation preserves block order and complete blocks across derived pages.
-
-## Processed in PR0027F
-
-- [x] **Print stylesheet** — exact Letter print geometry, deterministic page breaks, print-only cleanup and preserved print colors.
-- [x] **Static PDF export** — browser `Print / Save as PDF` remains the static serialization path.
-
-## Processed in PR0027G
-
-- [x] **Published revision model** — explicit Draft → Published transitions create immutable snapshots.
-- [x] **Revision persistence and history** — local history, newest-first route, restore as new Draft, cleanup on permanent deletion.
-
-## Processed in PR0027H
-
-- [x] **Interactive content domain model** — explicit multiline response and checkbox blocks with backward-compatible publication and revision persistence.
-
-## Processed in PR0027I
-
-- [x] **Interactive editor controls** — add/edit multiline response fields and checkboxes using existing block structure controls and lifecycle behavior.
-- [x] **Interactive static preview** — printable response areas and checkboxes participate in derived layout and remain understandable in static output.
-
-## Processed in PR0027J
-
-### Fillable PDF planning foundation
-
-- [x] **Serializer boundary investigation** — browser print remains static output; genuine fillable output uses a separate binary export path with `pdf-lib` behind the export boundary.
-- [x] **Library-independent PDF plan** — exact Letter geometry, fixed margins, page-number reserve, shared pagination estimates, deterministic block/widget rectangles and stable field identities.
-
-## Processed in PR0027K
-
-### Binary fillable PDF serializer
-
-- [x] **Serializer dependency and adapter** — `pdf-lib` generates `Uint8Array` PDF bytes from the publication PDF plan.
-- [x] **AcroForm fields** — multiline response blocks become multiline PDF text fields and checkbox blocks become PDF checkboxes.
-- [x] **Static document rendering** — cover, headings, paragraphs, prompts, labels and page numbers are drawn into generated Letter pages.
-- [x] **Generated-PDF verification** — generated bytes are reloaded in tests to verify page geometry, field names, field types, multiline behavior, multi-page output and static-only output.
-
-## Processed in PR0027L
-
-### Fillable PDF download action
-
-- [x] **User-facing export action** — interactive publications expose `Download fillable PDF` separately from `Print / Save as PDF`.
-- [x] **Deterministic filename** — publication titles are converted to filesystem-friendly fillable-PDF filenames.
-- [x] **Browser download lifecycle** — generated bytes are converted to a PDF Blob, downloaded through an object URL and released afterward.
-- [x] **Focused UX** — static-only publications do not show an irrelevant fillable-export action and the action is disabled while serialization runs.
-
-## Processed in PR0027M
-
-### Fillable export resilience
-
-- [x] **Recoverable export errors** — serializer or browser-download failures surface an accessible error without mutating publication state.
-- [x] **Retry behavior** — the fillable export action re-enables after failure and clears the previous error on the next attempt.
-- [x] **Duplicate-click guard** — in-progress generation ignores redundant export attempts.
-- [x] **Regression coverage** — tests cover failed generation, restored action state, retry, and error clearing.
-
-## Ready to validate next
+## Ready to validate manually
 
 ### Fillable export acceptance
 
-1. **Browser download validation**
-   - create a publication containing a multiline response field and a checkbox
-   - download the fillable PDF from preview
-   - verify the expected deterministic filename
+1. create a publication containing a multiline response field and a checkbox
+2. download the fillable PDF from preview and verify its filename
+3. open it in a common PDF viewer
+4. type into multiline fields and toggle checkboxes
+5. save, close, and reopen the PDF; confirm values persist
+6. print/export the filled PDF and confirm cover, margins, page numbers, content order, and field appearance
+7. record only reproducible viewer compatibility issues for follow-up
 
-2. **PDF viewer validation**
-   - open the PDF in a common PDF viewer
-   - type into multiline fields
-   - toggle checkboxes
-   - save the filled PDF and reopen it
-   - confirm entered values persist
-
-3. **Print validation**
-   - print or export the filled PDF from the viewer
-   - confirm cover, margins, page numbers, content order and field appearance
-
-4. **Compatibility follow-up**
-   - record any viewer-specific rendering or save issues
-   - only add compatibility work that is reproduced during acceptance validation
-
-## Architectural note on automatic pagination
+## Architectural notes
 
 Authored content remains a semantic ordered stream. Page objects belong to derived layout used by preview and export, preventing persisted page boundaries from becoming stale after content or typography changes.
 
-## Versioning decision
-
 Explicit publish creates an immutable snapshot; Draft saves do not version; all MVP snapshots remain local; restore creates a new Draft.
 
-## Fillable output decision
-
-Start with multiline text and checkbox blocks authored explicitly in the editor. Reader response data is not publication authoring state. Additional field types follow only after the first fillable workflow is validated.
+Reader response data is not publication authoring state. Additional fillable field types follow only after the first fillable workflow is validated.
 
 ## Intentionally deferred
 
