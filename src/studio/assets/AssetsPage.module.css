@@ -26,6 +26,10 @@
   pointer-events: none;
 }
 
+.errorText {
+  color: var(--color-feedback-danger, #9b2c2c);
+}
+
 .emptyState {
   text-align: center;
 }
