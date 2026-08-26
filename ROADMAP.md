@@ -1,6 +1,6 @@
 # Roadmap
 
-The Gentle Page Studio MVP is now consolidated in `release/mvp-manual-acceptance` / PR0028. Automated implementation work for the current MVP scope is complete; the remaining release gate is manual browser and PDF-viewer acceptance.
+The Gentle Page Studio MVP is now consolidated in `release/mvp-manual-acceptance` / PR0028. Automated implementation work for the current MVP scope is complete; the remaining release gate is manual browser and PDF-viewer acceptance tracked in issue #73.
 
 ## 1. Platform foundation — complete
 
@@ -11,6 +11,8 @@ The Gentle Page Studio MVP is now consolidated in `release/mvp-manual-acceptance
 - [x] Publications application shell and routing
 - [x] Reusable resource collection infrastructure
 - [x] Unified lint / test / build quality gate
+- [x] Release gate combining high-severity dependency audit + quality checks
+- [x] GitHub Quality enforcement of the release gate
 - [x] Reviewed dependency remediation and ongoing Dependabot maintenance
 
 ## 2. Publication lifecycle — complete
@@ -62,7 +64,7 @@ MVP defaults are locked: US Letter, portrait, fixed Gentle Page margins, automat
 - [x] Browser `Download fillable PDF` action
 - [x] Recoverable fillable-export error handling
 - [x] Lazy-load heavy fillable-PDF serialization code
-- [ ] Execute the release-candidate browser and PDF-viewer acceptance runbook
+- [ ] Execute the release-candidate browser and PDF-viewer acceptance runbook in issue #73
 - [ ] Remediate only reproducible blocking compatibility defects, if any
 
 ## 6. Publication history — complete for MVP
@@ -86,7 +88,7 @@ Direct asset placement into publication pages is intentionally post-MVP.
 
 ## 8. MVP release gate — current
 
-PR0028 stays in Draft until `docs/MVP_ACCEPTANCE.md` is completed with either:
+PR0028 stays in Draft until `docs/MVP_ACCEPTANCE.md` / issue #73 is completed with either:
 
 - **PASS**, or
 - **PASS WITH FOLLOW-UP** and no blocking defects.
@@ -109,6 +111,6 @@ The release candidate must be validated in real browsers and PDF viewers because
 
 ## Engineering follow-up
 
-The high-severity npm audit findings tracked in issue #60 have been remediated in the release candidate without forced upgrades. Keep the issue open until PR0028 is accepted and merged to `main`, then close it as part of release cleanup.
+The high-severity npm audit findings tracked in issue #60 have been remediated in the release candidate without forced upgrades. The high-severity audit is now part of `npm run quality:release` and the GitHub Quality workflow. Keep issue #60 open until PR0028 is accepted and merged to `main`, then close it as part of release cleanup.
 
 See `BACKLOG.md` for the current release gate and deferred work, `docs/MVP_ACCEPTANCE.md` for the manual acceptance runbook, and the ADR series for accepted architecture decisions.
