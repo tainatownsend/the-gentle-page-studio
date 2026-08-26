@@ -11,7 +11,7 @@ The Gentle Page Studio MVP is now consolidated in `release/mvp-manual-acceptance
 - [x] Publications application shell and routing
 - [x] Reusable resource collection infrastructure
 - [x] Unified lint / test / build quality gate
-- [x] Release gate combining high-severity dependency audit + quality checks
+- [x] `npm run quality:release` combining high-severity dependency audit + quality checks
 - [x] GitHub Quality enforcement of the release gate
 - [x] Reviewed dependency remediation and ongoing Dependabot maintenance
 
