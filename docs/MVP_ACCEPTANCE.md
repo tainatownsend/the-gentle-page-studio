@@ -9,10 +9,11 @@ The purpose of this pass is not to re-test every automated unit. It is to valida
 Before manual acceptance, confirm:
 
 - `npm ci` succeeds
-- `npm audit --audit-level=high` succeeds
-- `npm run quality` succeeds
+- `npm run quality:release` succeeds
 - GitHub Quality is green for PR0028
 - no temporary consolidation workflow remains in the branch
+
+`quality:release` runs the high-severity dependency audit first, then lint, tests, and the production build. The GitHub Quality workflow enforces the same gate.
 
 ## 2. Local startup
 
@@ -23,8 +24,7 @@ git fetch origin --prune
 git switch release/mvp-manual-acceptance
 git pull --ff-only origin release/mvp-manual-acceptance
 npm ci
-npm audit --audit-level=high
-npm run quality
+npm run quality:release
 npm run dev
 ```
 
