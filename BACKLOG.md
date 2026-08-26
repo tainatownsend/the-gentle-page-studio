@@ -9,6 +9,8 @@ This backlog reflects the consolidated MVP release candidate in `release/mvp-man
 - [x] project architecture and design-system foundation
 - [x] light/dark theme support
 - [x] unified `npm run quality` gate
+- [x] release-specific `npm run quality:release` gate
+- [x] high-severity dependency audit enforced in GitHub Quality
 - [x] snapshot-first repair workflow
 - [x] deterministic test interaction guidance
 - [x] repository hygiene cleanup
@@ -76,7 +78,7 @@ This backlog reflects the consolidated MVP release candidate in `release/mvp-man
 
 ## Current release gate — manual acceptance
 
-Run `docs/MVP_ACCEPTANCE.md` against PR0028.
+Run `docs/MVP_ACCEPTANCE.md` against PR0028 and track the result in issue #73.
 
 The MVP remains a release candidate until browser and real PDF-viewer acceptance is complete.
 
