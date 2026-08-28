@@ -105,4 +105,25 @@ First paragraph.
       }),
     )
   })
+
+  it('moves a prompt page-break intent onto its response without copying heading keep-with-next', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_BREAK type="forced"]]
+
+### Reflection
+
+[[GP:RESPONSE size="medium"]]`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'multiline-text-field',
+        text: 'Reflection',
+        responseSize: 'medium',
+        layout: {
+          pageBreakBefore: 'forced',
+        },
+      }),
+    ])
+  })
 })
