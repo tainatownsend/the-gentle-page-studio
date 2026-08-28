@@ -86,12 +86,9 @@ describe('App routing', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Compile publication' }))
 
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'Gentle Focus Journal',
-      }),
-    ).toBeInTheDocument()
+    expect(document.getElementById('publication-preview-title')).toHaveTextContent(
+      'Gentle Focus Journal',
+    )
     expect(screen.getByText('A gentle starting point.')).toBeInTheDocument()
   }, 10_000)
 
