@@ -2,27 +2,38 @@ export type PublicationBlockId = string
 
 export type PublicationHeadingLevel = 1 | 2 | 3
 
-export type PublicationHeadingBlock = {
+export type PublicationPageBreakIntent = 'preferred' | 'forced'
+
+export type PublicationBlockLayoutIntent = {
+  pageBreakBefore?: PublicationPageBreakIntent
+  keepWithNext?: boolean
+}
+
+export type PublicationBlockBase = {
   id: PublicationBlockId
+  layout?: PublicationBlockLayoutIntent
+}
+
+export type PublicationHeadingBlock = PublicationBlockBase & {
   type: 'heading'
   level: PublicationHeadingLevel
   text: string
 }
 
-export type PublicationParagraphBlock = {
-  id: PublicationBlockId
+export type PublicationParagraphBlock = PublicationBlockBase & {
   type: 'paragraph'
   text: string
 }
 
-export type PublicationMultilineTextFieldBlock = {
-  id: PublicationBlockId
+export type PublicationResponseSizeIntent = 'short' | 'medium' | 'long'
+
+export type PublicationMultilineTextFieldBlock = PublicationBlockBase & {
   type: 'multiline-text-field'
   text: string
+  responseSize?: PublicationResponseSizeIntent
 }
 
-export type PublicationCheckboxFieldBlock = {
-  id: PublicationBlockId
+export type PublicationCheckboxFieldBlock = PublicationBlockBase & {
   type: 'checkbox-field'
   text: string
 }
