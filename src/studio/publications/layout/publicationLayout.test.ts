@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { createPublicationFixture } from '../testing'
-import { createPublicationLayout } from './publicationLayout'
+import {
+  createPublicationLayout,
+  estimatePublicationBlockUnits,
+  PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
+} from './publicationLayout'
 
 describe('createPublicationLayout', () => {
   it('projects a fixed cover followed by numbered publication content', () => {
@@ -24,24 +28,31 @@ describe('createPublicationLayout', () => {
       },
     })
 
-    expect(createPublicationLayout(publication)).toEqual({
-      settings: publication.documentSettings,
-      pages: [
-        {
-          id: 'journal-1-cover',
-          sequence: 1,
-          kind: 'cover',
-          blocks: [],
-        },
-        {
-          id: 'journal-1-content-page-1',
-          sequence: 2,
-          kind: 'content',
-          pageNumber: 1,
-          blocks: publication.content.blocks,
-        },
-      ],
+    const layout = createPublicationLayout(publication)
+
+    expect(layout.settings).toEqual(publication.documentSettings)
+    expect(layout.health).toBe('healthy')
+    expect(layout.diagnostics).toEqual([])
+    expect(layout.pages[0]).toEqual({
+      id: 'journal-1-cover',
+      sequence: 1,
+      kind: 'cover',
+      blocks: [],
+      allocations: [],
+      usedUnits: 0,
+      remainingUnits: 0,
     })
+    expect(layout.pages[1]).toMatchObject({
+      id: 'journal-1-content-page-1',
+      sequence: 2,
+      kind: 'content',
+      pageNumber: 1,
+      blocks: publication.content.blocks,
+    })
+    expect(layout.pages[1]?.allocations.map((allocation) => allocation.blockId)).toEqual([
+      'heading-1',
+      'paragraph-1',
+    ])
   })
 
   it('flows larger content into sequential derived pages without reordering blocks', () => {
@@ -71,7 +82,7 @@ describe('createPublicationLayout', () => {
     expect(contentPages[1]?.blocks).toHaveLength(1)
   })
 
-  it('keeps a single oversized block intact instead of splitting authored content', () => {
+  it('keeps a single oversized block intact and reports it for review', () => {
     const publication = createPublicationFixture({
       content: {
         blocks: [
@@ -90,6 +101,14 @@ describe('createPublicationLayout', () => {
     expect(contentPages).toHaveLength(1)
     expect(contentPages[0]?.blocks).toHaveLength(1)
     expect(contentPages[0]?.blocks[0]?.id).toBe('long-paragraph')
+    expect(layout.health).toBe('needs-attention')
+    expect(layout.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'oversized-block',
+        blockId: 'long-paragraph',
+        pageNumber: 1,
+      }),
+    ])
   })
 
   it('returns independent layout data without mutating publication data', () => {
@@ -127,6 +146,9 @@ describe('createPublicationLayout', () => {
       kind: 'content',
       pageNumber: 1,
       blocks: [],
+      allocations: [],
+      usedUnits: 0,
+      remainingUnits: PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
     })
   })
 
@@ -268,5 +290,58 @@ describe('createPublicationLayout', () => {
     expect(contentPages).toHaveLength(2)
     expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
     expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual(['heading', 'reflection'])
+  })
+
+  it('expands response fields into available page capacity without changing authored intent', () => {
+    const responseBlock = {
+      id: 'response-1',
+      type: 'multiline-text-field' as const,
+      text: 'What do you need today?',
+      responseSize: 'medium' as const,
+    }
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [responseBlock],
+      },
+    })
+
+    const contentPage = createPublicationLayout(publication).pages[1]
+    const allocation = contentPage?.allocations[0]
+
+    expect(allocation?.baselineUnits).toBe(estimatePublicationBlockUnits(responseBlock))
+    expect(allocation?.allocatedUnits).toBeGreaterThan(allocation?.baselineUnits ?? 0)
+    expect(allocation?.allocatedUnits).toBeLessThanOrEqual(
+      (allocation?.baselineUnits ?? 0) + (allocation?.flexibleUnits ?? 0),
+    )
+    expect(contentPage?.usedUnits).toBe(
+      contentPage?.allocations.reduce((sum, current) => sum + current.allocatedUnits, 0),
+    )
+  })
+
+  it('distributes spare capacity across multiple response fields deterministically', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'response-1',
+            type: 'multiline-text-field',
+            text: 'First reflection?',
+            responseSize: 'short',
+          },
+          {
+            id: 'response-2',
+            type: 'multiline-text-field',
+            text: 'Second reflection?',
+            responseSize: 'short',
+          },
+        ],
+      },
+    })
+
+    const contentPage = createPublicationLayout(publication).pages[1]
+    const [first, second] = contentPage?.allocations ?? []
+
+    expect(first?.allocatedUnits).toBe(second?.allocatedUnits)
+    expect(first?.allocatedUnits).toBeGreaterThan(first?.baselineUnits ?? 0)
   })
 })
