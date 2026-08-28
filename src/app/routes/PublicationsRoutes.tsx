@@ -128,7 +128,13 @@ export function PublicationsRoutes(): ReactElement {
 
   function handleCreate(values: PublicationCreateValues) {
     const publication = workspace.createDraft(values)
-    navigate(`/publications/${encodeURIComponent(publication.id)}/edit`)
+    const encodedPublicationId = encodeURIComponent(publication.id)
+
+    navigate(
+      values.creationMode === 'compiled'
+        ? `/publications/${encodedPublicationId}/preview`
+        : `/publications/${encodedPublicationId}/edit`,
+    )
   }
 
   return (
