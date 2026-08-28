@@ -12,7 +12,7 @@ function renderApp(initialEntry = '/publications') {
   )
 }
 
-async function createDraft(user: ReturnType<typeof userEvent.setup>) {
+async function openCreatePage(user: ReturnType<typeof userEvent.setup>) {
   await user.click(
     screen.getByRole('button', {
       name: 'Create publication',
@@ -25,6 +25,11 @@ async function createDraft(user: ReturnType<typeof userEvent.setup>) {
       name: 'Create publication',
     }),
   ).toBeInTheDocument()
+}
+
+async function createManualDraft(user: ReturnType<typeof userEvent.setup>) {
+  await openCreatePage(user)
+  await user.click(screen.getByRole('button', { name: 'Advanced: start manually' }))
 
   await user.type(screen.getByRole('textbox', { name: /title/i }), 'Gentle Focus Journal')
 
@@ -59,19 +64,9 @@ describe('App routing', () => {
 
     renderApp()
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Create publication',
-      }),
-    )
+    await openCreatePage(user)
 
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'Create publication',
-      }),
-    ).toBeInTheDocument()
-
+    expect(screen.getByRole('textbox', { name: /manuscript/i })).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', {
         name: 'Create your first publication',
@@ -79,22 +74,43 @@ describe('App routing', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('creates a draft and continues directly in the editor', async () => {
+  it('compiles a manuscript and continues directly in preview', async () => {
     const user = userEvent.setup()
 
     renderApp()
-    await createDraft(user)
+    await openCreatePage(user)
+
+    await user.type(
+      screen.getByRole('textbox', { name: /manuscript/i }),
+      '# Gentle Focus Journal{enter}{enter}## Begin here{enter}{enter}A gentle starting point.',
+    )
+    await user.click(screen.getByRole('button', { name: 'Compile publication' }))
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Gentle Focus Journal',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('A gentle starting point.')).toBeInTheDocument()
+  }, 10_000)
+
+  it('keeps manual creation available and continues directly in the editor', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await createManualDraft(user)
 
     expect(screen.getByText('Publication editor')).toBeInTheDocument()
 
     expect(screen.getByRole('textbox', { name: /title/i })).toHaveValue('Gentle Focus Journal')
   }, 10_000)
 
-  it('creates, edits, and saves a publication through routes', async () => {
+  it('creates, edits, and saves a publication through manual routes', async () => {
     const user = userEvent.setup()
 
     renderApp()
-    await createDraft(user)
+    await createManualDraft(user)
 
     const titleInput = screen.getByRole('textbox', {
       name: /title/i,
@@ -119,11 +135,12 @@ describe('App routing', () => {
     expect(screen.getByText('Updated Gentle Journal')).toBeInTheDocument()
   }, 10_000)
 
-  it('returns to publications when creation is cancelled', async () => {
+  it('returns to publications when manual creation is cancelled', async () => {
     const user = userEvent.setup()
 
     renderApp('/publications/new')
 
+    await user.click(screen.getByRole('button', { name: 'Advanced: start manually' }))
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(
