@@ -20,6 +20,7 @@ export type PublicationLayout = {
 }
 
 export const PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS = 48
+const PREFERRED_PAGE_BREAK_MINIMUM_FILL_UNITS = 20
 
 function cloneDocumentSettings(
   settings: PublicationDocumentSettings,
@@ -32,6 +33,13 @@ function cloneDocumentSettings(
   }
 }
 
+function cloneBlock(block: PublicationBlock): PublicationBlock {
+  return {
+    ...block,
+    layout: block.layout ? { ...block.layout } : undefined,
+  }
+}
+
 export function estimatePublicationBlockUnits(block: PublicationBlock): number {
   const textLength = Math.max(block.text.trim().length, 1)
 
@@ -40,11 +48,18 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
       return 5 + Math.ceil(textLength / 45) * 2
     case 'paragraph':
       return 3 + Math.ceil(textLength / 70) * 3
-    case 'multiline-text-field':
-      return 14 + Math.ceil(textLength / 70) * 2
+    case 'multiline-text-field': {
+      const baseUnits =
+        block.responseSize === 'short' ? 7 : block.responseSize === 'medium' ? 10 : 14
+      return baseUnits + Math.ceil(textLength / 70) * 2
+    }
     case 'checkbox-field':
       return 5 + Math.ceil(textLength / 70) * 2
   }
+}
+
+function shouldKeepWithNext(block: PublicationBlock): boolean {
+  return block.layout?.keepWithNext ?? block.type === 'heading'
 }
 
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
@@ -56,23 +71,38 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
   let currentPage: PublicationBlock[] = []
   let currentUnits = 0
 
-  for (const block of blocks) {
+  blocks.forEach((block, index) => {
     const blockUnits = estimatePublicationBlockUnits(block)
-    const shouldStartNewPage =
+    const nextBlock = blocks[index + 1]
+    const nextBlockUnits = nextBlock ? estimatePublicationBlockUnits(nextBlock) : 0
+    const pairFitsOnFreshPage =
+      nextBlock !== undefined &&
+      blockUnits + nextBlockUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
+    const wouldOrphanKeepWithNextBlock =
+      currentPage.length > 0 &&
+      shouldKeepWithNext(block) &&
+      pairFitsOnFreshPage &&
+      currentUnits + blockUnits + nextBlockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
+
+    const forcedBreak =
+      currentPage.length > 0 && block.layout?.pageBreakBefore === 'forced'
+    const preferredBreak =
+      currentPage.length > 0 &&
+      block.layout?.pageBreakBefore === 'preferred' &&
+      currentUnits >= PREFERRED_PAGE_BREAK_MINIMUM_FILL_UNITS
+    const capacityBreak =
       currentPage.length > 0 &&
       currentUnits + blockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
-    if (shouldStartNewPage) {
+    if (forcedBreak || preferredBreak || wouldOrphanKeepWithNextBlock || capacityBreak) {
       pages.push(currentPage)
       currentPage = []
       currentUnits = 0
     }
 
-    currentPage.push({
-      ...block,
-    })
+    currentPage.push(cloneBlock(block))
     currentUnits += blockUnits
-  }
+  })
 
   pages.push(currentPage)
 
