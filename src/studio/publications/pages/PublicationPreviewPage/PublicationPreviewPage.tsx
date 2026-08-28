@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useState, type CSSProperties, type ReactElement } from 'react'
 import { AlertCircle, ArrowLeft, Download, History, Pencil, Printer } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
@@ -23,9 +23,13 @@ export type PublicationPreviewPageProps = {
 
 type PublicationBlockPreviewProps = {
   block: PublicationBlock
+  allocatedUnits?: number
 }
 
-function PublicationBlockPreview({ block }: PublicationBlockPreviewProps): ReactElement {
+function PublicationBlockPreview({
+  block,
+  allocatedUnits,
+}: PublicationBlockPreviewProps): ReactElement {
   if (block.type === 'heading') {
     const HeadingTag = `h${block.level + 1}` as 'h2' | 'h3' | 'h4'
     const headingClassName =
@@ -51,15 +55,19 @@ function PublicationBlockPreview({ block }: PublicationBlockPreviewProps): React
           ? styles.responseAreaMedium
           : styles.responseAreaLong
     }`
+    const responseAreaStyle = {
+      '--response-area-units': allocatedUnits ?? 14,
+    } as CSSProperties
 
     return (
       <section
         className={styles.multilineField}
         aria-label={block.text || 'Response field'}
         data-response-size={responseSize}
+        data-allocated-units={allocatedUnits}
       >
         <p className={styles.fieldLabel}>{block.text || 'Response'}</p>
-        <div className={responseAreaClassName} aria-hidden="true" />
+        <div className={responseAreaClassName} style={responseAreaStyle} aria-hidden="true" />
       </section>
     )
   }
@@ -164,6 +172,20 @@ export function PublicationPreviewPage({
                 }
               />
 
+              {layout.health === 'needs-attention' ? (
+                <div className={styles.layoutNotice} role="status">
+                  <AlertCircle size={18} aria-hidden="true" />
+                  <div>
+                    <p className={styles.noticeTitle}>Layout review suggested</p>
+                    <p>
+                      Automatic pagination resolved most geometry, but {layout.diagnostics.length}{' '}
+                      {layout.diagnostics.length === 1 ? 'item still needs' : 'items still need'} a quick
+                      review.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
               {fillablePdfError ? (
                 <div className={styles.exportError} role="alert">
                   <AlertCircle size={18} aria-hidden="true" />
@@ -190,6 +212,7 @@ export function PublicationPreviewPage({
                   data-page-kind={layoutPage.kind}
                   data-page-size={layout.settings.pageSize}
                   data-orientation={layout.settings.orientation}
+                  data-layout-remaining-units={layoutPage.remainingUnits}
                 >
                   {isCover ? (
                     <div className={styles.coverBody}>
@@ -213,9 +236,19 @@ export function PublicationPreviewPage({
                     <div className={styles.documentBody}>
                       {hasContent ? (
                         <div className={styles.content}>
-                          {layoutPage.blocks.map((block) => (
-                            <PublicationBlockPreview key={block.id} block={block} />
-                          ))}
+                          {layoutPage.blocks.map((block) => {
+                            const allocation = layoutPage.allocations.find(
+                              (candidate) => candidate.blockId === block.id,
+                            )
+
+                            return (
+                              <PublicationBlockPreview
+                                key={block.id}
+                                block={block}
+                                allocatedUnits={allocation?.allocatedUnits}
+                              />
+                            )
+                          })}
                         </div>
                       ) : (
                         <div className={styles.emptyState}>
