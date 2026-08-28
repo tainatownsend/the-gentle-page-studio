@@ -1,6 +1,5 @@
 import type {
   PublicationBlock,
-  PublicationBlockLayoutIntent,
   PublicationContent,
   PublicationPageBreakIntent,
   PublicationResponseSizeIntent,
@@ -138,19 +137,19 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     const responseMatch = line.match(/^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i)
     if (responseMatch) {
       flushParagraph()
-      const previousBlock = blocks.at(-1)
+      const previousBlock = blocks[blocks.length - 1]
       let prompt = 'Response'
-      let inheritedLayout: PublicationBlockLayoutIntent | undefined
+      let inheritedPageBreak: PublicationPageBreakIntent | undefined
 
       if (isPromptLikeBlock(previousBlock)) {
         const removed = blocks.pop()
         if (removed) {
           prompt = removed.text
-          inheritedLayout = removed.layout
+          inheritedPageBreak = removed.layout?.pageBreakBefore
         }
       }
 
-      const pageBreakBefore = pendingPageBreak ?? inheritedLayout?.pageBreakBefore
+      const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
       pendingPageBreak = undefined
 
       blocks.push({
@@ -158,13 +157,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         type: 'multiline-text-field',
         text: prompt,
         responseSize: normalizeResponseSize(responseMatch[1]),
-        layout:
-          pageBreakBefore || inheritedLayout?.keepWithNext
-            ? {
-                ...inheritedLayout,
-                pageBreakBefore,
-              }
-            : undefined,
+        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
       })
       return
     }
