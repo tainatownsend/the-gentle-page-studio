@@ -1,6 +1,7 @@
 import type {
   PublicationBlock,
   PublicationContent,
+  PublicationHeadingLevel,
   PublicationPageBreakIntent,
   PublicationResponseSizeIntent,
 } from '../types'
@@ -191,7 +192,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     const headingMatch = rawLine.match(/^\s*(#{1,3})\s+(.+?)\s*$/)
     if (headingMatch) {
       flushParagraph()
-      const markdownLevel = headingMatch[1].length
+      const markdownLevel = headingMatch[1].length as PublicationHeadingLevel
       const text = headingMatch[2].trim()
 
       if (markdownLevel === 1 && !title) {
