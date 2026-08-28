@@ -17,6 +17,7 @@ function createInteractivePublication() {
           id: 'response-1',
           type: 'multiline-text-field',
           text: 'What would support you today?',
+          responseSize: 'medium',
         },
         {
           id: 'checkbox-1',
@@ -47,7 +48,10 @@ describe('PublicationPreviewPage interactive fields', () => {
     expect(
       within(contentPage as HTMLElement).getByText('I completed this reflection.'),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('What would support you today?')).toBeInTheDocument()
+
+    const responseField = screen.getByLabelText('What would support you today?')
+    expect(responseField).toBeInTheDocument()
+    expect(responseField).toHaveAttribute('data-response-size', 'medium')
     expect(
       screen.getByRole('button', { name: 'Download fillable PDF' }),
     ).toBeInTheDocument()
