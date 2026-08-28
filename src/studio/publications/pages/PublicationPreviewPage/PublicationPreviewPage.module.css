@@ -165,7 +165,6 @@
 }
 
 .responseArea {
-  min-height: 7.5rem;
   border: 1px solid var(--publication-rule);
   border-radius: 0.5rem;
   background-image: repeating-linear-gradient(
@@ -175,6 +174,18 @@
     var(--publication-rule) 1.65rem,
     var(--publication-rule) calc(1.65rem + 1px)
   );
+}
+
+.responseAreaShort {
+  min-height: 3.5rem;
+}
+
+.responseAreaMedium {
+  min-height: 5.5rem;
+}
+
+.responseAreaLong {
+  min-height: 7.5rem;
 }
 
 .checkboxField {
