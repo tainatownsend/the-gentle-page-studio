@@ -19,6 +19,8 @@ import type {
   PublicationContent,
   PublicationHeadingBlock,
   PublicationHeadingLevel,
+  PublicationPageBreakIntent,
+  PublicationResponseSizeIntent,
   PublicationStatus,
 } from '../../types'
 
@@ -44,6 +46,8 @@ type UnsavedChangesConfirmationProps = {
   onKeepEditing: () => void
   onDiscard: () => void
 }
+
+type PagePlacementValue = 'auto' | PublicationPageBreakIntent
 
 function createBlockId(): string {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
@@ -75,6 +79,7 @@ function createMultilineTextFieldBlock(): PublicationBlock {
     id: createBlockId(),
     type: 'multiline-text-field',
     text: '',
+    responseSize: 'medium',
   }
 }
 
@@ -99,21 +104,33 @@ function getBlockTypeLabel(block: PublicationBlock): string {
   }
 }
 
+function cloneBlock(block: PublicationBlock): PublicationBlock {
+  return {
+    ...block,
+    layout: block.layout ? { ...block.layout } : undefined,
+  }
+}
+
 function cloneContent(content: PublicationContent): PublicationContent {
   return {
-    blocks: content.blocks.map((block) => ({
-      ...block,
-    })),
+    blocks: content.blocks.map(cloneBlock),
   }
 }
 
 function normalizeContent(content: PublicationContent): PublicationContent {
   return {
     blocks: content.blocks.map((block) => ({
-      ...block,
+      ...cloneBlock(block),
       text: block.text.trim(),
     })),
   }
+}
+
+function layoutMatches(currentBlock: PublicationBlock, savedBlock: PublicationBlock): boolean {
+  return (
+    currentBlock.layout?.pageBreakBefore === savedBlock.layout?.pageBreakBefore &&
+    currentBlock.layout?.keepWithNext === savedBlock.layout?.keepWithNext
+  )
 }
 
 function contentMatches(
@@ -131,7 +148,8 @@ function contentMatches(
       !savedBlock ||
       currentBlock.id !== savedBlock.id ||
       currentBlock.type !== savedBlock.type ||
-      currentBlock.text.trim() !== savedBlock.text.trim()
+      currentBlock.text.trim() !== savedBlock.text.trim() ||
+      !layoutMatches(currentBlock, savedBlock)
     ) {
       return false
     }
@@ -140,8 +158,41 @@ function contentMatches(
       return currentBlock.level === savedBlock.level
     }
 
+    if (
+      currentBlock.type === 'multiline-text-field' &&
+      savedBlock.type === 'multiline-text-field'
+    ) {
+      return currentBlock.responseSize === savedBlock.responseSize
+    }
+
     return true
   })
+}
+
+function getPagePlacementValue(block: PublicationBlock): PagePlacementValue {
+  return block.layout?.pageBreakBefore ?? 'auto'
+}
+
+function withPagePlacement(
+  block: PublicationBlock,
+  pagePlacement: PagePlacementValue,
+): PublicationBlock {
+  if (pagePlacement === 'auto') {
+    const keepWithNext = block.layout?.keepWithNext
+
+    return {
+      ...block,
+      layout: keepWithNext === undefined ? undefined : { keepWithNext },
+    }
+  }
+
+  return {
+    ...block,
+    layout: {
+      ...block.layout,
+      pageBreakBefore: pagePlacement,
+    },
+  }
 }
 
 function UnsavedChangesConfirmation({
@@ -281,7 +332,7 @@ export function PublicationEditorPage({
 
       const sourceBlock = current.blocks[sourceIndex]
       const duplicatedBlock = {
-        ...sourceBlock,
+        ...cloneBlock(sourceBlock),
         id: createBlockId(),
       }
 
@@ -603,22 +654,49 @@ export function PublicationEditorPage({
                                     />
                                   </Field>
                                 ) : block.type === 'multiline-text-field' ? (
-                                  <Field
-                                    label={`Block ${blockNumber} response prompt`}
-                                    description="Readers will receive a multiline response area beneath this prompt."
-                                  >
-                                    <Textarea
-                                      fullWidth
-                                      rows={3}
-                                      value={block.text}
-                                      onChange={(event) =>
-                                        updateBlock(block.id, (currentBlock) => ({
-                                          ...currentBlock,
-                                          text: event.target.value,
-                                        }))
-                                      }
-                                    />
-                                  </Field>
+                                  <div className={styles.headingFields}>
+                                    <Field
+                                      label={`Block ${blockNumber} response prompt`}
+                                      description="Readers will receive a multiline response area beneath this prompt."
+                                    >
+                                      <Textarea
+                                        fullWidth
+                                        rows={3}
+                                        value={block.text}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) => ({
+                                            ...currentBlock,
+                                            text: event.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field
+                                      label={`Block ${blockNumber} response size`}
+                                      description="Sets the minimum writing space. Auto layout can expand it when room is available."
+                                    >
+                                      <Select
+                                        fullWidth
+                                        value={block.responseSize ?? 'long'}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'multiline-text-field'
+                                              ? {
+                                                  ...currentBlock,
+                                                  responseSize: event.target
+                                                    .value as PublicationResponseSizeIntent,
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      >
+                                        <option value="short">Short</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="long">Long</option>
+                                      </Select>
+                                    </Field>
+                                  </div>
                                 ) : (
                                   <Field
                                     label={`Block ${blockNumber} checkbox label`}
@@ -636,6 +714,28 @@ export function PublicationEditorPage({
                                     />
                                   </Field>
                                 )}
+
+                                <Field
+                                  label={`Block ${blockNumber} page placement`}
+                                  description="Leave this on Auto unless the compiled layout needs a gentle correction."
+                                >
+                                  <Select
+                                    fullWidth
+                                    value={getPagePlacementValue(block)}
+                                    onChange={(event) =>
+                                      updateBlock(block.id, (currentBlock) =>
+                                        withPagePlacement(
+                                          currentBlock,
+                                          event.target.value as PagePlacementValue,
+                                        ),
+                                      )
+                                    }
+                                  >
+                                    <option value="auto">Auto</option>
+                                    <option value="preferred">Prefer new page</option>
+                                    <option value="forced">Start new page</option>
+                                  </Select>
+                                </Field>
                               </Stack>
                             </li>
                           )
