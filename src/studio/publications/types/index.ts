@@ -16,12 +16,16 @@ export type { PublicationTemplate } from './publicationTemplate'
 
 export type {
   PublicationBlock,
+  PublicationBlockBase,
   PublicationBlockId,
+  PublicationBlockLayoutIntent,
   PublicationCheckboxFieldBlock,
   PublicationContent,
   PublicationHeadingBlock,
   PublicationHeadingLevel,
   PublicationInteractiveBlock,
   PublicationMultilineTextFieldBlock,
+  PublicationPageBreakIntent,
   PublicationParagraphBlock,
+  PublicationResponseSizeIntent,
 } from './publicationContent'
