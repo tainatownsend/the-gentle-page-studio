@@ -5,6 +5,22 @@
   background: var(--color-surface-secondary, #f6f8f7);
 }
 
+.compilerNote {
+  display: grid;
+  gap: var(--space-xs, 8px);
+  padding: var(--space-md, 16px);
+  border: 1px solid var(--color-border-subtle, #d9dfdc);
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface-secondary, #f6f8f7);
+}
+
+.advancedSection {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-xs, 8px);
+  border-top: 1px solid var(--color-border-subtle, #d9dfdc);
+}
+
 .templateGrid {
   display: grid;
   gap: var(--space-sm, 12px);
