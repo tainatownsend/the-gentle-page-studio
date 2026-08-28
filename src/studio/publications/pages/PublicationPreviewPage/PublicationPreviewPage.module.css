@@ -5,7 +5,8 @@
   background: var(--color-surface-secondary, #f6f8f7);
 }
 
-.exportError {
+.exportError,
+.layoutNotice {
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm, 12px);
@@ -16,8 +17,14 @@
   border-radius: var(--radius-md, 12px);
 }
 
-.exportError p {
+.exportError p,
+.layoutNotice p {
   margin: 0;
+}
+
+.noticeTitle {
+  margin-bottom: var(--space-xs, 8px) !important;
+  font-weight: 600;
 }
 
 .previewViewport {
@@ -165,6 +172,7 @@
 }
 
 .responseArea {
+  min-height: calc(var(--response-area-units, 14) * 0.5rem);
   border: 1px solid var(--publication-rule);
   border-radius: 0.5rem;
   background-image: repeating-linear-gradient(
@@ -177,15 +185,15 @@
 }
 
 .responseAreaShort {
-  min-height: 3.5rem;
+  min-height: max(3.5rem, calc(var(--response-area-units, 7) * 0.5rem));
 }
 
 .responseAreaMedium {
-  min-height: 5.5rem;
+  min-height: max(5.5rem, calc(var(--response-area-units, 10) * 0.5rem));
 }
 
 .responseAreaLong {
-  min-height: 7.5rem;
+  min-height: max(7.5rem, calc(var(--response-area-units, 14) * 0.5rem));
 }
 
 .checkboxField {
