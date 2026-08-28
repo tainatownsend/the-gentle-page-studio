@@ -22,6 +22,7 @@ function cloneContent(content: PublicationContent): PublicationContent {
   return {
     blocks: content.blocks.map((block) => ({
       ...block,
+      layout: block.layout ? { ...block.layout } : undefined,
     })),
   }
 }
@@ -54,7 +55,7 @@ function createPublication(values: PublicationCreateValues): Publication {
     title: values.title,
     description: values.description,
     status: 'draft',
-    content: cloneTemplateContent(template),
+    content: values.content ? cloneContent(values.content) : cloneTemplateContent(template),
     documentSettings: createDefaultPublicationDocumentSettings(),
     createdAt: timestamp,
     updatedAt: timestamp,
