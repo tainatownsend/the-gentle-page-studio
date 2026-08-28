@@ -129,4 +129,144 @@ describe('createPublicationLayout', () => {
       blocks: [],
     })
   })
+
+  it('honors a forced page break before authored content', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'Short introduction.',
+          },
+          {
+            id: 'section',
+            type: 'heading',
+            level: 1,
+            text: 'New section',
+            layout: {
+              pageBreakBefore: 'forced',
+            },
+          },
+          {
+            id: 'body',
+            type: 'paragraph',
+            text: 'Section body.',
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
+    expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual(['section', 'body'])
+  })
+
+  it('honors a preferred page break after the current page has meaningful content', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'a'.repeat(450),
+          },
+          {
+            id: 'section',
+            type: 'heading',
+            level: 1,
+            text: 'New section',
+            layout: {
+              pageBreakBefore: 'preferred',
+            },
+          },
+          {
+            id: 'body',
+            type: 'paragraph',
+            text: 'Section body.',
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
+    expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual(['section', 'body'])
+  })
+
+  it('keeps a preferred break flexible when moving content would waste most of the page', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'Short introduction.',
+          },
+          {
+            id: 'section',
+            type: 'heading',
+            level: 1,
+            text: 'New section',
+            layout: {
+              pageBreakBefore: 'preferred',
+            },
+          },
+          {
+            id: 'body',
+            type: 'paragraph',
+            text: 'Section body.',
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(1)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro', 'section', 'body'])
+  })
+
+  it('moves a heading with its following block instead of orphaning the heading', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'a'.repeat(700),
+          },
+          {
+            id: 'heading',
+            type: 'heading',
+            level: 2,
+            text: 'Reflection',
+          },
+          {
+            id: 'reflection',
+            type: 'paragraph',
+            text: 'b'.repeat(200),
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
+    expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual(['heading', 'reflection'])
+  })
 })
