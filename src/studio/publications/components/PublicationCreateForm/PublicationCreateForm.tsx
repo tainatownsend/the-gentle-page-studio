@@ -13,12 +13,18 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
 
+import type { PublicationContent } from '../../types'
+
 import styles from './PublicationCreateForm.module.css'
+
+export type PublicationCreationMode = 'manual' | 'compiled'
 
 export type PublicationCreateValues = {
   title: string
   description?: string
   templateId?: string
+  content?: PublicationContent
+  creationMode?: PublicationCreationMode
 }
 
 export type PublicationCreateFormProps = {
@@ -53,6 +59,7 @@ export function PublicationCreateForm({
       title: normalizedTitle,
       description: normalizedDescription || undefined,
       templateId,
+      creationMode: 'manual',
     })
   }
 
@@ -62,10 +69,10 @@ export function PublicationCreateForm({
         <Stack gap="lg">
           <Stack gap="xs">
             <Text as="h2" id="create-publication-title" variant="h2" weight="semibold">
-              Create publication
+              Create publication manually
             </Text>
             <Text tone="secondary">
-              Start with the essentials. You can shape the full publication in the editor afterward.
+              Use this only when you want to start from a template or build the publication block by block.
             </Text>
           </Stack>
 
@@ -76,7 +83,6 @@ export function PublicationCreateForm({
             description="Use a clear working title. You can change it later."
           >
             <Input
-              autoFocus
               fullWidth
               value={title}
               onChange={(event) => {
