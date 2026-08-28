@@ -43,10 +43,23 @@ function PublicationBlockPreview({ block }: PublicationBlockPreviewProps): React
   }
 
   if (block.type === 'multiline-text-field') {
+    const responseSize = block.responseSize ?? 'long'
+    const responseAreaClassName = `${styles.responseArea} ${
+      responseSize === 'short'
+        ? styles.responseAreaShort
+        : responseSize === 'medium'
+          ? styles.responseAreaMedium
+          : styles.responseAreaLong
+    }`
+
     return (
-      <section className={styles.multilineField} aria-label={block.text || 'Response field'}>
+      <section
+        className={styles.multilineField}
+        aria-label={block.text || 'Response field'}
+        data-response-size={responseSize}
+      >
         <p className={styles.fieldLabel}>{block.text || 'Response'}</p>
-        <div className={styles.responseArea} aria-hidden="true" />
+        <div className={responseAreaClassName} aria-hidden="true" />
       </section>
     )
   }
