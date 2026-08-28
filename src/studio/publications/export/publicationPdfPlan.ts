@@ -1,7 +1,7 @@
 import {
   createPublicationLayout,
-  estimatePublicationBlockUnits,
   PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
+  type PublicationLayoutBlockAllocation,
 } from '../layout'
 import type { Publication, PublicationBlock } from '../types'
 
@@ -64,11 +64,16 @@ function createFieldName(publicationId: string, blockId: string): string {
 
 function createBlockPlacements(
   blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
 ): PublicationPdfBlockPlacement[] {
+  const allocationByBlockId = new Map(
+    allocations.map((allocation) => [allocation.blockId, allocation.allocatedUnits]),
+  )
   let top = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
 
   return blocks.map((block) => {
-    const height = estimatePublicationBlockUnits(block) * CAPACITY_UNIT_HEIGHT_POINTS
+    const allocatedUnits = allocationByBlockId.get(block.id) ?? 0
+    const height = allocatedUnits * CAPACITY_UNIT_HEIGHT_POINTS
     const rect = {
       x: PUBLICATION_MARGIN_POINTS,
       y: top - height,
@@ -116,7 +121,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
   const interactiveFields: PublicationPdfInteractiveField[] = []
 
   const pages = layout.pages.map((page) => {
-    const blockPlacements = createBlockPlacements(page.blocks)
+    const blockPlacements = createBlockPlacements(page.blocks, page.allocations)
     const pageNumber = page.pageNumber
 
     if (page.kind === 'content' && pageNumber !== undefined) {
@@ -160,7 +165,10 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
       width: US_LETTER_WIDTH_POINTS,
       height: US_LETTER_HEIGHT_POINTS,
       margin: PUBLICATION_MARGIN_POINTS,
-      blocks: page.blocks.map((block) => ({ ...block })),
+      blocks: page.blocks.map((block) => ({
+        ...block,
+        layout: block.layout ? { ...block.layout } : undefined,
+      })),
       blockPlacements,
     }
   })
