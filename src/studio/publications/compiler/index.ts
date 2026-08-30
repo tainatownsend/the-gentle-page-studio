@@ -4,3 +4,9 @@ export type {
   GentlePageCompilationDiagnosticLevel,
   GentlePageCompilationResult,
 } from './compileGentlePageManuscript'
+export {
+  docxArrayBufferToManuscript,
+  docxBlobToManuscript,
+  docxDocumentXmlToManuscript,
+  GentlePageDocxError,
+} from './docxToGentlePageManuscript'
