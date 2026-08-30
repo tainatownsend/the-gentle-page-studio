@@ -74,6 +74,14 @@ function createParagraphBlock(): PublicationBlock {
   }
 }
 
+function createTableBlock(): PublicationBlock {
+  return {
+    id: createBlockId(),
+    type: 'table',
+    text: '| Column 1 | Column 2 |\n| --- | --- |\n|  |  |',
+  }
+}
+
 function createMultilineTextFieldBlock(): PublicationBlock {
   return {
     id: createBlockId(),
@@ -91,16 +99,30 @@ function createCheckboxFieldBlock(): PublicationBlock {
   }
 }
 
+function createRatingFieldBlock(): PublicationBlock {
+  return {
+    id: createBlockId(),
+    type: 'rating-field',
+    text: '',
+    min: 0,
+    max: 10,
+  }
+}
+
 function getBlockTypeLabel(block: PublicationBlock): string {
   switch (block.type) {
     case 'heading':
       return 'Heading'
     case 'paragraph':
       return 'Paragraph'
+    case 'table':
+      return 'Table'
     case 'multiline-text-field':
       return 'Multiline response'
     case 'checkbox-field':
       return 'Checkbox'
+    case 'rating-field':
+      return 'Rating scale'
   }
 }
 
@@ -163,6 +185,10 @@ function contentMatches(
       savedBlock.type === 'multiline-text-field'
     ) {
       return currentBlock.responseSize === savedBlock.responseSize
+    }
+
+    if (currentBlock.type === 'rating-field' && savedBlock.type === 'rating-field') {
+      return currentBlock.min === savedBlock.min && currentBlock.max === savedBlock.max
     }
 
     return true
@@ -496,7 +522,7 @@ export function PublicationEditorPage({
                         </Text>
 
                         <Text tone="secondary">
-                          Build the publication with text and reader response fields.
+                          Refine compiler decisions only when the publication needs an exception or preference change.
                         </Text>
                       </Stack>
 
@@ -536,6 +562,24 @@ export function PublicationEditorPage({
                         >
                           Add checkbox
                         </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          startIcon={<Plus size={18} />}
+                          onClick={() => addBlock(createRatingFieldBlock())}
+                        >
+                          Add rating
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          startIcon={<Plus size={18} />}
+                          onClick={() => addBlock(createTableBlock())}
+                        >
+                          Add table
+                        </Button>
                       </Cluster>
                     </div>
 
@@ -544,7 +588,7 @@ export function PublicationEditorPage({
                         <Stack gap="xs">
                           <Text weight="semibold">No content blocks yet</Text>
                           <Text tone="secondary">
-                            Add text or a reader response field to begin shaping this publication.
+                            Add content only when you need to extend the compiled manuscript manually.
                           </Text>
                         </Stack>
                       </div>
@@ -653,6 +697,23 @@ export function PublicationEditorPage({
                                       }
                                     />
                                   </Field>
+                                ) : block.type === 'table' ? (
+                                  <Field
+                                    label={`Block ${blockNumber} table`}
+                                    description="Edit the table as Markdown. Keep the separator row so the compiler can preserve columns."
+                                  >
+                                    <Textarea
+                                      fullWidth
+                                      rows={7}
+                                      value={block.text}
+                                      onChange={(event) =>
+                                        updateBlock(block.id, (currentBlock) => ({
+                                          ...currentBlock,
+                                          text: event.target.value,
+                                        }))
+                                      }
+                                    />
+                                  </Field>
                                 ) : block.type === 'multiline-text-field' ? (
                                   <div className={styles.headingFields}>
                                     <Field
@@ -695,6 +756,63 @@ export function PublicationEditorPage({
                                         <option value="medium">Medium</option>
                                         <option value="long">Long</option>
                                       </Select>
+                                    </Field>
+                                  </div>
+                                ) : block.type === 'rating-field' ? (
+                                  <div className={styles.headingFields}>
+                                    <Field label={`Block ${blockNumber} rating prompt`}>
+                                      <Input
+                                        fullWidth
+                                        value={block.text}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) => ({
+                                            ...currentBlock,
+                                            text: event.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field
+                                      label={`Block ${blockNumber} rating minimum`}
+                                      description="Usually 0 or 1."
+                                    >
+                                      <Input
+                                        fullWidth
+                                        type="number"
+                                        value={String(block.min)}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'rating-field'
+                                              ? {
+                                                  ...currentBlock,
+                                                  min: Number(event.target.value),
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field
+                                      label={`Block ${blockNumber} rating maximum`}
+                                      description="Usually 5 or 10."
+                                    >
+                                      <Input
+                                        fullWidth
+                                        type="number"
+                                        value={String(block.max)}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'rating-field'
+                                              ? {
+                                                  ...currentBlock,
+                                                  max: Number(event.target.value),
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      />
                                     </Field>
                                   </div>
                                 ) : (
