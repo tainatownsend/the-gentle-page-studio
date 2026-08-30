@@ -70,6 +70,23 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
   return block.type === 'paragraph' && /[?:]$/.test(block.text.trim())
 }
 
+function isMarkdownTable(lines: readonly string[]): boolean {
+  if (lines.length < 2) return false
+
+  const tableRows = lines.every((line) => /^\|.*\|$/.test(line.trim()))
+  const separatorCells = lines[1]
+    ?.trim()
+    .replace(/^\||\|$/g, '')
+    .split('|')
+    .map((cell) => cell.trim())
+
+  return (
+    tableRows &&
+    (separatorCells?.length ?? 0) > 0 &&
+    separatorCells?.every((cell) => /^:?-{3,}:?$/.test(cell)) === true
+  )
+}
+
 export function compileGentlePageManuscript(manuscript: string): GentlePageCompilationResult {
   const lines = manuscript.replace(/\r\n?/g, '\n').split('\n')
   const blocks: PublicationBlock[] = []
@@ -91,7 +108,10 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
   }
 
   function flushParagraph() {
-    const text = paragraphLines.join(' ').replace(/\s+/g, ' ').trim()
+    const rawLines = paragraphLines.map((line) => line.trim()).filter(Boolean)
+    const text = isMarkdownTable(rawLines)
+      ? rawLines.join('\n')
+      : rawLines.join(' ').replace(/\s+/g, ' ').trim()
     paragraphLines = []
 
     if (!text) return
@@ -135,7 +155,9 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       return
     }
 
-    const responseMatch = line.match(/^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i)
+    const responseMatch = line.match(
+      /^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i,
+    )
     if (responseMatch) {
       flushParagraph()
       const previousBlock = blocks[blocks.length - 1]
@@ -169,7 +191,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         level: 'suggestion',
         code: 'rating-field-fallback',
         line: lineNumber,
-        message: 'Rating fields are preserved as publication text until the dedicated rating control lands.',
+        message:
+          'Rating fields are preserved as publication text until the dedicated rating control lands.',
       })
       paragraphLines.push(line)
       flushParagraph()
@@ -254,7 +277,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     diagnostics.push({
       level: 'suggestion',
       code: 'unterminated-author-note',
-      message: 'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.',
+      message:
+        'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.',
     })
   }
 
