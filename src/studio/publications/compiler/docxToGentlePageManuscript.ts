@@ -51,13 +51,7 @@ function readZipEntries(bytes: Uint8Array): ZipEntry[] {
     const fileNameStart = offset + 46
     const name = UTF8.decode(bytes.subarray(fileNameStart, fileNameStart + fileNameLength))
 
-    entries.push({
-      name,
-      compressionMethod,
-      compressedSize,
-      localHeaderOffset,
-    })
-
+    entries.push({ name, compressionMethod, compressedSize, localHeaderOffset })
     offset = fileNameStart + fileNameLength + extraFieldLength + commentLength
   }
 
@@ -71,7 +65,9 @@ async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
     )
   }
 
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+  const payload = new ArrayBuffer(bytes.byteLength)
+  new Uint8Array(payload).set(bytes)
+  const stream = new Blob([payload]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
   return new Uint8Array(await new Response(stream).arrayBuffer())
 }
 
@@ -88,13 +84,8 @@ async function readZipEntry(bytes: Uint8Array, entry: ZipEntry): Promise<Uint8Ar
   const dataStart = offset + 30 + fileNameLength + extraFieldLength
   const compressed = bytes.subarray(dataStart, dataStart + entry.compressedSize)
 
-  if (entry.compressionMethod === 0) {
-    return compressed
-  }
-
-  if (entry.compressionMethod === 8) {
-    return inflateRaw(compressed)
-  }
+  if (entry.compressionMethod === 0) return compressed
+  if (entry.compressionMethod === 8) return inflateRaw(compressed)
 
   throw new GentlePageDocxError(
     `This DOCX uses an unsupported ZIP compression method (${entry.compressionMethod}).`,
@@ -147,7 +138,6 @@ function hasExplicitPageBreak(paragraph: Element): boolean {
 
 function headingPrefix(style: string | undefined): string | undefined {
   const normalized = style?.replace(/\s+/g, '').toLowerCase()
-
   if (normalized === 'heading1' || normalized === 'title') return '#'
   if (normalized === 'heading2') return '##'
   if (normalized === 'heading3') return '###'
@@ -158,17 +148,9 @@ function paragraphToManuscript(paragraph: Element): string[] {
   const text = getParagraphText(paragraph)
   const lines: string[] = []
 
-  if (hasPageBreakBefore(paragraph)) {
-    lines.push('[[GP:PAGE_BREAK type="preferred"]]')
-  }
-
-  if (hasExplicitPageBreak(paragraph)) {
-    lines.push('[[GP:PAGE_BREAK type="forced"]]')
-  }
-
-  if (!text) {
-    return lines
-  }
+  if (hasPageBreakBefore(paragraph)) lines.push('[[GP:PAGE_BREAK type="preferred"]]')
+  if (hasExplicitPageBreak(paragraph)) lines.push('[[GP:PAGE_BREAK type="forced"]]')
+  if (!text) return lines
 
   const prefix = headingPrefix(getParagraphStyle(paragraph))
   lines.push(prefix ? `${prefix} ${text}` : text)
@@ -182,7 +164,6 @@ function tableToManuscript(table: Element): string[] {
         .map((paragraph) => getParagraphText(paragraph))
         .filter(Boolean)
         .join(' / ')
-
       return text.replace(/\|/g, '\\|')
     }),
   )
@@ -195,13 +176,12 @@ function tableToManuscript(table: Element): string[] {
     ...Array.from({ length: Math.max(0, width - row.length) }, () => ''),
   ])
   const firstRow = normalizedRows[0] ?? []
-  const lines = [
+
+  return [
     `| ${firstRow.join(' | ')} |`,
     `| ${Array.from({ length: width }, () => '---').join(' | ')} |`,
     ...normalizedRows.slice(1).map((row) => `| ${row.join(' | ')} |`),
   ]
-
-  return lines
 }
 
 export function docxDocumentXmlToManuscript(xml: string): string {
@@ -213,25 +193,14 @@ export function docxDocumentXmlToManuscript(xml: string): string {
   }
 
   const body = Array.from(document.getElementsByTagNameNS('*', 'body'))[0]
-
-  if (!body) {
-    throw new GentlePageDocxError('The Word document does not contain a document body.')
-  }
+  if (!body) throw new GentlePageDocxError('The Word document does not contain a document body.')
 
   const output: string[] = []
-
   Array.from(body.children).forEach((child) => {
     let blockLines: string[] = []
-
-    if (child.localName === 'p') {
-      blockLines = paragraphToManuscript(child)
-    } else if (child.localName === 'tbl') {
-      blockLines = tableToManuscript(child)
-    }
-
-    if (blockLines.length > 0) {
-      output.push(blockLines.join('\n'))
-    }
+    if (child.localName === 'p') blockLines = paragraphToManuscript(child)
+    else if (child.localName === 'tbl') blockLines = tableToManuscript(child)
+    if (blockLines.length > 0) output.push(blockLines.join('\n'))
   })
 
   return output.join('\n\n').trim()
@@ -240,10 +209,7 @@ export function docxDocumentXmlToManuscript(xml: string): string {
 export async function docxArrayBufferToManuscript(buffer: ArrayBuffer): Promise<string> {
   const bytes = new Uint8Array(buffer)
   const entry = readZipEntries(bytes).find((candidate) => candidate.name === 'word/document.xml')
-
-  if (!entry) {
-    throw new GentlePageDocxError('This DOCX does not contain word/document.xml.')
-  }
+  if (!entry) throw new GentlePageDocxError('This DOCX does not contain word/document.xml.')
 
   const xml = UTF8.decode(await readZipEntry(bytes, entry))
   return docxDocumentXmlToManuscript(xml)
