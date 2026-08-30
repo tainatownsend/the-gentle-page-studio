@@ -22,32 +22,20 @@ A capacity-first workbook.
     expect(result.title).toBe('Burnout Recovery Journal')
     expect(result.detectedProtocol).toBe(true)
     expect(result.content.blocks).toEqual([
-      expect.objectContaining({
-        type: 'paragraph',
-        text: 'A capacity-first workbook.',
-      }),
+      expect.objectContaining({ type: 'paragraph', text: 'A capacity-first workbook.' }),
       expect.objectContaining({
         type: 'heading',
         level: 2,
         text: 'Before You Begin',
-        layout: expect.objectContaining({
-          pageBreakBefore: 'preferred',
-          keepWithNext: true,
-        }),
+        layout: expect.objectContaining({ pageBreakBefore: 'preferred', keepWithNext: true }),
       }),
       expect.objectContaining({
         type: 'multiline-text-field',
         text: 'What would make this feel supportive?',
         responseSize: 'long',
       }),
-      expect.objectContaining({
-        type: 'checkbox-field',
-        text: 'I want shorter prompts',
-      }),
-      expect.objectContaining({
-        type: 'checkbox-field',
-        text: 'I want more structure',
-      }),
+      expect.objectContaining({ type: 'checkbox-field', text: 'I want shorter prompts' }),
+      expect.objectContaining({ type: 'checkbox-field', text: 'I want more structure' }),
     ])
   })
 
@@ -74,16 +62,10 @@ Visible again.`)
 [[GP:SOMETHING_NEW]]`)
 
     expect(result.content.blocks[0]).toEqual(
-      expect.objectContaining({
-        type: 'paragraph',
-        text: '[[GP:SOMETHING_NEW]]',
-      }),
+      expect.objectContaining({ type: 'paragraph', text: '[[GP:SOMETHING_NEW]]' }),
     )
     expect(result.diagnostics).toEqual([
-      expect.objectContaining({
-        code: 'unknown-directive',
-        level: 'suggestion',
-      }),
+      expect.objectContaining({ code: 'unknown-directive', level: 'suggestion' }),
     ])
   })
 
@@ -99,9 +81,7 @@ First paragraph.
     expect(result.content.blocks[1]).toEqual(
       expect.objectContaining({
         type: 'heading',
-        layout: expect.objectContaining({
-          pageBreakBefore: 'preferred',
-        }),
+        layout: expect.objectContaining({ pageBreakBefore: 'preferred' }),
       }),
     )
   })
@@ -120,9 +100,7 @@ First paragraph.
         type: 'multiline-text-field',
         text: 'Reflection',
         responseSize: 'medium',
-        layout: {
-          pageBreakBefore: 'forced',
-        },
+        layout: { pageBreakBefore: 'forced' },
       }),
     ])
   })
@@ -171,11 +149,7 @@ Date: ____________________
 Sleep hours ____________________`)
 
     expect(result.content.blocks).toEqual([
-      expect.objectContaining({
-        type: 'multiline-text-field',
-        text: 'Date',
-        responseSize: 'short',
-      }),
+      expect.objectContaining({ type: 'multiline-text-field', text: 'Date', responseSize: 'short' }),
       expect.objectContaining({
         type: 'multiline-text-field',
         text: 'Sleep hours',
@@ -214,10 +188,7 @@ Reduce immediate strain.`)
       }),
     )
     expect(result.content.blocks[1]).toEqual(
-      expect.objectContaining({
-        type: 'paragraph',
-        text: 'Reduce immediate strain.',
-      }),
+      expect.objectContaining({ type: 'paragraph', text: 'Reduce immediate strain.' }),
     )
   })
 
@@ -235,5 +206,43 @@ PHASE 1 — STABILIZE`)
     expect(result.content.blocks[1]).toEqual(
       expect.objectContaining({ type: 'heading', text: 'PHASE 1 — STABILIZE' }),
     )
+  })
+
+  it('renders rating directives as printable scales instead of leaking protocol text', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+### Energy right now
+
+[[GP:RATING min="0" max="5"]]`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({ type: 'heading', text: 'Energy right now' }),
+      expect.objectContaining({ type: 'paragraph', text: '0   1   2   3   4   5' }),
+    ])
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: 'rating-static-scale', level: 'info' }),
+    ])
+  })
+
+  it('treats repeatable-page wrappers as layout intent instead of printable text', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:REPEATABLE_PAGE name="Daily Check-in"]]
+
+## Daily Check-in
+
+How do I feel today?
+
+[[GP:END_REPEATABLE_PAGE]]`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'heading',
+        text: 'Daily Check-in',
+        layout: expect.objectContaining({ pageBreakBefore: 'preferred' }),
+      }),
+      expect.objectContaining({ type: 'paragraph', text: 'How do I feel today?' }),
+    ])
+    expect(result.content.blocks.some((block) => block.text.includes('GP:'))).toBe(false)
   })
 })
