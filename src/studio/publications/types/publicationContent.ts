@@ -9,9 +9,21 @@ export type PublicationBlockLayoutIntent = {
   keepWithNext?: boolean
 }
 
+export type PublicationSemanticGroupKind =
+  | 'checkbox-group'
+  | 'worksheet'
+  | 'repeatable-page'
+
+export type PublicationSemanticGroup = {
+  id: string
+  kind: PublicationSemanticGroupKind
+  name?: string
+}
+
 export type PublicationBlockBase = {
   id: PublicationBlockId
   layout?: PublicationBlockLayoutIntent
+  semanticGroup?: PublicationSemanticGroup
 }
 
 export type PublicationHeadingBlock = PublicationBlockBase & {
