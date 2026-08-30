@@ -60,6 +60,18 @@ function cloneBlock(block: PublicationBlock): PublicationBlock {
   }
 }
 
+function estimateTableUnits(text: string): number {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const contentRows = lines.filter((line, index) => index !== 1 || !/^\|?\s*:?-{3,}/.test(line))
+  const rowCount = Math.max(contentRows.length, 1)
+  const totalTextLength = contentRows.join(' ').replace(/\|/g, ' ').length
+
+  return 4 + rowCount * 4 + Math.ceil(totalTextLength / 180) * 2
+}
+
 export function estimatePublicationBlockUnits(block: PublicationBlock): number {
   const textLength = Math.max(block.text.trim().length, 1)
 
@@ -68,6 +80,8 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
       return 5 + Math.ceil(textLength / 45) * 2
     case 'paragraph':
       return 3 + Math.ceil(textLength / 70) * 3
+    case 'table':
+      return estimateTableUnits(block.text)
     case 'multiline-text-field': {
       const baseUnits =
         block.responseSize === 'short' ? 7 : block.responseSize === 'medium' ? 10 : 14
@@ -75,6 +89,10 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
     }
     case 'checkbox-field':
       return 5 + Math.ceil(textLength / 70) * 2
+    case 'rating-field': {
+      const optionCount = Math.max(2, block.max - block.min + 1)
+      return 5 + Math.ceil(textLength / 70) * 2 + Math.ceil(optionCount / 6) * 2
+    }
   }
 }
 
