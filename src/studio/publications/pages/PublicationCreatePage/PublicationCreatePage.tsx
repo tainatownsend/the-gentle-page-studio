@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useState, type ChangeEvent, type ReactElement } from 'react'
 import { ArrowLeft } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
@@ -12,7 +12,7 @@ import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
 
 import { PublicationCreateForm, type PublicationCreateValues } from '../../components'
-import { compileGentlePageManuscript } from '../../compiler'
+import { compileGentlePageManuscript, docxBlobToManuscript } from '../../compiler'
 import { PUBLICATION_TEMPLATES } from '../../templates'
 
 import styles from './PublicationCreatePage.module.css'
@@ -30,12 +30,14 @@ export function PublicationCreatePage({
   const [manuscript, setManuscript] = useState('')
   const [manuscriptError, setManuscriptError] = useState<string>()
   const [showManualCreation, setShowManualCreation] = useState(false)
+  const [isImportingDocx, setIsImportingDocx] = useState(false)
+  const [importedFileName, setImportedFileName] = useState<string>()
 
   function handleCompile() {
     const normalizedManuscript = manuscript.trim()
 
     if (!normalizedManuscript) {
-      setManuscriptError('Paste a manuscript before compiling the publication.')
+      setManuscriptError('Paste or import a manuscript before compiling the publication.')
       return
     }
 
@@ -55,6 +57,41 @@ export function PublicationCreatePage({
     })
   }
 
+  async function handleDocxImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.docx')) {
+      setManuscriptError('Choose a Word .docx file.')
+      return
+    }
+
+    setIsImportingDocx(true)
+    setManuscriptError(undefined)
+
+    try {
+      const importedManuscript = await docxBlobToManuscript(file)
+
+      if (!importedManuscript.trim()) {
+        setManuscriptError('The Word document did not contain readable publication content.')
+        return
+      }
+
+      setManuscript(importedManuscript)
+      setImportedFileName(file.name)
+    } catch (error) {
+      setManuscriptError(
+        error instanceof Error
+          ? error.message
+          : 'The Word document could not be imported. Paste the manuscript instead.',
+      )
+    } finally {
+      setIsImportingDocx(false)
+      event.target.value = ''
+    }
+  }
+
   return (
     <main className={styles.page}>
       <Container size="md">
@@ -62,7 +99,7 @@ export function PublicationCreatePage({
           <PageHeader
             eyebrow="The Gentle Page Studio"
             title="Create publication"
-            description="Paste your manuscript. Gentle Page will interpret the structure and compose the publication for you."
+            description="Bring your manuscript. Gentle Page will interpret the structure and compose the publication for you."
             actions={
               <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
                 Back to publications
@@ -77,11 +114,26 @@ export function PublicationCreatePage({
                   Paste. Compile. Preview. Export.
                 </Text>
                 <Text tone="secondary">
-                  Paste content from ChatGPT, Gemini, Claude, Markdown, or any other writing tool. The
-                  compiler will create the publication blocks and preserve Gentle Page manuscript
-                  directives automatically.
+                  Paste content from ChatGPT, Gemini, Claude, Markdown, or another writing tool — or import a Word document. The compiler will turn the manuscript into a Gentle Page publication.
                 </Text>
               </Stack>
+
+              <Field
+                label="Import Word document"
+                description="Upload a .docx file. The Studio preserves paragraph order, Word heading styles, tables, and page-break intent before compilation."
+              >
+                <input
+                  type="file"
+                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  disabled={isImportingDocx}
+                  onChange={(event) => void handleDocxImport(event)}
+                />
+              </Field>
+
+              {isImportingDocx ? <Text tone="secondary">Reading Word document…</Text> : null}
+              {importedFileName ? (
+                <Text tone="secondary">Imported {importedFileName}. You can compile immediately or edit the extracted manuscript below.</Text>
+              ) : null}
 
               <Field
                 label="Manuscript"
@@ -96,6 +148,7 @@ export function PublicationCreatePage({
                   value={manuscript}
                   onChange={(event) => {
                     setManuscript(event.target.value)
+                    setImportedFileName(undefined)
                     if (manuscriptError) setManuscriptError(undefined)
                   }}
                   placeholder={`# Publication title
@@ -111,13 +164,12 @@ export function PublicationCreatePage({
               <div className={styles.compilerNote}>
                 <Text weight="semibold">Zero-touch by default</Text>
                 <Text tone="secondary">
-                  The compiler makes the layout decisions. Manual editing remains available only for
-                  exceptions or preference changes.
+                  The compiler makes the layout decisions. Manual editing remains available only for exceptions or preference changes.
                 </Text>
               </div>
 
               <Cluster justify="end" gap="sm">
-                <Button type="button" onClick={handleCompile}>
+                <Button type="button" disabled={isImportingDocx} onClick={handleCompile}>
                   Compile publication
                 </Button>
               </Cluster>
