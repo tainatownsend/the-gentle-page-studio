@@ -47,6 +47,14 @@ function parsePageBreakIntent(line: string): PublicationPageBreakIntent {
   return typeMatch?.[1]?.toLowerCase() === 'forced' ? 'forced' : 'preferred'
 }
 
+function parseNumericAttribute(line: string, attribute: string): number | undefined {
+  const match = line.match(new RegExp(`${attribute}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
+  if (!match?.[1]) return undefined
+
+  const value = Number(match[1])
+  return Number.isFinite(value) ? value : undefined
+}
+
 function withPendingLayout(
   block: PublicationBlock,
   pendingPageBreak: PublicationPageBreakIntent | undefined,
@@ -109,11 +117,20 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
   function flushParagraph() {
     const rawLines = paragraphLines.map((line) => line.trim()).filter(Boolean)
-    const text = isMarkdownTable(rawLines)
-      ? rawLines.join('\n')
-      : rawLines.join(' ').replace(/\s+/g, ' ').trim()
     paragraphLines = []
 
+    if (rawLines.length === 0) return
+
+    if (isMarkdownTable(rawLines)) {
+      pushBlock({
+        id: createBlockId(),
+        type: 'table',
+        text: rawLines.join('\n'),
+      })
+      return
+    }
+
+    const text = rawLines.join(' ').replace(/\s+/g, ' ').trim()
     if (!text) return
 
     pushBlock({
@@ -121,6 +138,25 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       type: 'paragraph',
       text,
     })
+  }
+
+  function consumePrompt(defaultPrompt: string): {
+    prompt: string
+    inheritedPageBreak?: PublicationPageBreakIntent
+  } {
+    const previousBlock = blocks[blocks.length - 1]
+
+    if (!isPromptLikeBlock(previousBlock)) {
+      return { prompt: defaultPrompt }
+    }
+
+    const removed = blocks.pop()
+    if (!removed) return { prompt: defaultPrompt }
+
+    return {
+      prompt: removed.text,
+      inheritedPageBreak: removed.layout?.pageBreakBefore,
+    }
   }
 
   lines.forEach((rawLine, index) => {
@@ -160,18 +196,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     )
     if (responseMatch) {
       flushParagraph()
-      const previousBlock = blocks[blocks.length - 1]
-      let prompt = 'Response'
-      let inheritedPageBreak: PublicationPageBreakIntent | undefined
-
-      if (isPromptLikeBlock(previousBlock)) {
-        const removed = blocks.pop()
-        if (removed) {
-          prompt = removed.text
-          inheritedPageBreak = removed.layout?.pageBreakBefore
-        }
-      }
-
+      const { prompt, inheritedPageBreak } = consumePrompt('Response')
       const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
       pendingPageBreak = undefined
 
@@ -185,17 +210,33 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       return
     }
 
-    if (/^\[\[GP:RATING\b/i.test(line)) {
+    if (/^\[\[GP:RATING\b[^\]]*\]\]$/i.test(line)) {
       flushParagraph()
-      diagnostics.push({
-        level: 'suggestion',
-        code: 'rating-field-fallback',
-        line: lineNumber,
-        message:
-          'Rating fields are preserved as publication text until the dedicated rating control lands.',
+      const { prompt, inheritedPageBreak } = consumePrompt('Rating')
+      const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
+      pendingPageBreak = undefined
+      const parsedMin = parseNumericAttribute(line, 'min') ?? 0
+      const parsedMax = parseNumericAttribute(line, 'max') ?? 10
+      const min = Math.trunc(parsedMin)
+      const max = Math.trunc(parsedMax)
+
+      if (min >= max) {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'rating-range-normalized',
+          line: lineNumber,
+          message: 'A rating range with min greater than or equal to max was normalized to 0–10.',
+        })
+      }
+
+      blocks.push({
+        id: createBlockId(),
+        type: 'rating-field',
+        text: prompt,
+        min: min < max ? min : 0,
+        max: min < max ? max : 10,
+        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
       })
-      paragraphLines.push(line)
-      flushParagraph()
       return
     }
 
