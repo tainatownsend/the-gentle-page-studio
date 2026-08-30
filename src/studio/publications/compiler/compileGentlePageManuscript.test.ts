@@ -146,6 +146,23 @@ ____________________________`)
     ])
   })
 
+  it('uses a short preceding label as the prompt for inferred writing space', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+Today I need
+
+____________________________
+____________________________`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'multiline-text-field',
+        text: 'Today I need',
+        responseSize: 'medium',
+      }),
+    ])
+  })
+
   it('infers inline short fields without preserving underscore artifacts', () => {
     const result = compileGentlePageManuscript(`# Journal
 
@@ -201,6 +218,22 @@ Reduce immediate strain.`)
         type: 'paragraph',
         text: 'Reduce immediate strain.',
       }),
+    )
+  })
+
+  it('infers an all-caps manuscript title when Markdown is not present', () => {
+    const result = compileGentlePageManuscript(`BURNOUT RECOVERY JOURNAL
+
+A capacity-first workbook.
+
+PHASE 1 — STABILIZE`)
+
+    expect(result.title).toBe('BURNOUT RECOVERY JOURNAL')
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({ type: 'paragraph', text: 'A capacity-first workbook.' }),
+    )
+    expect(result.content.blocks[1]).toEqual(
+      expect.objectContaining({ type: 'heading', text: 'PHASE 1 — STABILIZE' }),
     )
   })
 })
