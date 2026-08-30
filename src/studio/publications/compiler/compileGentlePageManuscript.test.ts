@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { compileGentlePageManuscript } from './compileGentlePageManuscript'
 
 describe('compileGentlePageManuscript', () => {
-  it('compiles a Gentle Page manuscript into existing publication blocks', () => {
+  it('compiles a Gentle Page manuscript into publication blocks', () => {
     const result = compileGentlePageManuscript(`# Burnout Recovery Journal
 
 A capacity-first workbook.
@@ -48,6 +48,48 @@ A capacity-first workbook.
         type: 'checkbox-field',
         text: 'I want more structure',
       }),
+    ])
+  })
+
+  it('compiles markdown tables and rating directives as first-class structured blocks', () => {
+    const result = compileGentlePageManuscript(`# Energy Audit
+
+### Energy right now
+
+[[GP:RATING min="0" max="10"]]
+
+| Area | Capacity |
+| --- | --- |
+| Physical | Low |
+| Mental | Medium |`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'rating-field',
+        text: 'Energy right now',
+        min: 0,
+        max: 10,
+      }),
+      expect.objectContaining({
+        type: 'table',
+        text: '| Area | Capacity |\n| --- | --- |\n| Physical | Low |\n| Mental | Medium |',
+      }),
+    ])
+    expect(result.diagnostics).toEqual([])
+  })
+
+  it('normalizes an invalid rating range without blocking compilation', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+### Energy
+
+[[GP:RATING min="10" max="0"]]`)
+
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({ type: 'rating-field', min: 0, max: 10 }),
+    )
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: 'rating-range-normalized', level: 'suggestion' }),
     ])
   })
 
