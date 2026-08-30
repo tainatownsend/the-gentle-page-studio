@@ -53,6 +53,23 @@ function parsePageBreakIntent(line: string): PublicationPageBreakIntent {
   return typeMatch?.[1]?.toLowerCase() === 'forced' ? 'forced' : 'preferred'
 }
 
+function parseNumericAttribute(line: string, name: string, fallback: number): number {
+  const match = line.match(new RegExp(`${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
+  const value = match ? Number(match[1]) : fallback
+  return Number.isFinite(value) ? value : fallback
+}
+
+function createRatingScaleText(min: number, max: number): string {
+  const safeMin = Math.ceil(Math.min(min, max))
+  const safeMax = Math.floor(Math.max(min, max))
+
+  if (safeMax - safeMin > 20) {
+    return `${safeMin}  ·  ·  ·  ${safeMax}`
+  }
+
+  return Array.from({ length: safeMax - safeMin + 1 }, (_, index) => safeMin + index).join('   ')
+}
+
 function withPendingLayout(
   block: PublicationBlock,
   pendingPageBreak: PublicationPageBreakIntent | undefined,
@@ -254,6 +271,17 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       return
     }
 
+    if (/^\[\[GP:REPEATABLE_PAGE\b/i.test(line)) {
+      flushParagraph()
+      pendingPageBreak = pendingPageBreak ?? 'preferred'
+      return
+    }
+
+    if (/^\[\[GP:END_REPEATABLE_PAGE\]\]$/i.test(line)) {
+      flushParagraph()
+      return
+    }
+
     const responseMatch = line.match(/^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i)
     if (responseMatch) {
       flushParagraph()
@@ -284,14 +312,19 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
     if (/^\[\[GP:RATING\b/i.test(line)) {
       flushParagraph()
-      diagnostics.push({
-        level: 'suggestion',
-        code: 'rating-field-fallback',
-        line: lineNumber,
-        message: 'Rating fields are preserved as publication text until the dedicated rating control lands.',
+      const min = parseNumericAttribute(line, 'min', 0)
+      const max = parseNumericAttribute(line, 'max', 10)
+      pushBlock({
+        id: createBlockId(),
+        type: 'paragraph',
+        text: createRatingScaleText(min, max),
       })
-      paragraphLines.push(line)
-      flushParagraph()
+      diagnostics.push({
+        level: 'info',
+        code: 'rating-static-scale',
+        line: lineNumber,
+        message: 'The rating directive was rendered as a printable scale; dedicated fillable rating controls are still pending.',
+      })
       return
     }
 
