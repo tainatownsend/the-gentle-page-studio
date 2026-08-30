@@ -344,4 +344,45 @@ describe('createPublicationLayout', () => {
     expect(first?.allocatedUnits).toBe(second?.allocatedUnits)
     expect(first?.allocatedUnits).toBeGreaterThan(first?.baselineUnits ?? 0)
   })
+
+  it('moves a compact checkbox run together instead of splitting the set', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'a'.repeat(850),
+          },
+          {
+            id: 'check-1',
+            type: 'checkbox-field',
+            text: 'Reduce expectations',
+          },
+          {
+            id: 'check-2',
+            type: 'checkbox-field',
+            text: 'Ask for help',
+          },
+          {
+            id: 'check-3',
+            type: 'checkbox-field',
+            text: 'Protect a break',
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
+    expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual([
+      'check-1',
+      'check-2',
+      'check-3',
+    ])
+  })
 })
