@@ -111,7 +111,7 @@ describe('convertDocxXmlToGentlePageManuscript', () => {
           text: 'Ask for help',
         }),
         expect.objectContaining({
-          type: 'paragraph',
+          type: 'table',
           text: expect.stringContaining('| Area | Current capacity |'),
         }),
       ]),
