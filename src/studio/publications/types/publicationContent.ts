@@ -25,6 +25,12 @@ export type PublicationParagraphBlock = PublicationBlockBase & {
   text: string
 }
 
+export type PublicationTableBlock = PublicationBlockBase & {
+  type: 'table'
+  /** Canonical Markdown table payload. */
+  text: string
+}
+
 export type PublicationResponseSizeIntent = 'short' | 'medium' | 'long'
 
 export type PublicationMultilineTextFieldBlock = PublicationBlockBase & {
@@ -38,13 +44,22 @@ export type PublicationCheckboxFieldBlock = PublicationBlockBase & {
   text: string
 }
 
+export type PublicationRatingFieldBlock = PublicationBlockBase & {
+  type: 'rating-field'
+  text: string
+  min: number
+  max: number
+}
+
 export type PublicationInteractiveBlock =
   | PublicationMultilineTextFieldBlock
   | PublicationCheckboxFieldBlock
+  | PublicationRatingFieldBlock
 
 export type PublicationBlock =
   | PublicationHeadingBlock
   | PublicationParagraphBlock
+  | PublicationTableBlock
   | PublicationInteractiveBlock
 
 export type PublicationContent = {
