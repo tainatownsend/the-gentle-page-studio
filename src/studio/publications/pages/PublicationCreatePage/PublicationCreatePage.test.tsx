@@ -15,6 +15,7 @@ describe('PublicationCreatePage', () => {
     ).toBeInTheDocument()
 
     expect(screen.getByRole('textbox', { name: /manuscript/i })).toHaveFocus()
+    expect(screen.getByLabelText('Import Word document')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Compile publication' })).toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument()
   })
@@ -26,7 +27,9 @@ describe('PublicationCreatePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Compile publication' }))
 
-    expect(screen.getByText('Paste a manuscript before compiling the publication.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Paste or import a manuscript before compiling the publication.'),
+    ).toBeInTheDocument()
     expect(onCreate).not.toHaveBeenCalled()
   })
 
