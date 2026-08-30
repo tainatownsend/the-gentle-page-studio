@@ -126,4 +126,81 @@ First paragraph.
       }),
     ])
   })
+
+  it('infers Word-style writing lines as one semantic response area', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+What would make this feel supportive?
+
+____________________________
+____________________________
+____________________________
+____________________________`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'multiline-text-field',
+        text: 'What would make this feel supportive?',
+        responseSize: 'long',
+      }),
+    ])
+  })
+
+  it('infers inline short fields without preserving underscore artifacts', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+Date: ____________________
+
+Sleep hours ____________________`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'multiline-text-field',
+        text: 'Date',
+        responseSize: 'short',
+      }),
+      expect.objectContaining({
+        type: 'multiline-text-field',
+        text: 'Sleep hours',
+        responseSize: 'short',
+      }),
+    ])
+  })
+
+  it('accepts common checkbox syntax copied from AI or Word', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[ ] Reduce expectations
+☐ Ask for help
+□ Protect a break`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({ type: 'checkbox-field', text: 'Reduce expectations' }),
+      expect.objectContaining({ type: 'checkbox-field', text: 'Ask for help' }),
+      expect.objectContaining({ type: 'checkbox-field', text: 'Protect a break' }),
+    ])
+  })
+
+  it('conservatively recognizes common plain-text section markers', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+PHASE 1 — STABILIZE
+
+Reduce immediate strain.`)
+
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'heading',
+        level: 2,
+        text: 'PHASE 1 — STABILIZE',
+        layout: expect.objectContaining({ keepWithNext: true }),
+      }),
+    )
+    expect(result.content.blocks[1]).toEqual(
+      expect.objectContaining({
+        type: 'paragraph',
+        text: 'Reduce immediate strain.',
+      }),
+    )
+  })
 })
