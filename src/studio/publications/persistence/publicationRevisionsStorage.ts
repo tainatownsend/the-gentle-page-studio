@@ -77,10 +77,20 @@ function isPublicationBlock(value: unknown): value is PublicationBlock {
 
   if (
     value.type === 'paragraph' ||
+    value.type === 'table' ||
     value.type === 'multiline-text-field' ||
     value.type === 'checkbox-field'
   ) {
     return true
+  }
+
+  if (value.type === 'rating-field') {
+    return (
+      typeof value.min === 'number' &&
+      Number.isFinite(value.min) &&
+      typeof value.max === 'number' &&
+      Number.isFinite(value.max)
+    )
   }
 
   return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
