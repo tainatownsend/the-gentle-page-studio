@@ -22,10 +22,7 @@ export type PublicationCreatePageProps = {
   onCreate: (values: PublicationCreateValues) => void
 }
 
-export function PublicationCreatePage({
-  onBack,
-  onCreate,
-}: PublicationCreatePageProps): ReactElement {
+export function PublicationCreatePage({ onBack, onCreate }: PublicationCreatePageProps): ReactElement {
   const [templateId, setTemplateId] = useState('blank')
   const [manuscript, setManuscript] = useState('')
   const [manuscriptError, setManuscriptError] = useState<string>()
@@ -35,31 +32,23 @@ export function PublicationCreatePage({
 
   function handleCompile() {
     const normalizedManuscript = manuscript.trim()
-
     if (!normalizedManuscript) {
       setManuscriptError('Paste or import a manuscript before compiling the publication.')
       return
     }
 
     const result = compileGentlePageManuscript(normalizedManuscript)
-
     if (result.content.blocks.length === 0) {
       setManuscriptError('The manuscript needs publication content in addition to its title.')
       return
     }
 
     setManuscriptError(undefined)
-
-    onCreate({
-      title: result.title,
-      content: result.content,
-      creationMode: 'compiled',
-    })
+    onCreate({ title: result.title, content: result.content, creationMode: 'compiled' })
   }
 
   async function handleDocxImport(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-
     if (!file) return
 
     if (!file.name.toLowerCase().endsWith('.docx')) {
@@ -72,12 +61,10 @@ export function PublicationCreatePage({
 
     try {
       const importedManuscript = await docxBlobToManuscript(file)
-
       if (!importedManuscript.trim()) {
         setManuscriptError('The Word document did not contain readable publication content.')
         return
       }
-
       setManuscript(importedManuscript)
       setImportedFileName(file.name)
     } catch (error) {
@@ -120,9 +107,11 @@ export function PublicationCreatePage({
 
               <Field
                 label="Import Word document"
+                controlId="docx-import"
                 description="Upload a .docx file. The Studio preserves paragraph order, Word heading styles, tables, and page-break intent before compilation."
               >
                 <input
+                  id="docx-import"
                   type="file"
                   accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   disabled={isImportingDocx}
@@ -132,7 +121,9 @@ export function PublicationCreatePage({
 
               {isImportingDocx ? <Text tone="secondary">Reading Word document…</Text> : null}
               {importedFileName ? (
-                <Text tone="secondary">Imported {importedFileName}. You can compile immediately or edit the extracted manuscript below.</Text>
+                <Text tone="secondary">
+                  Imported {importedFileName}. You can compile immediately or edit the extracted manuscript below.
+                </Text>
               ) : null}
 
               <Field
