@@ -76,6 +76,11 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
   return block.type === 'paragraph' && /[?:]$/.test(block.text.trim())
 }
 
+function isLikelyInferredWritingPrompt(block: PublicationBlock | undefined): boolean {
+  if (isPromptLikeBlock(block)) return true
+  return block?.type === 'paragraph' && block.text.trim().length <= 120
+}
+
 function isWritingAreaLine(line: string): boolean {
   return /^_{3,}$/.test(line)
 }
@@ -84,14 +89,24 @@ function normalizeInlineFieldPrompt(value: string): string {
   return value.trim().replace(/\s+$/, '').replace(/:\s*$/, '')
 }
 
+const PLAIN_SECTION_PREFIX =
+  /^(PHASE|DAY|WEEK|ANALYSIS|REPEATABLE PAGE|CURRENT-STATE|CURRENT STATE|BEFORE YOU BEGIN|REFLECTION|SUMMARY|REVIEW)\b/
+
 function isConservativePlainHeading(line: string): boolean {
   if (line.length < 3 || line.length > 80) return false
   if (!/[A-Z]/.test(line)) return false
   if (/[a-z]/.test(line)) return false
 
-  return /^(PHASE|DAY|WEEK|ANALYSIS|REPEATABLE PAGE|CURRENT-STATE|CURRENT STATE|BEFORE YOU BEGIN|REFLECTION|SUMMARY|REVIEW)\b/.test(
-    line,
-  )
+  return PLAIN_SECTION_PREFIX.test(line)
+}
+
+function isLikelyPlainTitle(line: string): boolean {
+  if (line.length < 4 || line.length > 100) return false
+  if (PLAIN_SECTION_PREFIX.test(line)) return false
+  if (/[a-z]/.test(line)) return false
+
+  const words = line.match(/[A-Z][A-Z0-9'’&-]*/g) ?? []
+  return words.length >= 2
 }
 
 export function compileGentlePageManuscript(manuscript: string): GentlePageCompilationResult {
@@ -151,7 +166,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     let prompt = 'Response'
     let inheritedPageBreak: PublicationPageBreakIntent | undefined
 
-    if (isPromptLikeBlock(previousBlock)) {
+    if (isLikelyInferredWritingPrompt(previousBlock)) {
       const removed = blocks.pop()
       if (removed) {
         prompt = removed.text
@@ -199,6 +214,17 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
     if (!line) {
       flushParagraph()
+      return
+    }
+
+    if (
+      !title &&
+      blocks.length === 0 &&
+      paragraphLines.length === 0 &&
+      !detectedProtocol &&
+      isLikelyPlainTitle(line)
+    ) {
+      title = line
       return
     }
 
