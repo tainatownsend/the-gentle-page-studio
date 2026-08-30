@@ -42,6 +42,12 @@ function normalizeResponseSize(value: string | undefined): PublicationResponseSi
   }
 }
 
+function inferredResponseSize(lineCount: number): PublicationResponseSizeIntent {
+  if (lineCount <= 1) return 'short'
+  if (lineCount === 2) return 'medium'
+  return 'long'
+}
+
 function parsePageBreakIntent(line: string): PublicationPageBreakIntent {
   const typeMatch = line.match(/type\s*=\s*["']?(preferred|forced)["']?/i)
   return typeMatch?.[1]?.toLowerCase() === 'forced' ? 'forced' : 'preferred'
@@ -70,6 +76,24 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
   return block.type === 'paragraph' && /[?:]$/.test(block.text.trim())
 }
 
+function isWritingAreaLine(line: string): boolean {
+  return /^_{3,}$/.test(line)
+}
+
+function normalizeInlineFieldPrompt(value: string): string {
+  return value.trim().replace(/\s+$/, '').replace(/:\s*$/, '')
+}
+
+function isConservativePlainHeading(line: string): boolean {
+  if (line.length < 3 || line.length > 80) return false
+  if (!/[A-Z]/.test(line)) return false
+  if (/[a-z]/.test(line)) return false
+
+  return /^(PHASE|DAY|WEEK|ANALYSIS|REPEATABLE PAGE|CURRENT-STATE|CURRENT STATE|BEFORE YOU BEGIN|REFLECTION|SUMMARY|REVIEW)\b/.test(
+    line,
+  )
+}
+
 export function compileGentlePageManuscript(manuscript: string): GentlePageCompilationResult {
   const lines = manuscript.replace(/\r\n?/g, '\n').split('\n')
   const blocks: PublicationBlock[] = []
@@ -79,6 +103,13 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
   let authorNote = false
   let pendingPageBreak: PublicationPageBreakIntent | undefined
   let paragraphLines: string[] = []
+  let inferredResponseBlockId: string | undefined
+  let inferredResponseLineCount = 0
+
+  function resetInferredWritingArea() {
+    inferredResponseBlockId = undefined
+    inferredResponseLineCount = 0
+  }
 
   function consumePendingPageBreak(): PublicationPageBreakIntent | undefined {
     const value = pendingPageBreak
@@ -103,6 +134,47 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     })
   }
 
+  function inferWritingArea() {
+    flushParagraph()
+    const previousBlock = blocks[blocks.length - 1]
+
+    if (
+      inferredResponseBlockId &&
+      previousBlock?.id === inferredResponseBlockId &&
+      previousBlock.type === 'multiline-text-field'
+    ) {
+      inferredResponseLineCount += 1
+      previousBlock.responseSize = inferredResponseSize(inferredResponseLineCount)
+      return
+    }
+
+    let prompt = 'Response'
+    let inheritedPageBreak: PublicationPageBreakIntent | undefined
+
+    if (isPromptLikeBlock(previousBlock)) {
+      const removed = blocks.pop()
+      if (removed) {
+        prompt = removed.text
+        inheritedPageBreak = removed.layout?.pageBreakBefore
+      }
+    }
+
+    const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
+    pendingPageBreak = undefined
+    const id = createBlockId()
+
+    blocks.push({
+      id,
+      type: 'multiline-text-field',
+      text: prompt,
+      responseSize: 'short',
+      layout: pageBreakBefore ? { pageBreakBefore } : undefined,
+    })
+
+    inferredResponseBlockId = id
+    inferredResponseLineCount = 1
+  }
+
   lines.forEach((rawLine, index) => {
     const lineNumber = index + 1
     const line = rawLine.trim()
@@ -113,6 +185,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
     if (/^\[\[GP:AUTHOR_NOTE\]\]$/i.test(line)) {
       flushParagraph()
+      resetInferredWritingArea()
       authorNote = true
       return
     }
@@ -128,6 +201,26 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       flushParagraph()
       return
     }
+
+    if (isWritingAreaLine(line)) {
+      inferWritingArea()
+      return
+    }
+
+    const inlineFieldMatch = line.match(/^(.+?)\s+_{3,}$/)
+    if (inlineFieldMatch) {
+      flushParagraph()
+      resetInferredWritingArea()
+      pushBlock({
+        id: createBlockId(),
+        type: 'multiline-text-field',
+        text: normalizeInlineFieldPrompt(inlineFieldMatch[1]),
+        responseSize: 'short',
+      })
+      return
+    }
+
+    resetInferredWritingArea()
 
     if (/^\[\[GP:PAGE_BREAK(?:\s+[^\]]+)?\]\]$/i.test(line)) {
       flushParagraph()
@@ -212,13 +305,27 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       return
     }
 
-    const checkboxMatch = line.match(/^[-*]\s+\[\s?\]\s+(.+)$/)
+    const checkboxMatch = line.match(/^(?:[-*]\s*)?(?:\[\s?\]|☐|□)\s+(.+)$/)
     if (checkboxMatch) {
       flushParagraph()
       pushBlock({
         id: createBlockId(),
         type: 'checkbox-field',
         text: checkboxMatch[1].trim(),
+      })
+      return
+    }
+
+    if (isConservativePlainHeading(line)) {
+      flushParagraph()
+      pushBlock({
+        id: createBlockId(),
+        type: 'heading',
+        level: 2,
+        text: line,
+        layout: {
+          keepWithNext: true,
+        },
       })
       return
     }
