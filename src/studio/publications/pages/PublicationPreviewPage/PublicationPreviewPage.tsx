@@ -26,6 +26,21 @@ type PublicationBlockPreviewProps = {
   allocatedUnits?: number
 }
 
+function parseMarkdownTable(text: string): string[][] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) =>
+      line
+        .replace(/^\|/, '')
+        .replace(/\|$/, '')
+        .split(/(?<!\\)\|/)
+        .map((cell) => cell.trim().replace(/\\\|/g, '|')),
+    )
+    .filter((row) => !row.every((cell) => /^:?-{3,}:?$/.test(cell)))
+}
+
 function PublicationBlockPreview({
   block,
   allocatedUnits,
@@ -33,17 +48,9 @@ function PublicationBlockPreview({
   if (block.type === 'heading') {
     const HeadingTag = `h${block.level + 1}` as 'h2' | 'h3' | 'h4'
     const headingClassName =
-      block.level === 1
-        ? styles.heading1
-        : block.level === 2
-          ? styles.heading2
-          : styles.heading3
+      block.level === 1 ? styles.heading1 : block.level === 2 ? styles.heading2 : styles.heading3
 
-    return (
-      <HeadingTag className={headingClassName}>
-        {block.text || 'Untitled heading'}
-      </HeadingTag>
-    )
+    return <HeadingTag className={headingClassName}>{block.text || 'Untitled heading'}</HeadingTag>
   }
 
   if (block.type === 'multiline-text-field') {
@@ -55,9 +62,7 @@ function PublicationBlockPreview({
           ? styles.responseAreaMedium
           : styles.responseAreaLong
     }`
-    const responseAreaStyle = {
-      '--response-area-units': allocatedUnits ?? 14,
-    } as CSSProperties
+    const responseAreaStyle = { '--response-area-units': allocatedUnits ?? 14 } as CSSProperties
 
     return (
       <section
@@ -81,15 +86,36 @@ function PublicationBlockPreview({
     )
   }
 
+  if (block.format === 'table') {
+    const rows = parseMarkdownTable(block.text)
+    const [header = [], ...body] = rows
+
+    return (
+      <div className={styles.tableFrame}>
+        <table className={styles.publicationTable}>
+          <thead>
+            <tr>{header.map((cell, index) => <th key={`${index}-${cell}`}>{cell}</th>)}</tr>
+          </thead>
+          <tbody>
+            {body.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  if (block.format === 'rating-scale') {
+    return <p className={styles.ratingScale}>{block.text}</p>
+  }
+
   return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
 }
 
-export function PublicationPreviewPage({
-  publication,
-  onBack,
-  onEdit,
-  onHistory,
-}: PublicationPreviewPageProps): ReactElement {
+export function PublicationPreviewPage({ publication, onBack, onEdit, onHistory }: PublicationPreviewPageProps): ReactElement {
   const [isDownloadingFillablePdf, setIsDownloadingFillablePdf] = useState(false)
   const [fillablePdfError, setFillablePdfError] = useState<string>()
   const layout = createPublicationLayout(publication)
@@ -102,19 +128,13 @@ export function PublicationPreviewPage({
   }
 
   async function handleDownloadFillablePdf() {
-    if (isDownloadingFillablePdf) {
-      return
-    }
-
+    if (isDownloadingFillablePdf) return
     setFillablePdfError(undefined)
     setIsDownloadingFillablePdf(true)
-
     try {
       await downloadFillablePublicationPdf(publication)
     } catch {
-      setFillablePdfError(
-        'The fillable PDF could not be prepared. Your publication is unchanged. Please try again.',
-      )
+      setFillablePdfError('The fillable PDF could not be prepared. Your publication is unchanged. Please try again.')
     } finally {
       setIsDownloadingFillablePdf(false)
     }
@@ -129,45 +149,18 @@ export function PublicationPreviewPage({
               <PageHeader
                 eyebrow="Publication preview"
                 title={publication.title}
-                description={
-                  publication.status === 'published' ? 'Published preview' : 'Draft preview'
-                }
+                description={publication.status === 'published' ? 'Published preview' : 'Draft preview'}
                 actions={
                   <Cluster gap="sm">
-                    <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
-                      Back to publications
-                    </Button>
-
-                    <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
-                      Edit publication
-                    </Button>
-
-                    {onHistory ? (
-                      <Button
-                        variant="secondary"
-                        startIcon={<History size={18} />}
-                        onClick={onHistory}
-                      >
-                        Version history
-                      </Button>
-                    ) : null}
-
+                    <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>Back to publications</Button>
+                    <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>Edit publication</Button>
+                    {onHistory ? <Button variant="secondary" startIcon={<History size={18} />} onClick={onHistory}>Version history</Button> : null}
                     {hasInteractiveFields ? (
-                      <Button
-                        variant="secondary"
-                        startIcon={<Download size={18} />}
-                        disabled={isDownloadingFillablePdf}
-                        onClick={() => void handleDownloadFillablePdf()}
-                      >
-                        {isDownloadingFillablePdf
-                          ? 'Preparing fillable PDF…'
-                          : 'Download fillable PDF'}
+                      <Button variant="secondary" startIcon={<Download size={18} />} disabled={isDownloadingFillablePdf} onClick={() => void handleDownloadFillablePdf()}>
+                        {isDownloadingFillablePdf ? 'Preparing fillable PDF…' : 'Download fillable PDF'}
                       </Button>
                     ) : null}
-
-                    <Button startIcon={<Printer size={18} />} onClick={handlePrint}>
-                      Print / Save as PDF
-                    </Button>
+                    <Button startIcon={<Printer size={18} />} onClick={handlePrint}>Print / Save as PDF</Button>
                   </Cluster>
                 }
               />
@@ -177,21 +170,12 @@ export function PublicationPreviewPage({
                   <AlertCircle size={18} aria-hidden="true" />
                   <div>
                     <p className={styles.noticeTitle}>Layout review suggested</p>
-                    <p>
-                      Automatic pagination resolved most geometry, but {layout.diagnostics.length}{' '}
-                      {layout.diagnostics.length === 1 ? 'item still needs' : 'items still need'} a quick
-                      review.
-                    </p>
+                    <p>Automatic pagination resolved most geometry, but {layout.diagnostics.length} {layout.diagnostics.length === 1 ? 'item still needs' : 'items still need'} a quick review.</p>
                   </div>
                 </div>
               ) : null}
 
-              {fillablePdfError ? (
-                <div className={styles.exportError} role="alert">
-                  <AlertCircle size={18} aria-hidden="true" />
-                  <p>{fillablePdfError}</p>
-                </div>
-              ) : null}
+              {fillablePdfError ? <div className={styles.exportError} role="alert"><AlertCircle size={18} aria-hidden="true" /><p>{fillablePdfError}</p></div> : null}
             </Stack>
           </div>
 
@@ -204,11 +188,7 @@ export function PublicationPreviewPage({
                 <article
                   key={layoutPage.id}
                   className={`${styles.documentPage} ${documentTheme.theme}`}
-                  aria-label={
-                    isCover
-                      ? 'Publication cover'
-                      : `Publication content page ${layoutPage.pageNumber ?? layoutPage.sequence}`
-                  }
+                  aria-label={isCover ? 'Publication cover' : `Publication content page ${layoutPage.pageNumber ?? layoutPage.sequence}`}
                   data-page-kind={layoutPage.kind}
                   data-page-size={layout.settings.pageSize}
                   data-orientation={layout.settings.orientation}
@@ -217,58 +197,31 @@ export function PublicationPreviewPage({
                   {isCover ? (
                     <div className={styles.coverBody}>
                       <p className={styles.coverBrand}>The Gentle Page</p>
-
                       <div className={styles.coverTitleGroup}>
-                        <h1 id="publication-preview-title" className={styles.coverTitle}>
-                          {publication.title}
-                        </h1>
-
-                        {publication.description ? (
-                          <p className={styles.coverDescription}>{publication.description}</p>
-                        ) : null}
+                        <h1 id="publication-preview-title" className={styles.coverTitle}>{publication.title}</h1>
+                        {publication.description ? <p className={styles.coverDescription}>{publication.description}</p> : null}
                       </div>
-
-                      <p className={styles.coverTagline}>
-                        Thoughtfully designed tools for everyday clarity.
-                      </p>
+                      <p className={styles.coverTagline}>Thoughtfully designed tools for everyday clarity.</p>
                     </div>
                   ) : (
                     <div className={styles.documentBody}>
                       {hasContent ? (
                         <div className={styles.content}>
                           {layoutPage.blocks.map((block) => {
-                            const allocation = layoutPage.allocations.find(
-                              (candidate) => candidate.blockId === block.id,
-                            )
-
-                            return (
-                              <PublicationBlockPreview
-                                key={block.id}
-                                block={block}
-                                allocatedUnits={allocation?.allocatedUnits}
-                              />
-                            )
+                            const allocation = layoutPage.allocations.find((candidate) => candidate.blockId === block.id)
+                            return <PublicationBlockPreview key={block.id} block={block} allocatedUnits={allocation?.allocatedUnits} />
                           })}
                         </div>
                       ) : (
                         <div className={styles.emptyState}>
                           <p className={styles.emptyTitle}>Nothing to preview yet</p>
-                          <p className={styles.emptyDescription}>
-                            Add content blocks in the editor to build this publication.
-                          </p>
+                          <p className={styles.emptyDescription}>Add content blocks in the editor to build this publication.</p>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {layoutPage.pageNumber !== undefined ? (
-                    <footer
-                      className={styles.pageNumber}
-                      aria-label={`Page ${layoutPage.pageNumber}`}
-                    >
-                      {layoutPage.pageNumber}
-                    </footer>
-                  ) : null}
+                  {layoutPage.pageNumber !== undefined ? <footer className={styles.pageNumber} aria-label={`Page ${layoutPage.pageNumber}`}>{layoutPage.pageNumber}</footer> : null}
                 </article>
               )
             })}
