@@ -11,6 +11,7 @@ import { downloadFillablePublicationPdf } from '../../export'
 import { createPublicationLayout } from '../../layout'
 import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
 import type { Publication, PublicationBlock } from '../../types'
+import { parsePublicationTable } from '../../utils/parsePublicationTable'
 
 import styles from './PublicationPreviewPage.module.css'
 
@@ -43,6 +44,37 @@ function PublicationBlockPreview({
       <HeadingTag className={headingClassName}>
         {block.text || 'Untitled heading'}
       </HeadingTag>
+    )
+  }
+
+  if (block.type === 'table') {
+    const table = parsePublicationTable(block.text)
+
+    return (
+      <div className={styles.tableWrapper} data-publication-block="table">
+        <table className={styles.publicationTable}>
+          {table.headers.length > 0 ? (
+            <thead>
+              <tr>
+                {table.headers.map((header, index) => (
+                  <th key={`${block.id}-header-${index}`} scope="col">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          ) : null}
+          <tbody>
+            {table.rows.map((row, rowIndex) => (
+              <tr key={`${block.id}-row-${rowIndex}`}>
+                {row.map((cell, cellIndex) => (
+                  <td key={`${block.id}-cell-${rowIndex}-${cellIndex}`}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )
   }
 
@@ -81,6 +113,24 @@ function PublicationBlockPreview({
     )
   }
 
+  if (block.type === 'rating-field') {
+    const options = Array.from({ length: block.max - block.min + 1 }, (_, index) => block.min + index)
+
+    return (
+      <section className={styles.ratingField} aria-label={block.text || 'Rating'}>
+        <p className={styles.fieldLabel}>{block.text || 'Rating'}</p>
+        <div className={styles.ratingScale} aria-hidden="true">
+          {options.map((option) => (
+            <span key={`${block.id}-rating-${option}`} className={styles.ratingOption}>
+              <span className={styles.ratingMark} />
+              <span>{option}</span>
+            </span>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
 }
 
@@ -94,7 +144,10 @@ export function PublicationPreviewPage({
   const [fillablePdfError, setFillablePdfError] = useState<string>()
   const layout = createPublicationLayout(publication)
   const hasInteractiveFields = publication.content.blocks.some(
-    (block) => block.type === 'multiline-text-field' || block.type === 'checkbox-field',
+    (block) =>
+      block.type === 'multiline-text-field' ||
+      block.type === 'checkbox-field' ||
+      block.type === 'rating-field',
   )
 
   function handlePrint() {
