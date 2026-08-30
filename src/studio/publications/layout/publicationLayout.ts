@@ -99,6 +99,31 @@ function shouldKeepWithNext(block: PublicationBlock): boolean {
   return block.layout?.keepWithNext ?? block.type === 'heading'
 }
 
+function getCheckboxRun(
+  blocks: readonly PublicationBlock[],
+  startIndex: number,
+): { length: number; units: number } {
+  if (blocks[startIndex]?.type !== 'checkbox-field') {
+    return { length: 0, units: 0 }
+  }
+
+  let length = 0
+  let units = 0
+
+  for (let index = startIndex; index < blocks.length; index += 1) {
+    const candidate = blocks[index]
+
+    if (!candidate || candidate.type !== 'checkbox-field') {
+      break
+    }
+
+    length += 1
+    units += estimatePublicationBlockUnits(candidate)
+  }
+
+  return { length, units }
+}
+
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
   if (blocks.length === 0) {
     return [[]]
@@ -121,6 +146,13 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       pairFitsOnFreshPage &&
       currentUnits + blockUnits + nextBlockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
+    const checkboxRun = getCheckboxRun(blocks, index)
+    const wouldSplitCompactCheckboxRun =
+      currentPage.length > 0 &&
+      checkboxRun.length >= 2 &&
+      checkboxRun.units <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
+      currentUnits + checkboxRun.units > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
+
     const forcedBreak = currentPage.length > 0 && block.layout?.pageBreakBefore === 'forced'
     const preferredBreak =
       currentPage.length > 0 &&
@@ -130,7 +162,13 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       currentPage.length > 0 &&
       currentUnits + blockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
-    if (forcedBreak || preferredBreak || wouldOrphanKeepWithNextBlock || capacityBreak) {
+    if (
+      forcedBreak ||
+      preferredBreak ||
+      wouldOrphanKeepWithNextBlock ||
+      wouldSplitCompactCheckboxRun ||
+      capacityBreak
+    ) {
       pages.push(currentPage)
       currentPage = []
       currentUnits = 0
