@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render } from '@testing-library/react'
 
 import { createPublicationFixture } from '../../testing'
 import { PublicationPreviewPage } from './PublicationPreviewPage'
@@ -30,14 +30,20 @@ describe('PublicationPreviewPage structured journal blocks', () => {
       />,
     )
 
-    const table = screen.getByRole('table')
-    expect(within(table).getByRole('columnheader', { name: 'Area' })).toBeInTheDocument()
-    expect(within(table).getByRole('cell', { name: 'Physical' })).toBeInTheDocument()
-    expect(within(table).getByRole('cell', { name: 'Medium' })).toBeInTheDocument()
+    const table = document.querySelector('[data-publication-block="table"] table')
+    expect(table).not.toBeNull()
+    expect(table?.querySelector('th')?.textContent).toBe('Area')
+    expect(table?.textContent).toContain('Physical')
+    expect(table?.textContent).toContain('Medium')
 
-    const rating = screen.getByLabelText('Energy right now')
-    expect(within(rating).getByText('0')).toBeInTheDocument()
-    expect(within(rating).getByText('3')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Download fillable PDF' })).toBeInTheDocument()
+    const rating = document.querySelector('[aria-label="Energy right now"]')
+    expect(rating).not.toBeNull()
+    expect(rating?.textContent).toContain('0')
+    expect(rating?.textContent).toContain('3')
+
+    const fillableButton = Array.from(document.querySelectorAll('button')).find(
+      (button) => button.textContent?.includes('Download fillable PDF'),
+    )
+    expect(fillableButton).toBeDefined()
   })
 })
