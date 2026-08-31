@@ -15,7 +15,7 @@ export const PUBLICATION_CONTENT_HEIGHT_POINTS = 660
 
 const CAPACITY_UNIT_HEIGHT_POINTS =
   PUBLICATION_CONTENT_HEIGHT_POINTS / PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
-const MULTILINE_PROMPT_RESERVE_POINTS = 30
+const INTERACTIVE_PROMPT_RESERVE_POINTS = 30
 const CHECKBOX_SIZE_POINTS = 14
 
 export type PublicationPdfRect = {
@@ -35,9 +35,10 @@ export type PublicationPdfInteractiveField = {
   name: string
   blockId: string
   pageNumber: number
-  kind: 'multiline-text' | 'checkbox'
+  kind: 'multiline-text' | 'checkbox' | 'rating'
   label: string
   rect: PublicationPdfRect
+  options?: string[]
 }
 
 export type PublicationPdfPagePlan = {
@@ -100,7 +101,7 @@ function createInteractiveRect(
       x: placement.rect.x,
       y: placement.rect.y,
       width: placement.rect.width,
-      height: Math.max(72, placement.rect.height - MULTILINE_PROMPT_RESERVE_POINTS),
+      height: Math.max(72, placement.rect.height - INTERACTIVE_PROMPT_RESERVE_POINTS),
     }
   }
 
@@ -110,6 +111,15 @@ function createInteractiveRect(
       y: placement.rect.y + placement.rect.height - CHECKBOX_SIZE_POINTS - 2,
       width: CHECKBOX_SIZE_POINTS,
       height: CHECKBOX_SIZE_POINTS,
+    }
+  }
+
+  if (block.type === 'rating-field') {
+    return {
+      x: placement.rect.x,
+      y: placement.rect.y,
+      width: placement.rect.width,
+      height: Math.max(28, placement.rect.height - INTERACTIVE_PROMPT_RESERVE_POINTS),
     }
   }
 
@@ -128,9 +138,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
       page.blocks.forEach((block, index) => {
         const placement = blockPlacements[index]
 
-        if (!placement) {
-          return
-        }
+        if (!placement) return
 
         const rect = createInteractiveRect(block, placement)
 
@@ -153,6 +161,22 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
             kind: 'checkbox',
             label: block.text,
             rect,
+          })
+        }
+
+        if (block.type === 'rating-field' && rect) {
+          const options = Array.from({ length: block.max - block.min + 1 }, (_, optionIndex) =>
+            String(block.min + optionIndex),
+          )
+
+          interactiveFields.push({
+            name: createFieldName(publication.id, block.id),
+            blockId: block.id,
+            pageNumber,
+            kind: 'rating',
+            label: block.text,
+            rect,
+            options,
           })
         }
       })

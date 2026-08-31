@@ -27,5 +27,7 @@ export type {
   PublicationMultilineTextFieldBlock,
   PublicationPageBreakIntent,
   PublicationParagraphBlock,
+  PublicationRatingFieldBlock,
   PublicationResponseSizeIntent,
+  PublicationTableBlock,
 } from './publicationContent'
