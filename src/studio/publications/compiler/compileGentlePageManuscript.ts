@@ -29,10 +29,13 @@ function createBlockId(): string {
 
 function normalizeResponseSize(value: string | undefined): PublicationResponseSizeIntent {
   switch (value?.toLowerCase()) {
-    case 'short': return 'short'
-    case 'medium': return 'medium'
+    case 'short':
+      return 'short'
+    case 'medium':
+      return 'medium'
     case 'long':
-    default: return 'long'
+    default:
+      return 'long'
   }
 }
 
@@ -51,13 +54,6 @@ function parseNumericAttribute(line: string, name: string, fallback: number): nu
   const match = line.match(new RegExp(`${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
   const value = match ? Number(match[1]) : fallback
   return Number.isFinite(value) ? value : fallback
-}
-
-function createRatingScaleText(min: number, max: number): string {
-  const safeMin = Math.ceil(Math.min(min, max))
-  const safeMax = Math.floor(Math.max(min, max))
-  if (safeMax - safeMin > 20) return `${safeMin}  ·  ·  ·  ${safeMax}`
-  return Array.from({ length: safeMax - safeMin + 1 }, (_, index) => safeMin + index).join('   ')
 }
 
 function withPendingLayout(
@@ -91,7 +87,8 @@ function normalizeInlineFieldPrompt(value: string): string {
   return value.trim().replace(/\s+$/, '').replace(/:\s*$/, '')
 }
 
-const PLAIN_SECTION_PREFIX = /^(PHASE|DAY|WEEK|ANALYSIS|REPEATABLE PAGE|CURRENT-STATE|CURRENT STATE|BEFORE YOU BEGIN|REFLECTION|SUMMARY|REVIEW)\b/
+const PLAIN_SECTION_PREFIX =
+  /^(PHASE|DAY|WEEK|ANALYSIS|REPEATABLE PAGE|CURRENT-STATE|CURRENT STATE|BEFORE YOU BEGIN|REFLECTION|SUMMARY|REVIEW)\b/
 
 function isConservativePlainHeading(line: string): boolean {
   if (line.length < 3 || line.length > 80 || !/[A-Z]/.test(line) || /[a-z]/.test(line)) return false
@@ -99,7 +96,15 @@ function isConservativePlainHeading(line: string): boolean {
 }
 
 function isLikelyPlainTitle(line: string): boolean {
-  if (line.length < 4 || line.length > 100 || PLAIN_SECTION_PREFIX.test(line) || /[a-z]/.test(line)) return false
+  if (
+    line.length < 4 ||
+    line.length > 100 ||
+    PLAIN_SECTION_PREFIX.test(line) ||
+    /[a-z]/.test(line)
+  ) {
+    return false
+  }
+
   return (line.match(/[A-Z][A-Z0-9'’&-]*/g) ?? []).length >= 2
 }
 
@@ -142,7 +147,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     if (tableLines.length === 0) return
     const text = tableLines.join('\n')
     tableLines = []
-    pushBlock({ id: createBlockId(), type: 'paragraph', text, format: 'table' })
+    pushBlock({ id: createBlockId(), type: 'table', text })
   }
 
   function flushText() {
@@ -150,9 +155,29 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     flushParagraph()
   }
 
+  function consumePrompt(defaultPrompt: string): {
+    prompt: string
+    inheritedPageBreak?: PublicationPageBreakIntent
+  } {
+    const previousBlock = blocks[blocks.length - 1]
+
+    if (!isPromptLikeBlock(previousBlock)) {
+      return { prompt: defaultPrompt }
+    }
+
+    const removed = blocks.pop()
+    if (!removed) return { prompt: defaultPrompt }
+
+    return {
+      prompt: removed.text,
+      inheritedPageBreak: removed.layout?.pageBreakBefore,
+    }
+  }
+
   function inferWritingArea() {
     flushText()
     const previousBlock = blocks[blocks.length - 1]
+
     if (
       inferredResponseBlockId &&
       previousBlock?.id === inferredResponseBlockId &&
@@ -165,6 +190,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
     let prompt = 'Response'
     let inheritedPageBreak: PublicationPageBreakIntent | undefined
+
     if (isLikelyInferredWritingPrompt(previousBlock)) {
       const removed = blocks.pop()
       if (removed) {
@@ -176,6 +202,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
     pendingPageBreak = undefined
     const id = createBlockId()
+
     blocks.push({
       id,
       type: 'multiline-text-field',
@@ -218,7 +245,13 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
     flushTable()
 
-    if (!title && blocks.length === 0 && paragraphLines.length === 0 && !detectedProtocol && isLikelyPlainTitle(line)) {
+    if (
+      !title &&
+      blocks.length === 0 &&
+      paragraphLines.length === 0 &&
+      !detectedProtocol &&
+      isLikelyPlainTitle(line)
+    ) {
       title = line
       return
     }
@@ -232,7 +265,12 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     if (inlineFieldMatch) {
       flushParagraph()
       resetInferredWritingArea()
-      pushBlock({ id: createBlockId(), type: 'multiline-text-field', text: normalizeInlineFieldPrompt(inlineFieldMatch[1]), responseSize: 'short' })
+      pushBlock({
+        id: createBlockId(),
+        type: 'multiline-text-field',
+        text: normalizeInlineFieldPrompt(inlineFieldMatch[1]),
+        responseSize: 'short',
+      })
       return
     }
 
@@ -255,37 +293,63 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       return
     }
 
-    const responseMatch = line.match(/^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i)
+    const responseMatch = line.match(
+      /^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i,
+    )
     if (responseMatch) {
       flushParagraph()
-      const previousBlock = blocks[blocks.length - 1]
-      let prompt = 'Response'
-      let inheritedPageBreak: PublicationPageBreakIntent | undefined
-      if (isPromptLikeBlock(previousBlock)) {
-        const removed = blocks.pop()
-        if (removed) {
-          prompt = removed.text
-          inheritedPageBreak = removed.layout?.pageBreakBefore
-        }
-      }
+      const { prompt, inheritedPageBreak } = consumePrompt('Response')
       const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
       pendingPageBreak = undefined
-      blocks.push({ id: createBlockId(), type: 'multiline-text-field', text: prompt, responseSize: normalizeResponseSize(responseMatch[1]), layout: pageBreakBefore ? { pageBreakBefore } : undefined })
+      blocks.push({
+        id: createBlockId(),
+        type: 'multiline-text-field',
+        text: prompt,
+        responseSize: normalizeResponseSize(responseMatch[1]),
+        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
+      })
       return
     }
 
-    if (/^\[\[GP:RATING\b/i.test(line)) {
+    if (/^\[\[GP:RATING\b[^\]]*\]\]$/i.test(line)) {
       flushParagraph()
-      const min = parseNumericAttribute(line, 'min', 0)
-      const max = parseNumericAttribute(line, 'max', 10)
-      pushBlock({ id: createBlockId(), type: 'paragraph', text: createRatingScaleText(min, max), format: 'rating-scale' })
-      diagnostics.push({ level: 'info', code: 'rating-static-scale', line: lineNumber, message: 'The rating directive was rendered as a printable scale; dedicated fillable rating controls are still pending.' })
+      const { prompt, inheritedPageBreak } = consumePrompt('Rating')
+      const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
+      pendingPageBreak = undefined
+      const parsedMin = Math.trunc(parseNumericAttribute(line, 'min', 0))
+      const parsedMax = Math.trunc(parseNumericAttribute(line, 'max', 10))
+      const isValidRange = parsedMin < parsedMax && parsedMax - parsedMin <= 20
+      const min = isValidRange ? parsedMin : 0
+      const max = isValidRange ? parsedMax : 10
+
+      if (!isValidRange) {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'rating-range-normalized',
+          line: lineNumber,
+          message: 'An unsupported rating range was normalized to 0–10.',
+        })
+      }
+
+      blocks.push({
+        id: createBlockId(),
+        type: 'rating-field',
+        text: prompt,
+        min,
+        max,
+        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
+      })
       return
     }
 
     if (/^\[\[GP:/i.test(line)) {
       flushParagraph()
-      diagnostics.push({ level: 'suggestion', code: 'unknown-directive', line: lineNumber, message: `Unknown Gentle Page directive preserved as text: ${line}` })
+      diagnostics.push({
+        level: 'suggestion',
+        code: 'unknown-directive',
+        line: lineNumber,
+        message: `Unknown Gentle Page directive preserved as text: ${line}`,
+      })
       paragraphLines.push(line)
       flushParagraph()
       return
@@ -296,11 +360,19 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       flushParagraph()
       const markdownLevel = headingMatch[1].length as PublicationHeadingLevel
       const text = headingMatch[2].trim()
+
       if (markdownLevel === 1 && !title) {
         title = text
         return
       }
-      pushBlock({ id: createBlockId(), type: 'heading', level: markdownLevel, text, layout: { keepWithNext: true } })
+
+      pushBlock({
+        id: createBlockId(),
+        type: 'heading',
+        level: markdownLevel,
+        text,
+        layout: { keepWithNext: true },
+      })
       return
     }
 
@@ -313,7 +385,13 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
     if (isConservativePlainHeading(line)) {
       flushParagraph()
-      pushBlock({ id: createBlockId(), type: 'heading', level: 2, text: line, layout: { keepWithNext: true } })
+      pushBlock({
+        id: createBlockId(),
+        type: 'heading',
+        level: 2,
+        text: line,
+        layout: { keepWithNext: true },
+      })
       return
     }
 
@@ -336,8 +414,21 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
   flushText()
 
-  if (authorNote) diagnostics.push({ level: 'suggestion', code: 'unterminated-author-note', message: 'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.' })
-  if (pendingPageBreak) diagnostics.push({ level: 'info', code: 'trailing-page-break', message: 'A trailing page-break directive had no following content and was ignored.' })
+  if (authorNote) {
+    diagnostics.push({
+      level: 'suggestion',
+      code: 'unterminated-author-note',
+      message: 'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.',
+    })
+  }
+
+  if (pendingPageBreak) {
+    diagnostics.push({
+      level: 'info',
+      code: 'trailing-page-break',
+      message: 'A trailing page-break directive had no following content and was ignored.',
+    })
+  }
 
   return { title: title || 'Untitled publication', content: { blocks }, diagnostics, detectedProtocol }
 }
