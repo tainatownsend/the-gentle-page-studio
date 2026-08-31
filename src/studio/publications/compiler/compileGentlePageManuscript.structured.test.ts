@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { compileGentlePageManuscript } from './compileGentlePageManuscript'
 
 describe('compileGentlePageManuscript structured content', () => {
-  it('keeps a Markdown worksheet table as one semantic paragraph block', () => {
+  it('keeps a Markdown worksheet table as one first-class table block', () => {
     const result = compileGentlePageManuscript(`# Capacity Journal
 
 ## Capacity baseline
@@ -19,24 +19,24 @@ describe('compileGentlePageManuscript structured content', () => {
 
     expect(result.content.blocks[1]).toEqual(
       expect.objectContaining({
-        type: 'paragraph',
-        format: 'table',
+        type: 'table',
         text: expect.stringContaining('| Physical | Low | Rest |'),
       }),
     )
-    expect(result.content.blocks.filter((block) => block.type === 'paragraph' && block.format === 'table')).toHaveLength(1)
+    expect(result.content.blocks.filter((block) => block.type === 'table')).toHaveLength(1)
   })
 
-  it('marks compiled rating scales with semantic presentation', () => {
+  it('compiles rating directives into first-class rating fields', () => {
     const result = compileGentlePageManuscript(`# Journal
 
 [[GP:RATING min="0" max="3"]]`)
 
     expect(result.content.blocks[0]).toEqual(
       expect.objectContaining({
-        type: 'paragraph',
-        format: 'rating-scale',
-        text: '0   1   2   3',
+        type: 'rating-field',
+        text: 'Rating',
+        min: 0,
+        max: 3,
       }),
     )
   })
