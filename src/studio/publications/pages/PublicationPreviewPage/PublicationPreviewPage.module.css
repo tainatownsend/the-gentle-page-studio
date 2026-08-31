@@ -38,7 +38,7 @@
 }
 
 .coverBody { display: flex; min-height: 100%; flex: 1; flex-direction: column; justify-content: space-between; text-align: center; }
-.coverBrand,.coverTagline,.coverDescription,.coverTitle,.heading1,.heading2,.heading3,.paragraph,.fieldLabel,.emptyTitle,.emptyDescription,.ratingScale { margin: 0; }
+.coverBrand,.coverTagline,.coverDescription,.coverTitle,.heading1,.heading2,.heading3,.paragraph,.fieldLabel,.emptyTitle,.emptyDescription { margin: 0; }
 .coverBrand { font-size: .75rem; font-weight: 600; line-height: 1.4; color: var(--publication-muted-ink); text-transform: uppercase; letter-spacing: .16em; }
 .coverTitleGroup { display: grid; gap: var(--space-lg, 24px); margin-block: auto; }
 .coverTitle { font-family: var(--publication-font-family-display); font-size: var(--publication-font-size-cover-title); font-weight: 600; line-height: var(--publication-line-height-tight); letter-spacing: var(--publication-letter-spacing-display); overflow-wrap: anywhere; }
@@ -68,7 +68,11 @@
 .publicationTable th:last-child,.publicationTable td:last-child { border-right: 0; }
 .publicationTable tbody tr:last-child td { border-bottom: 0; }
 .publicationTable th { font-weight: 600; background: color-mix(in srgb, var(--publication-rule) 22%, transparent); }
-.ratingScale { display: flex; justify-content: space-between; width: 100%; padding: .7rem .85rem; font-size: .9rem; line-height: 1.4; letter-spacing: .05em; border-block: 1px solid var(--publication-rule); white-space: pre-wrap; }
+
+.ratingField { display: grid; gap: .75rem; }
+.ratingScale { display: flex; flex-wrap: wrap; gap: .7rem 1rem; align-items: center; justify-content: space-between; width: 100%; padding: .75rem .85rem; border-block: 1px solid var(--publication-rule); }
+.ratingOption { display: inline-flex; gap: .3rem; align-items: center; font-size: .82rem; line-height: 1.2; color: var(--publication-muted-ink); }
+.ratingMark { width: .8rem; height: .8rem; border: 1px solid var(--publication-ink); border-radius: 50%; }
 
 .emptyState { display: grid; gap: var(--space-xs, 8px); padding: var(--space-xl, 32px); text-align: center; border: 1px dashed var(--publication-rule); border-radius: var(--radius-md, 12px); }
 .emptyTitle { font-weight: 600; }
