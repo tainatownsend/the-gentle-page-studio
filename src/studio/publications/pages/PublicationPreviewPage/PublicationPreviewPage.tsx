@@ -91,7 +91,7 @@ function PublicationBlockPreview({
     const [header = [], ...body] = rows
 
     return (
-      <div className={styles.tableFrame}>
+      <div className={styles.tableFrame} data-publication-format="table">
         <table className={styles.publicationTable}>
           <thead>
             <tr>{header.map((cell, index) => <th key={`${index}-${cell}`}>{cell}</th>)}</tr>
@@ -109,7 +109,11 @@ function PublicationBlockPreview({
   }
 
   if (block.format === 'rating-scale') {
-    return <p className={styles.ratingScale}>{block.text}</p>
+    return (
+      <p className={styles.ratingScale} data-publication-format="rating-scale">
+        {block.text}
+      </p>
+    )
   }
 
   return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
