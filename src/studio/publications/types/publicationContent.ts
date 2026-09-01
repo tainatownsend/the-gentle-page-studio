@@ -9,9 +9,16 @@ export type PublicationBlockLayoutIntent = {
   keepWithNext?: boolean
 }
 
+export type PublicationSemanticGroup = {
+  id: string
+  kind: 'repeatable-page'
+  name: string
+}
+
 export type PublicationBlockBase = {
   id: PublicationBlockId
   layout?: PublicationBlockLayoutIntent
+  semanticGroup?: PublicationSemanticGroup
 }
 
 export type PublicationHeadingBlock = PublicationBlockBase & {
