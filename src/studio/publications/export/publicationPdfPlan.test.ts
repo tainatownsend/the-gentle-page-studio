@@ -48,7 +48,8 @@ describe('createPublicationPdfPlan', () => {
       }),
     )
 
-    expect(plan.interactiveFields[0]).toMatchObject({
+    const responseField = plan.interactiveFields[0]
+    expect(responseField).toMatchObject({
       name: 'publication.journal-1.block.response-1',
       blockId: 'response-1',
       pageNumber: 1,
@@ -59,7 +60,10 @@ describe('createPublicationPdfPlan', () => {
         width: 504,
       },
     })
-    expect(plan.interactiveFields[0]?.rect.height).toBeGreaterThan(72)
+    expect(responseField?.kind).toBe('multiline-text')
+    if (responseField?.kind === 'multiline-text') {
+      expect(responseField.rect.height).toBeGreaterThan(72)
+    }
 
     expect(plan.interactiveFields[1]).toMatchObject({
       name: 'publication.journal-1.block.checkbox-1',
@@ -73,6 +77,51 @@ describe('createPublicationPdfPlan', () => {
         height: 14,
       },
     })
+  })
+
+  it('plans a rating scale as one stable radio group', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'journal-rating',
+        content: {
+          blocks: [
+            {
+              id: 'energy-rating',
+              type: 'rating-field',
+              text: 'Energy right now',
+              min: 0,
+              max: 10,
+            },
+          ],
+        },
+      }),
+    )
+
+    const ratingField = plan.interactiveFields[0]
+    expect(ratingField).toMatchObject({
+      name: 'publication.journal-rating.block.energy-rating',
+      blockId: 'energy-rating',
+      pageNumber: 1,
+      kind: 'rating',
+      label: 'Energy right now',
+    })
+    expect(ratingField?.kind).toBe('rating')
+    if (ratingField?.kind === 'rating') {
+      expect(ratingField.options.map((option) => option.value)).toEqual([
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        '10',
+      ])
+      expect(ratingField.options.every((option) => option.rect.width === 12)).toBe(true)
+    }
   })
 
   it('keeps block placements inside the printable content area', () => {
