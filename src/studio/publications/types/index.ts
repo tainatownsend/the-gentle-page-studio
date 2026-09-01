@@ -29,5 +29,6 @@ export type {
   PublicationParagraphBlock,
   PublicationRatingFieldBlock,
   PublicationResponseSizeIntent,
+  PublicationSemanticGroup,
   PublicationTableBlock,
 } from './publicationContent'
