@@ -172,6 +172,68 @@ function drawCover(
   })
 }
 
+function drawTableBlock(
+  page: PDFPage,
+  block: Extract<PublicationBlock, { type: 'table' }>,
+  placement: PublicationPdfBlockPlacement,
+  bodyFont: PDFFont,
+  bodyBoldFont: PDFFont,
+): void {
+  const columnCount = Math.max(block.columns.length, 1)
+  const rowCount = block.rows.length + 1
+  const columnWidth = placement.rect.width / columnCount
+  const captionReserve = block.text ? 22 : 0
+  const tableHeight = Math.max(24, placement.rect.height - captionReserve)
+  const rowHeight = tableHeight / Math.max(rowCount, 1)
+  const tableTop = placement.rect.y + placement.rect.height - captionReserve
+
+  if (block.text) {
+    drawWrappedText(
+      page,
+      block.text,
+      bodyBoldFont,
+      11,
+      placement.rect.x,
+      placement.rect.y + placement.rect.height,
+      placement.rect.width,
+      14,
+      captionReserve,
+    )
+  }
+
+  const allRows = [block.columns, ...block.rows]
+
+  allRows.forEach((row, rowIndex) => {
+    const cellTop = tableTop - rowIndex * rowHeight
+
+    block.columns.forEach((_, columnIndex) => {
+      const x = placement.rect.x + columnIndex * columnWidth
+      const y = cellTop - rowHeight
+
+      page.drawRectangle({
+        x,
+        y,
+        width: columnWidth,
+        height: rowHeight,
+        borderColor: RULE,
+        borderWidth: 0.6,
+      })
+
+      drawWrappedText(
+        page,
+        row[columnIndex] ?? '',
+        rowIndex === 0 ? bodyBoldFont : bodyFont,
+        8.5,
+        x + 5,
+        cellTop - 4,
+        Math.max(8, columnWidth - 10),
+        10.5,
+        Math.max(8, rowHeight - 8),
+      )
+    })
+  })
+}
+
 function drawStaticBlock(
   page: PDFPage,
   block: PublicationBlock,
@@ -229,17 +291,37 @@ function drawStaticBlock(
     return
   }
 
-  drawWrappedText(
-    page,
-    block.text || 'Checkbox',
-    bodyFont,
-    11,
-    placement.rect.x + 22,
-    top,
-    placement.rect.width - 22,
-    14,
-    placement.rect.height,
-  )
+  if (block.type === 'checkbox-field') {
+    drawWrappedText(
+      page,
+      block.text || 'Checkbox',
+      bodyFont,
+      11,
+      placement.rect.x + 22,
+      top,
+      placement.rect.width - 22,
+      14,
+      placement.rect.height,
+    )
+    return
+  }
+
+  if (block.type === 'rating-field') {
+    drawWrappedText(
+      page,
+      block.text || 'Rating',
+      bodyBoldFont,
+      11,
+      placement.rect.x,
+      top,
+      placement.rect.width,
+      14,
+      28,
+    )
+    return
+  }
+
+  drawTableBlock(page, block, placement, bodyFont, bodyBoldFont)
 }
 
 function addInteractiveField(
@@ -264,12 +346,36 @@ function addInteractiveField(
     return
   }
 
-  const checkBox = form.createCheckBox(field.name)
-  checkBox.addToPage(page, {
-    ...field.rect,
-    backgroundColor: PAPER,
-    borderColor: INK,
-    borderWidth: 1,
+  if (field.kind === 'checkbox') {
+    const checkBox = form.createCheckBox(field.name)
+    checkBox.addToPage(page, {
+      ...field.rect,
+      backgroundColor: PAPER,
+      borderColor: INK,
+      borderWidth: 1,
+    })
+    return
+  }
+
+  const radioGroup = form.createRadioGroup(field.name)
+
+  field.options.forEach((option) => {
+    radioGroup.addOptionToPage(option.value, page, {
+      ...option.rect,
+      backgroundColor: PAPER,
+      borderColor: INK,
+      borderWidth: 1,
+    })
+
+    const labelSize = 7
+    const labelWidth = bodyFont.widthOfTextAtSize(option.value, labelSize)
+    page.drawText(option.value, {
+      x: option.rect.x + option.rect.width / 2 - labelWidth / 2,
+      y: option.rect.y - 9,
+      size: labelSize,
+      font: bodyFont,
+      color: MUTED_INK,
+    })
   })
 }
 
