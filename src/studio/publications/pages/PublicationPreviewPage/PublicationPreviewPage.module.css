@@ -162,7 +162,9 @@
   white-space: pre-wrap;
 }
 
-.multilineField {
+.multilineField,
+.ratingField,
+.tableBlock {
   display: grid;
   gap: 0.75rem;
 }
@@ -209,6 +211,58 @@
   margin-top: 0.2rem;
   border: 1.5px solid var(--publication-ink);
   border-radius: 0.2rem;
+}
+
+.ratingScale {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.4rem, 1fr));
+  gap: 0.5rem;
+}
+
+.ratingOption {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  font-size: 0.75rem;
+  color: var(--publication-muted-ink);
+}
+
+.ratingMark {
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1.5px solid var(--publication-ink);
+  border-radius: 50%;
+}
+
+.ratingValue {
+  line-height: 1;
+}
+
+.tableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.publicationTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.publicationTable th,
+.publicationTable td {
+  padding: 0.55rem 0.6rem;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  border: 1px solid var(--publication-rule);
+}
+
+.publicationTable th {
+  font-weight: 600;
+  text-align: left;
+  background: color-mix(in srgb, var(--publication-rule) 20%, transparent);
 }
 
 .emptyState {
@@ -295,5 +349,9 @@
   .documentPage:last-child {
     break-after: auto;
     page-break-after: auto;
+  }
+
+  .tableScroll {
+    overflow: visible;
   }
 }
