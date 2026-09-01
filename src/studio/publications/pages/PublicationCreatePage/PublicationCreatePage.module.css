@@ -5,6 +5,60 @@
   background: var(--color-surface-secondary, #f6f8f7);
 }
 
+.inputChoices {
+  display: grid;
+  gap: var(--space-md, 16px);
+}
+
+.docxUpload {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm, 12px);
+  align-items: center;
+  padding: var(--space-lg, 24px);
+  color: var(--color-text-primary, #1f2522);
+  background: var(--color-surface-primary, #fff);
+  border: 1px solid var(--color-border-subtle, #d9dfdc);
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+}
+
+.docxUpload:hover,
+.docxUpload:focus-within {
+  border-color: var(--color-border-strong, #7a8b82);
+}
+
+.docxUpload[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.docxUpload span {
+  display: grid;
+  gap: 4px;
+}
+
+.docxUpload small {
+  color: var(--color-text-secondary, #626d67);
+  font-size: 0.875rem;
+}
+
+.orDivider {
+  display: flex;
+  gap: var(--space-sm, 12px);
+  align-items: center;
+  color: var(--color-text-secondary, #626d67);
+  font-size: 0.875rem;
+}
+
+.orDivider::before,
+.orDivider::after {
+  height: 1px;
+  flex: 1;
+  content: '';
+  background: var(--color-border-subtle, #d9dfdc);
+}
+
 .compilerNote {
   display: grid;
   gap: var(--space-xs, 8px);
