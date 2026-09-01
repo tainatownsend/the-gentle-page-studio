@@ -26,10 +26,11 @@ export type PublicationLayoutPage = {
 }
 
 export type PublicationLayoutDiagnostic = {
-  code: 'oversized-block' | 'sparse-page'
+  code: 'oversized-block' | 'sparse-page' | 'repeatable-group-overflow'
   message: string
   pageNumber?: number
   blockId?: string
+  semanticGroupId?: string
 }
 
 export type PublicationLayout = {
@@ -55,18 +56,23 @@ function cloneDocumentSettings(
 }
 
 function cloneBlock(block: PublicationBlock): PublicationBlock {
+  const shared = {
+    layout: block.layout ? { ...block.layout } : undefined,
+    semanticGroup: block.semanticGroup ? { ...block.semanticGroup } : undefined,
+  }
+
   if (block.type === 'table') {
     return {
       ...block,
+      ...shared,
       columns: [...block.columns],
       rows: block.rows.map((row) => [...row]),
-      layout: block.layout ? { ...block.layout } : undefined,
     }
   }
 
   return {
     ...block,
-    layout: block.layout ? { ...block.layout } : undefined,
+    ...shared,
   }
 }
 
@@ -146,6 +152,22 @@ function getCheckboxGroupUnits(
   return total
 }
 
+function crossesRepeatablePageBoundary(
+  blocks: readonly PublicationBlock[],
+  index: number,
+): boolean {
+  if (index === 0) return false
+
+  const previousGroup = blocks[index - 1]?.semanticGroup
+  const currentGroup = blocks[index]?.semanticGroup
+  const previousRepeatableId =
+    previousGroup?.kind === 'repeatable-page' ? previousGroup.id : undefined
+  const currentRepeatableId = currentGroup?.kind === 'repeatable-page' ? currentGroup.id : undefined
+
+  return previousRepeatableId !== currentRepeatableId &&
+    (previousRepeatableId !== undefined || currentRepeatableId !== undefined)
+}
+
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
   if (blocks.length === 0) {
     return [[]]
@@ -178,6 +200,8 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       checkboxGroupUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
       currentUnits + checkboxGroupUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
+    const semanticBoundaryBreak =
+      currentPage.length > 0 && crossesRepeatablePageBoundary(blocks, index)
     const forcedBreak = currentPage.length > 0 && block.layout?.pageBreakBefore === 'forced'
     const preferredBreak =
       currentPage.length > 0 &&
@@ -188,6 +212,7 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       currentUnits + blockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
     if (
+      semanticBoundaryBreak ||
       forcedBreak ||
       preferredBreak ||
       wouldOrphanKeepWithNextBlock ||
@@ -259,11 +284,37 @@ function allocatePage(blocks: readonly PublicationBlock[]) {
   }
 }
 
+function isRepeatablePage(page: PublicationLayoutPage): boolean {
+  if (page.blocks.length === 0) return false
+
+  const semanticGroup = page.blocks[0]?.semanticGroup
+  if (semanticGroup?.kind !== 'repeatable-page') return false
+
+  return page.blocks.every((block) => block.semanticGroup?.id === semanticGroup.id)
+}
+
 function createDiagnostics(pages: readonly PublicationLayoutPage[]): PublicationLayoutDiagnostic[] {
   const diagnostics: PublicationLayoutDiagnostic[] = []
   const contentPages = pages.filter((page) => page.kind === 'content')
+  const repeatableGroupUnits = new Map<
+    string,
+    { name: string; units: number; pageNumber?: number }
+  >()
 
   contentPages.forEach((page, pageIndex) => {
+    page.blocks.forEach((block, blockIndex) => {
+      const group = block.semanticGroup
+      if (group?.kind !== 'repeatable-page') return
+
+      const allocation = page.allocations[blockIndex]
+      const current = repeatableGroupUnits.get(group.id)
+      repeatableGroupUnits.set(group.id, {
+        name: group.name,
+        units: (current?.units ?? 0) + (allocation?.baselineUnits ?? estimatePublicationBlockUnits(block)),
+        pageNumber: current?.pageNumber ?? page.pageNumber,
+      })
+    })
+
     page.allocations.forEach((allocation) => {
       if (allocation.baselineUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS) {
         diagnostics.push({
@@ -281,6 +332,7 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
     if (
       !isFinalPage &&
       !startsWithForcedBreak &&
+      !isRepeatablePage(page) &&
       page.blocks.length > 0 &&
       page.remainingUnits >= SPARSE_PAGE_REMAINING_UNITS
     ) {
@@ -288,6 +340,17 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
         code: 'sparse-page',
         pageNumber: page.pageNumber,
         message: 'This page remains unusually sparse after automatic response-field expansion.',
+      })
+    }
+  })
+
+  repeatableGroupUnits.forEach((group, groupId) => {
+    if (group.units > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS) {
+      diagnostics.push({
+        code: 'repeatable-group-overflow',
+        semanticGroupId: groupId,
+        pageNumber: group.pageNumber,
+        message: `Repeatable page “${group.name}” exceeds one page and needs a quick content or layout review.`,
       })
     }
   })
