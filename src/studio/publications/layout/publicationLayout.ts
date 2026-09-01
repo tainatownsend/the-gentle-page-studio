@@ -2,6 +2,7 @@ import type {
   Publication,
   PublicationBlock,
   PublicationDocumentSettings,
+  PublicationTableBlock,
 } from '../types'
 
 export type PublicationLayoutPageKind = 'cover' | 'content'
@@ -54,10 +55,31 @@ function cloneDocumentSettings(
 }
 
 function cloneBlock(block: PublicationBlock): PublicationBlock {
+  if (block.type === 'table') {
+    return {
+      ...block,
+      columns: [...block.columns],
+      rows: block.rows.map((row) => [...row]),
+      layout: block.layout ? { ...block.layout } : undefined,
+    }
+  }
+
   return {
     ...block,
     layout: block.layout ? { ...block.layout } : undefined,
   }
+}
+
+function estimateTableUnits(block: PublicationTableBlock): number {
+  const columnCount = Math.max(block.columns.length, 1)
+  const headerCharacters = block.columns.reduce((total, cell) => total + cell.length, 0)
+  const headerUnits = 5 + Math.ceil(headerCharacters / Math.max(36 * columnCount, 1)) * 2
+  const rowUnits = block.rows.reduce((total, row) => {
+    const rowCharacters = row.reduce((sum, cell) => sum + cell.length, 0)
+    return total + 4 + Math.ceil(rowCharacters / Math.max(42 * columnCount, 1)) * 2
+  }, 0)
+
+  return headerUnits + rowUnits
 }
 
 export function estimatePublicationBlockUnits(block: PublicationBlock): number {
@@ -75,6 +97,12 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
     }
     case 'checkbox-field':
       return 5 + Math.ceil(textLength / 70) * 2
+    case 'rating-field': {
+      const optionCount = Math.max(1, Math.floor(block.max - block.min) + 1)
+      return 7 + Math.ceil(textLength / 70) * 2 + Math.ceil(optionCount / 6) * 3
+    }
+    case 'table':
+      return estimateTableUnits(block)
   }
 }
 
@@ -99,6 +127,25 @@ function shouldKeepWithNext(block: PublicationBlock): boolean {
   return block.layout?.keepWithNext ?? block.type === 'heading'
 }
 
+function getCheckboxGroupUnits(
+  blocks: readonly PublicationBlock[],
+  startIndex: number,
+): number | undefined {
+  if (blocks[startIndex]?.type !== 'checkbox-field') {
+    return undefined
+  }
+
+  let total = 0
+  let index = startIndex
+
+  while (index < blocks.length && blocks[index]?.type === 'checkbox-field') {
+    total += estimatePublicationBlockUnits(blocks[index] as PublicationBlock)
+    index += 1
+  }
+
+  return total
+}
+
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
   if (blocks.length === 0) {
     return [[]]
@@ -121,6 +168,16 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       pairFitsOnFreshPage &&
       currentUnits + blockUnits + nextBlockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
+    const checkboxGroupUnits = getCheckboxGroupUnits(blocks, index)
+    const startsCheckboxGroup =
+      block.type === 'checkbox-field' && blocks[index - 1]?.type !== 'checkbox-field'
+    const wouldSplitCheckboxGroup =
+      currentPage.length > 0 &&
+      startsCheckboxGroup &&
+      checkboxGroupUnits !== undefined &&
+      checkboxGroupUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
+      currentUnits + checkboxGroupUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
+
     const forcedBreak = currentPage.length > 0 && block.layout?.pageBreakBefore === 'forced'
     const preferredBreak =
       currentPage.length > 0 &&
@@ -130,7 +187,13 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       currentPage.length > 0 &&
       currentUnits + blockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
-    if (forcedBreak || preferredBreak || wouldOrphanKeepWithNextBlock || capacityBreak) {
+    if (
+      forcedBreak ||
+      preferredBreak ||
+      wouldOrphanKeepWithNextBlock ||
+      wouldSplitCheckboxGroup ||
+      capacityBreak
+    ) {
       pages.push(currentPage)
       currentPage = []
       currentUnits = 0
