@@ -66,10 +66,7 @@ function parseNumericAttribute(line: string, name: string): number | undefined {
 
 function parseTextAttribute(line: string, name: string): string | undefined {
   const quotedMatch = line.match(new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i'))
-  if (quotedMatch?.[1]?.trim()) return quotedMatch[1].trim()
-
-  const bareMatch = line.match(new RegExp(`${name}\\s*=\\s*([^\\]\s]+)`, 'i'))
-  return bareMatch?.[1]?.trim() || undefined
+  return quotedMatch?.[1]?.trim() || undefined
 }
 
 function withPendingLayout(
