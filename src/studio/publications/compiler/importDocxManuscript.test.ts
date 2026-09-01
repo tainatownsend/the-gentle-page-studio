@@ -109,9 +109,7 @@ describe('importDocxManuscript', () => {
     expect(result.manuscript).toContain('- [ ] Protect a break')
     expect(result.manuscript).toContain('| Area | Capacity |')
     expect(result.manuscript).toContain('| Physical | Low |')
-    expect(result.diagnostics).toEqual([
-      expect.objectContaining({ code: 'table-preserved-as-markdown' }),
-    ])
+    expect(result.diagnostics).toEqual([])
   })
 
   it('uses the file name when the document has no explicit title style', async () => {

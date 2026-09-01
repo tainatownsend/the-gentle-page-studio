@@ -218,6 +218,26 @@ Closing paragraph.`)
     expect(result.content.blocks.at(-1)?.semanticGroup).toBeUndefined()
   })
 
+  it('infers prompt-response and checkbox groups without overriding repeatable groups', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+### What would help today?
+[[GP:RESPONSE size="medium"]]
+
+- [ ] Ask for help
+- [ ] Protect a break`)
+
+    expect(result.content.blocks[0]?.semanticGroup).toEqual(
+      expect.objectContaining({ kind: 'prompt-response', name: 'What would help today?' }),
+    )
+    expect(result.content.blocks[1]?.semanticGroup).toEqual(
+      expect.objectContaining({ kind: 'checkbox-group' }),
+    )
+    expect(result.content.blocks[2]?.semanticGroup?.id).toBe(
+      result.content.blocks[1]?.semanticGroup?.id,
+    )
+  })
+
   it('preserves an unterminated repeatable page and reports one optional suggestion', () => {
     const result = compileGentlePageManuscript(`# Journal
 

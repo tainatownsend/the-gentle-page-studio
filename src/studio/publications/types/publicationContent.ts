@@ -11,7 +11,7 @@ export type PublicationBlockLayoutIntent = {
 
 export type PublicationSemanticGroup = {
   id: string
-  kind: 'repeatable-page'
+  kind: 'repeatable-page' | 'prompt-response' | 'checkbox-group'
   name: string
 }
 

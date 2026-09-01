@@ -75,8 +75,7 @@ function normalizeStyleName(value: string | undefined): string {
 }
 
 function getParagraphStyle(paragraph: Element, styleNames: Map<string, string>): string {
-  const properties = childElementsByLocalName(paragraph, 'pPr')[0]
-  const styleElement = properties ? firstDescendantByLocalName(properties, 'pStyle') : undefined
+  const styleElement = firstDescendantByLocalName(paragraph, 'pStyle')
   const styleId = styleElement ? getAttribute(styleElement, 'val') : undefined
 
   return styleNames.get(styleId ?? '') ?? styleId ?? ''
@@ -116,8 +115,7 @@ function paragraphText(paragraph: Element): string {
 }
 
 function paragraphHasPageBreakBefore(paragraph: Element): boolean {
-  const properties = childElementsByLocalName(paragraph, 'pPr')[0]
-  return properties ? descendantsByLocalName(properties, 'pageBreakBefore').length > 0 : false
+  return descendantsByLocalName(paragraph, 'pageBreakBefore').length > 0
 }
 
 function paragraphHasManualPageBreak(paragraph: Element): boolean {

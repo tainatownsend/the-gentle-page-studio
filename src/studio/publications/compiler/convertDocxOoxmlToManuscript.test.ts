@@ -41,9 +41,7 @@ describe('convertDocxOoxmlToManuscript', () => {
 Notice what gives and takes energy.
 
 | Area | Capacity |
-
 | --- | --- |
-
 | Physical | Low |
 
 ### Reflection`)

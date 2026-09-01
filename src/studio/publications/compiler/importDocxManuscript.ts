@@ -97,7 +97,9 @@ async function decompressDeflateRaw(compressed: Uint8Array): Promise<Uint8Array>
     throw new Error('This browser cannot decompress DOCX files locally.')
   }
 
-  const stream = new Blob([compressed]).stream().pipeThrough(
+  const ownedBuffer = new ArrayBuffer(compressed.byteLength)
+  new Uint8Array(ownedBuffer).set(compressed)
+  const stream = new Blob([ownedBuffer]).stream().pipeThrough(
     new DecompressionStream('deflate-raw'),
   )
   const buffer = await new Response(stream).arrayBuffer()
@@ -378,7 +380,6 @@ function renderItemsAsManuscript(items: ParsedBodyItem[], fallbackTitle: string)
   }
 
   if (!title) {
-    title = fallbackTitle
     output.unshift(`# ${fallbackTitle}`, '')
   }
 
@@ -407,11 +408,29 @@ export async function importDocxManuscript(
 
   const documentBytes = await readZipEntry(bytes, documentEntry)
   const xml = new TextDecoder('utf-8').decode(documentBytes)
-  const items = parseDocumentBody(xml)
+  const stylesEntry = entries.find((entry) => entry.name === 'word/styles.xml')
+  const stylesXml = stylesEntry
+    ? new TextDecoder('utf-8').decode(await readZipEntry(bytes, stylesEntry))
+    : undefined
+  const converted = convertDocxOoxmlToManuscript(xml, stylesXml)
+  const fallback = renderItemsAsManuscript(
+    parseDocumentBody(xml),
+    fallbackTitleFromFileName(fileName),
+  )
 
-  if (items.length === 0) {
+  const convertedManuscript = converted.manuscript.trim() || fallback.manuscript.trim()
+
+  if (!convertedManuscript) {
     throw new Error('No publication content was found in this DOCX file.')
   }
 
-  return renderItemsAsManuscript(items, fallbackTitleFromFileName(fileName))
+  const hasTitle = /^#\s+\S/m.test(convertedManuscript)
+
+  return {
+    manuscript: hasTitle
+      ? convertedManuscript
+      : `# ${fallbackTitleFromFileName(fileName)}\n\n${convertedManuscript}`,
+    diagnostics: converted.manuscript.trim() ? converted.diagnostics : fallback.diagnostics,
+  }
 }
+import { convertDocxOoxmlToManuscript } from './convertDocxOoxmlToManuscript'

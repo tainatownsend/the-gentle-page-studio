@@ -11,3 +11,5 @@ export type {
 } from './convertDocxOoxmlToManuscript'
 export { importDocxManuscript } from './importDocxManuscript'
 export type { DocxImportDiagnostic, DocxImportResult } from './importDocxManuscript'
+export { benchmarkDocxManuscript } from './goldenManuscriptBenchmark'
+export type { GoldenManuscriptBenchmark } from './goldenManuscriptBenchmark'

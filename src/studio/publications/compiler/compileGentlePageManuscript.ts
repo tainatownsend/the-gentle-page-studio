@@ -106,6 +106,45 @@ function isMarkdownTableRow(line: string): boolean {
   return line.includes('|') && parseMarkdownTableRow(line).length >= 2
 }
 
+function inferSemanticGroups(blocks: PublicationBlock[]): void {
+  for (const block of blocks) {
+    if (
+      !block.semanticGroup &&
+      (block.type === 'multiline-text-field' || block.type === 'rating-field')
+    ) {
+      block.semanticGroup = {
+        id: createSemanticGroupId(),
+        kind: 'prompt-response',
+        name: block.text || 'Prompt and response',
+      }
+    }
+  }
+
+  let index = 0
+  while (index < blocks.length) {
+    if (blocks[index]?.type !== 'checkbox-field' || blocks[index]?.semanticGroup) {
+      index += 1
+      continue
+    }
+
+    let end = index + 1
+    while (end < blocks.length && blocks[end]?.type === 'checkbox-field' && !blocks[end]?.semanticGroup) {
+      end += 1
+    }
+
+    const group: PublicationSemanticGroup = {
+      id: createSemanticGroupId(),
+      kind: 'checkbox-group',
+      name: 'Checkbox group',
+    }
+    for (let cursor = index; cursor < end; cursor += 1) {
+      const block = blocks[cursor]
+      if (block) block.semanticGroup = { ...group }
+    }
+    index = end
+  }
+}
+
 export function compileGentlePageManuscript(manuscript: string): GentlePageCompilationResult {
   const lines = manuscript.replace(/\r\n?/g, '\n').split('\n')
   const blocks: PublicationBlock[] = []
@@ -446,6 +485,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       message: 'A trailing page-break directive had no following content and was ignored.',
     })
   }
+
+  inferSemanticGroups(blocks)
 
   return {
     title: title || 'Untitled publication',

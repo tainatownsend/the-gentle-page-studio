@@ -933,6 +933,19 @@ export function PublicationEditorPage({
                                     <option value="forced">Start new page</option>
                                   </Select>
                                 </Field>
+                                {getPagePlacementValue(block) !== 'auto' ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      updateBlock(block.id, (currentBlock) =>
+                                        withPagePlacement(currentBlock, 'auto'),
+                                      )
+                                    }
+                                  >
+                                    Reset to Auto
+                                  </Button>
+                                ) : null}
                               </Stack>
                             </li>
                           )

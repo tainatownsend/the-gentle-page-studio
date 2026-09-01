@@ -30,6 +30,7 @@ export function PublicationCreatePage({
   const [manuscript, setManuscript] = useState('')
   const [manuscriptError, setManuscriptError] = useState<string>()
   const [isImportingDocx, setIsImportingDocx] = useState(false)
+  const [importDiagnostics, setImportDiagnostics] = useState<string[]>([])
   const [showManualCreation, setShowManualCreation] = useState(false)
 
   function createFromManuscript(source: string) {
@@ -75,11 +76,15 @@ export function PublicationCreatePage({
 
     setIsImportingDocx(true)
     setManuscriptError(undefined)
+    setImportDiagnostics([])
 
     try {
       const imported = await importDocxManuscript(await file.arrayBuffer(), file.name)
       setManuscript(imported.manuscript)
-      createFromManuscript(imported.manuscript)
+      setImportDiagnostics(imported.diagnostics.map((diagnostic) => diagnostic.message))
+      if (imported.diagnostics.length === 0) {
+        createFromManuscript(imported.manuscript)
+      }
     } catch (error) {
       setManuscriptError(
         error instanceof Error
@@ -163,6 +168,21 @@ export function PublicationCreatePage({
 [[GP:RESPONSE size="long"]]`}
                 />
               </Field>
+
+              {importDiagnostics.length > 0 ? (
+                <div className={styles.importReview} role="status">
+                  <Text weight="semibold">Import Review</Text>
+                  <Text tone="secondary">
+                    Gentle Page handled the clear structures automatically. Review only these ambiguous
+                    items, adjust the manuscript if needed, then compile.
+                  </Text>
+                  <ul>
+                    {importDiagnostics.map((message) => (
+                      <li key={message}>{message}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
               <div className={styles.compilerNote}>
                 <Text weight="semibold">Zero-touch by default</Text>
