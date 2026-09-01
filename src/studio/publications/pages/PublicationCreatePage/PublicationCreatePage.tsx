@@ -1,5 +1,5 @@
-import { useState, type ReactElement } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { useState, type ChangeEvent, type ReactElement } from 'react'
+import { ArrowLeft, FileUp } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -12,7 +12,7 @@ import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
 
 import { PublicationCreateForm, type PublicationCreateValues } from '../../components'
-import { compileGentlePageManuscript } from '../../compiler'
+import { compileGentlePageManuscript, importDocxManuscript } from '../../compiler'
 import { PUBLICATION_TEMPLATES } from '../../templates'
 
 import styles from './PublicationCreatePage.module.css'
@@ -29,21 +29,22 @@ export function PublicationCreatePage({
   const [templateId, setTemplateId] = useState('blank')
   const [manuscript, setManuscript] = useState('')
   const [manuscriptError, setManuscriptError] = useState<string>()
+  const [isImportingDocx, setIsImportingDocx] = useState(false)
   const [showManualCreation, setShowManualCreation] = useState(false)
 
-  function handleCompile() {
-    const normalizedManuscript = manuscript.trim()
+  function createFromManuscript(source: string) {
+    const normalizedManuscript = source.trim()
 
     if (!normalizedManuscript) {
       setManuscriptError('Paste a manuscript before compiling the publication.')
-      return
+      return false
     }
 
     const result = compileGentlePageManuscript(normalizedManuscript)
 
     if (result.content.blocks.length === 0) {
       setManuscriptError('The manuscript needs publication content in addition to its title.')
-      return
+      return false
     }
 
     setManuscriptError(undefined)
@@ -53,6 +54,41 @@ export function PublicationCreatePage({
       content: result.content,
       creationMode: 'compiled',
     })
+
+    return true
+  }
+
+  function handleCompile() {
+    createFromManuscript(manuscript)
+  }
+
+  async function handleDocxUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.docx')) {
+      setManuscriptError('Choose a Microsoft Word .docx file.')
+      return
+    }
+
+    setIsImportingDocx(true)
+    setManuscriptError(undefined)
+
+    try {
+      const imported = await importDocxManuscript(await file.arrayBuffer(), file.name)
+      setManuscript(imported.manuscript)
+      createFromManuscript(imported.manuscript)
+    } catch (error) {
+      setManuscriptError(
+        error instanceof Error
+          ? error.message
+          : 'The DOCX file could not be imported. Your existing publications are unchanged.',
+      )
+    } finally {
+      setIsImportingDocx(false)
+    }
   }
 
   return (
@@ -62,7 +98,7 @@ export function PublicationCreatePage({
           <PageHeader
             eyebrow="The Gentle Page Studio"
             title="Create publication"
-            description="Paste your manuscript. Gentle Page will interpret the structure and compose the publication for you."
+            description="Bring the manuscript. Gentle Page interprets the structure, composes the pages, and prepares the publication for you."
             actions={
               <Button variant="ghost" startIcon={<ArrowLeft size={18} />} onClick={onBack}>
                 Back to publications
@@ -77,11 +113,31 @@ export function PublicationCreatePage({
                   Paste. Compile. Preview. Export.
                 </Text>
                 <Text tone="secondary">
-                  Paste content from ChatGPT, Gemini, Claude, Markdown, or any other writing tool. The
-                  compiler will create the publication blocks and preserve Gentle Page manuscript
-                  directives automatically.
+                  Paste content from ChatGPT, Gemini, Claude, or another writing tool — or upload a
+                  Word document. The compiler handles the publication structure and layout.
                 </Text>
               </Stack>
+
+              <div className={styles.inputChoices}>
+                <label className={styles.docxUpload} aria-busy={isImportingDocx}>
+                  <FileUp size={20} aria-hidden="true" />
+                  <span>
+                    <strong>{isImportingDocx ? 'Importing Word document…' : 'Upload .docx'}</strong>
+                    <small>Import and compile directly to preview</small>
+                  </span>
+                  <input
+                    className={styles.srOnly}
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    disabled={isImportingDocx}
+                    onChange={(event) => void handleDocxUpload(event)}
+                  />
+                </label>
+
+                <div className={styles.orDivider} aria-hidden="true">
+                  <span>or paste</span>
+                </div>
+              </div>
 
               <Field
                 label="Manuscript"
@@ -111,13 +167,13 @@ export function PublicationCreatePage({
               <div className={styles.compilerNote}>
                 <Text weight="semibold">Zero-touch by default</Text>
                 <Text tone="secondary">
-                  The compiler makes the layout decisions. Manual editing remains available only for
-                  exceptions or preference changes.
+                  Word headings, page-break hints, checkboxes, writing lines, paragraphs, and tables
+                  are interpreted locally in your browser. Manual editing remains an exception path.
                 </Text>
               </div>
 
               <Cluster justify="end" gap="sm">
-                <Button type="button" onClick={handleCompile}>
+                <Button type="button" onClick={handleCompile} disabled={isImportingDocx}>
                   Compile publication
                 </Button>
               </Cluster>
