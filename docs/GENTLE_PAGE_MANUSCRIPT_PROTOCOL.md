@@ -97,6 +97,30 @@ Use ordinary Markdown task-list syntax:
 
 Consecutive checkbox options are treated as a semantic group for pagination. When the group fits on a fresh page, the layout engine avoids stranding only the final options on the next page.
 
+## Repeatable pages
+
+Use repeatable-page directives for reusable journal, tracker, check-in, or worksheet pages that should remain one semantic page unit.
+
+```md
+[[GP:REPEATABLE_PAGE name="Daily Recovery Check-in"]]
+
+## Daily Recovery Check-in
+
+### Energy right now
+[[GP:RATING min="0" max="10"]]
+
+### What would support me today?
+[[GP:RESPONSE size="medium"]]
+
+[[GP:END_REPEATABLE_PAGE]]
+```
+
+Every block inside the directive pair receives the same semantic group identity. The layout engine automatically isolates the group on page boundaries; the manuscript does not need to insert manual page breaks before or after it.
+
+A repeatable page is semantic intent, not absolute geometry. Response fields may still expand within safe design-system bounds so the compiler can use the page well.
+
+If a repeatable group is too large to fit on one page, the compiler preserves all content and surfaces a non-blocking layout review suggestion instead of clipping or dropping content.
+
 ## Page-break intent
 
 Preferred break:
@@ -121,6 +145,8 @@ For convenience, this is equivalent to a preferred break:
 [[GP:PAGE_BREAK]]
 ```
 
+Do not add page-break directives around a repeatable page. Its semantic boundaries already define its page intent.
+
 ## Author-only notes
 
 Use author notes for design, product, or implementation context that must not appear in the final publication.
@@ -135,7 +161,7 @@ Author notes are excluded from publication output.
 
 ## Forward-compatible directives
 
-The protocol is intentionally small in v1. Repeatable-page semantics and additional structured journal components remain planned extensions.
+The protocol is intentionally small in v1. Additional structured journal components may be introduced when they materially reduce ambiguity.
 
 When the compiler encounters a directive it does not yet support, it must preserve the information or surface a non-blocking diagnostic rather than silently dropping manuscript content.
 
@@ -194,6 +220,17 @@ For a long reflection:
 For a numeric rating scale:
 ### Energy right now
 [[GP:RATING min="0" max="10"]]
+
+REPEATABLE PAGES
+
+For a reusable journal/check-in/worksheet page:
+[[GP:REPEATABLE_PAGE name="Daily Check-in"]]
+
+page content
+
+[[GP:END_REPEATABLE_PAGE]]
+
+Do not manually add page breaks around a repeatable page. Gentle Page Studio will isolate it as a semantic page unit.
 
 PAGE INTENT
 
