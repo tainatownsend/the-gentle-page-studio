@@ -38,14 +38,30 @@ export type PublicationCheckboxFieldBlock = PublicationBlockBase & {
   text: string
 }
 
+export type PublicationRatingFieldBlock = PublicationBlockBase & {
+  type: 'rating-field'
+  text: string
+  min: number
+  max: number
+}
+
+export type PublicationTableBlock = PublicationBlockBase & {
+  type: 'table'
+  text: string
+  columns: string[]
+  rows: string[][]
+}
+
 export type PublicationInteractiveBlock =
   | PublicationMultilineTextFieldBlock
   | PublicationCheckboxFieldBlock
+  | PublicationRatingFieldBlock
 
 export type PublicationBlock =
   | PublicationHeadingBlock
   | PublicationParagraphBlock
   | PublicationInteractiveBlock
+  | PublicationTableBlock
 
 export type PublicationContent = {
   blocks: PublicationBlock[]
