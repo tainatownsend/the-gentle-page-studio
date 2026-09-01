@@ -81,6 +81,59 @@ function PublicationBlockPreview({
     )
   }
 
+  if (block.type === 'rating-field') {
+    const values = Array.from(
+      { length: Math.max(1, Math.floor(block.max - block.min) + 1) },
+      (_, index) => block.min + index,
+    )
+
+    return (
+      <section className={styles.ratingField} aria-label={block.text || 'Rating field'}>
+        <p className={styles.fieldLabel}>{block.text || 'Rating'}</p>
+        <div className={styles.ratingScale} aria-hidden="true">
+          {values.map((value) => (
+            <span key={value} className={styles.ratingOption}>
+              <span className={styles.ratingMark} />
+              <span className={styles.ratingValue}>{value}</span>
+            </span>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (block.type === 'table') {
+    return (
+      <section className={styles.tableBlock} aria-label={block.text || 'Worksheet table'}>
+        {block.text ? <p className={styles.fieldLabel}>{block.text}</p> : null}
+        <div className={styles.tableScroll}>
+          <table className={styles.publicationTable}>
+            <thead>
+              <tr>
+                {block.columns.map((column, index) => (
+                  <th key={`${block.id}-column-${index}`} scope="col">
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {block.rows.map((row, rowIndex) => (
+                <tr key={`${block.id}-row-${rowIndex}`}>
+                  {block.columns.map((_, columnIndex) => (
+                    <td key={`${block.id}-row-${rowIndex}-column-${columnIndex}`}>
+                      {row[columnIndex] ?? ''}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+
   return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
 }
 
@@ -94,7 +147,10 @@ export function PublicationPreviewPage({
   const [fillablePdfError, setFillablePdfError] = useState<string>()
   const layout = createPublicationLayout(publication)
   const hasInteractiveFields = publication.content.blocks.some(
-    (block) => block.type === 'multiline-text-field' || block.type === 'checkbox-field',
+    (block) =>
+      block.type === 'multiline-text-field' ||
+      block.type === 'checkbox-field' ||
+      block.type === 'rating-field',
   )
 
   function handlePrint() {
