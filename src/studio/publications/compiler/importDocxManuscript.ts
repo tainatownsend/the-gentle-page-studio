@@ -36,12 +36,17 @@ type TableRendering = {
   diagnostic: DocxImportDiagnostic
 }
 
+type InlineWritingField = {
+  label: string
+  size: 'short' | 'medium' | 'long'
+}
+
 const WORDPROCESSING_NAMESPACE = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 const EOCD_SIGNATURE = 0x06054b50
 const CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50
 const LOCAL_FILE_SIGNATURE = 0x04034b50
 const MAX_EOCD_SEARCH_BYTES = 65557
-const AUTHOR_ONLY_MARKERS = new Set(['PRODUCT / LAYOUT NOTE', 'INTERNAL DRAFT NOTE'])
+const AUTHOR_ONLY_MARKERS = ['PRODUCT / LAYOUT NOTE', 'INTERNAL DRAFT NOTE'] as const
 
 function readUint16(view: DataView, offset: number): number {
   return view.getUint16(offset, true)
@@ -281,6 +286,26 @@ function isWritingLine(text: string): boolean {
   return /^_{4,}$/.test(normalized) || /^\.{6,}$/.test(normalized)
 }
 
+function responseSizeForWritingLength(length: number): 'short' | 'medium' | 'long' {
+  if (length >= 150) return 'long'
+  if (length >= 80) return 'medium'
+  return 'short'
+}
+
+function inlineWritingField(text: string): InlineWritingField | undefined {
+  const match = text.trim().match(/^(.+?)(_{4,}|\.{6,})$/)
+  if (!match) return undefined
+
+  const label = match[1]?.trim()
+  const writingSpace = match[2] ?? ''
+  if (!label) return undefined
+
+  return {
+    label,
+    size: responseSizeForWritingLength(writingSpace.length),
+  }
+}
+
 function checkboxTexts(text: string): string[] {
   const normalized = text.trim()
   if (!/^(?:☐|□|\[\s?\])/.test(normalized)) return []
@@ -326,6 +351,27 @@ function renderCheckboxTable(table: ParsedTable): TableRendering | undefined {
   }
 }
 
+function renderInlineResponseTable(table: ParsedTable): TableRendering | undefined {
+  const cells = table.rows.flat().map((cell) => cell.trim()).filter(Boolean)
+  if (cells.length === 0) return undefined
+
+  const fields = cells.map((cell) => inlineWritingField(cell))
+  if (fields.some((field) => field === undefined)) return undefined
+
+  return {
+    lines: fields.flatMap((field) => [
+      `### ${field?.label ?? 'Response'}`,
+      '',
+      `[[GP:RESPONSE size="${field?.size ?? 'short'}"]]`,
+      '',
+    ]),
+    diagnostic: {
+      code: 'inline-response-table-normalized',
+      message: 'A Word compact response grid was normalized into editable response fields.',
+    },
+  }
+}
+
 function renderResponseGrid(table: ParsedTable): TableRendering | undefined {
   const pairs: Array<{ label: string; size: 'short' | 'medium' | 'long' }> = []
 
@@ -337,10 +383,9 @@ function renderResponseGrid(table: ParsedTable): TableRendering | undefined {
       const writingSpace = row[index + 1]?.trim() ?? ''
       if (!label || !isWritingLine(writingSpace)) return undefined
 
-      const underscoreCount = writingSpace.replace(/[^_.]/g, '').length
       pairs.push({
         label,
-        size: underscoreCount >= 80 ? 'medium' : 'short',
+        size: responseSizeForWritingLength(writingSpace.replace(/\s+/g, '').length),
       })
     }
   }
@@ -364,6 +409,7 @@ function renderResponseGrid(table: ParsedTable): TableRendering | undefined {
 function renderTable(table: ParsedTable): TableRendering {
   return (
     renderCheckboxTable(table) ??
+    renderInlineResponseTable(table) ??
     renderResponseGrid(table) ?? {
       lines: renderMarkdownTable(table),
       diagnostic: {
@@ -378,11 +424,22 @@ function renderPageBreak(intent: 'preferred' | 'forced'): string {
   return `[[GP:PAGE_BREAK type="${intent}"]]`
 }
 
-function isAuthorOnlyMarker(item: ParsedBodyItem): item is ParsedParagraph {
-  return item.kind === 'paragraph' && AUTHOR_ONLY_MARKERS.has(item.text.trim().toUpperCase())
+function authorOnlyMarkerForItem(item: ParsedBodyItem): string | undefined {
+  const candidates =
+    item.kind === 'paragraph'
+      ? [item.text]
+      : item.rows.flat().map((cell) => cell.trim()).filter(Boolean)
+
+  for (const candidate of candidates) {
+    const normalized = candidate.trim().toUpperCase()
+    const marker = AUTHOR_ONLY_MARKERS.find((value) => normalized.startsWith(value))
+    if (marker) return marker
+  }
+
+  return undefined
 }
 
-function skipAuthorOnlySection(items: ParsedBodyItem[], startIndex: number): number {
+function skipAuthorOnlyParagraphSection(items: ParsedBodyItem[], startIndex: number): number {
   let cursor = startIndex + 1
 
   while (cursor < items.length) {
@@ -407,12 +464,13 @@ function renderItemsAsManuscript(items: ParsedBodyItem[], fallbackTitle: string)
     const item = items[index]
     if (!item) break
 
-    if (isAuthorOnlyMarker(item)) {
+    const authorOnlyMarker = authorOnlyMarkerForItem(item)
+    if (authorOnlyMarker) {
       diagnostics.push({
         code: 'author-only-section-removed',
-        message: `${item.text} was kept out of publication output.`,
+        message: `${authorOnlyMarker} was kept out of publication output.`,
       })
-      index = skipAuthorOnlySection(items, index)
+      index = item.kind === 'table' ? index + 1 : skipAuthorOnlyParagraphSection(items, index)
       continue
     }
 
