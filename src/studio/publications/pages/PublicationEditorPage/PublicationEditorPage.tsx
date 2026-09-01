@@ -101,10 +101,23 @@ function getBlockTypeLabel(block: PublicationBlock): string {
       return 'Multiline response'
     case 'checkbox-field':
       return 'Checkbox'
+    case 'rating-field':
+      return 'Rating'
+    case 'table':
+      return 'Table'
   }
 }
 
 function cloneBlock(block: PublicationBlock): PublicationBlock {
+  if (block.type === 'table') {
+    return {
+      ...block,
+      columns: [...block.columns],
+      rows: block.rows.map((row) => [...row]),
+      layout: block.layout ? { ...block.layout } : undefined,
+    }
+  }
+
   return {
     ...block,
     layout: block.layout ? { ...block.layout } : undefined,
@@ -131,6 +144,33 @@ function layoutMatches(currentBlock: PublicationBlock, savedBlock: PublicationBl
     currentBlock.layout?.pageBreakBefore === savedBlock.layout?.pageBreakBefore &&
     currentBlock.layout?.keepWithNext === savedBlock.layout?.keepWithNext
   )
+}
+
+function tableMatches(
+  currentBlock: Extract<PublicationBlock, { type: 'table' }>,
+  savedBlock: Extract<PublicationBlock, { type: 'table' }>,
+): boolean {
+  if (currentBlock.columns.length !== savedBlock.columns.length) {
+    return false
+  }
+
+  if (!currentBlock.columns.every((column, index) => column === savedBlock.columns[index])) {
+    return false
+  }
+
+  if (currentBlock.rows.length !== savedBlock.rows.length) {
+    return false
+  }
+
+  return currentBlock.rows.every((row, rowIndex) => {
+    const savedRow = savedBlock.rows[rowIndex]
+
+    return (
+      savedRow !== undefined &&
+      row.length === savedRow.length &&
+      row.every((cell, columnIndex) => cell === savedRow[columnIndex])
+    )
+  })
 }
 
 function contentMatches(
@@ -165,6 +205,14 @@ function contentMatches(
       return currentBlock.responseSize === savedBlock.responseSize
     }
 
+    if (currentBlock.type === 'rating-field' && savedBlock.type === 'rating-field') {
+      return currentBlock.min === savedBlock.min && currentBlock.max === savedBlock.max
+    }
+
+    if (currentBlock.type === 'table' && savedBlock.type === 'table') {
+      return tableMatches(currentBlock, savedBlock)
+    }
+
     return true
   })
 }
@@ -193,6 +241,27 @@ function withPagePlacement(
       pageBreakBefore: pagePlacement,
     },
   }
+}
+
+function parseTableColumns(value: string): string[] {
+  return value
+    .split('\n')
+    .map((cell) => cell.trim())
+    .filter(Boolean)
+}
+
+function serializeTableRows(rows: string[][]): string {
+  return rows.map((row) => row.join('\t')).join('\n')
+}
+
+function parseTableRows(value: string, columnCount: number): string[][] {
+  return value
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .map((line) => {
+      const cells = line.split('\t').map((cell) => cell.trim())
+      return Array.from({ length: columnCount }, (_, index) => cells[index] ?? '')
+    })
 }
 
 function UnsavedChangesConfirmation({
@@ -496,7 +565,7 @@ export function PublicationEditorPage({
                         </Text>
 
                         <Text tone="secondary">
-                          Build the publication with text and reader response fields.
+                          Refine compiled content only when an exception needs correction.
                         </Text>
                       </Stack>
 
@@ -697,7 +766,7 @@ export function PublicationEditorPage({
                                       </Select>
                                     </Field>
                                   </div>
-                                ) : (
+                                ) : block.type === 'checkbox-field' ? (
                                   <Field
                                     label={`Block ${blockNumber} checkbox label`}
                                     description="Readers will receive an empty checkbox beside this label."
@@ -713,6 +782,134 @@ export function PublicationEditorPage({
                                       }
                                     />
                                   </Field>
+                                ) : block.type === 'rating-field' ? (
+                                  <div className={styles.headingFields}>
+                                    <Field label={`Block ${blockNumber} rating prompt`}>
+                                      <Input
+                                        fullWidth
+                                        value={block.text}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) => ({
+                                            ...currentBlock,
+                                            text: event.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field
+                                      label={`Block ${blockNumber} rating minimum`}
+                                      description="Use a compact bounded scale, such as 0–10."
+                                    >
+                                      <Input
+                                        fullWidth
+                                        type="number"
+                                        value={String(block.min)}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'rating-field'
+                                              ? {
+                                                  ...currentBlock,
+                                                  min: Number(event.target.value),
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field label={`Block ${blockNumber} rating maximum`}>
+                                      <Input
+                                        fullWidth
+                                        type="number"
+                                        value={String(block.max)}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'rating-field'
+                                              ? {
+                                                  ...currentBlock,
+                                                  max: Number(event.target.value),
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      />
+                                    </Field>
+                                  </div>
+                                ) : (
+                                  <div className={styles.headingFields}>
+                                    <Field
+                                      label={`Block ${blockNumber} table title`}
+                                      description="Optional caption shown above the worksheet."
+                                    >
+                                      <Input
+                                        fullWidth
+                                        value={block.text}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) => ({
+                                            ...currentBlock,
+                                            text: event.target.value,
+                                          }))
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field
+                                      label={`Block ${blockNumber} table columns`}
+                                      description="One column heading per line."
+                                    >
+                                      <Textarea
+                                        fullWidth
+                                        rows={Math.max(3, block.columns.length)}
+                                        value={block.columns.join('\n')}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) => {
+                                            if (currentBlock.type !== 'table') {
+                                              return currentBlock
+                                            }
+
+                                            const columns = parseTableColumns(event.target.value)
+                                            const safeColumns = columns.length > 0 ? columns : ['Column']
+
+                                            return {
+                                              ...currentBlock,
+                                              columns: safeColumns,
+                                              rows: currentBlock.rows.map((row) =>
+                                                Array.from(
+                                                  { length: safeColumns.length },
+                                                  (_, columnIndex) => row[columnIndex] ?? '',
+                                                ),
+                                              ),
+                                            }
+                                          })
+                                        }
+                                      />
+                                    </Field>
+
+                                    <Field
+                                      label={`Block ${blockNumber} table rows`}
+                                      description="One row per line. Separate cells with the Tab key."
+                                    >
+                                      <Textarea
+                                        fullWidth
+                                        rows={Math.max(4, block.rows.length + 1)}
+                                        value={serializeTableRows(block.rows)}
+                                        onChange={(event) =>
+                                          updateBlock(block.id, (currentBlock) =>
+                                            currentBlock.type === 'table'
+                                              ? {
+                                                  ...currentBlock,
+                                                  rows: parseTableRows(
+                                                    event.target.value,
+                                                    currentBlock.columns.length,
+                                                  ),
+                                                }
+                                              : currentBlock,
+                                          )
+                                        }
+                                      />
+                                    </Field>
+                                  </div>
                                 )}
 
                                 <Field
