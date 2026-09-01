@@ -184,4 +184,57 @@ First paragraph.
       }),
     ])
   })
+
+  it('tags every block inside a repeatable page with the same semantic group', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+Intro paragraph.
+
+[[GP:REPEATABLE_PAGE name="Daily Recovery Check-in"]]
+
+## Daily Recovery Check-in
+
+### Energy right now
+[[GP:RATING min="0" max="10"]]
+
+### What would support me today?
+[[GP:RESPONSE size="medium"]]
+
+[[GP:END_REPEATABLE_PAGE]]
+
+Closing paragraph.`)
+
+    const groupedBlocks = result.content.blocks.filter((block) => block.semanticGroup)
+
+    expect(groupedBlocks).toHaveLength(3)
+    expect(new Set(groupedBlocks.map((block) => block.semanticGroup?.id)).size).toBe(1)
+    expect(groupedBlocks.every((block) => block.semanticGroup?.kind === 'repeatable-page')).toBe(
+      true,
+    )
+    expect(groupedBlocks.every((block) => block.semanticGroup?.name === 'Daily Recovery Check-in')).toBe(
+      true,
+    )
+    expect(result.content.blocks[0]?.semanticGroup).toBeUndefined()
+    expect(result.content.blocks.at(-1)?.semanticGroup).toBeUndefined()
+  })
+
+  it('preserves an unterminated repeatable page and reports one optional suggestion', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:REPEATABLE_PAGE name="Weekly Review"]]
+
+## Weekly Review
+
+Reflection content.`)
+
+    expect(result.content.blocks.every((block) => block.semanticGroup?.name === 'Weekly Review')).toBe(
+      true,
+    )
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'unterminated-repeatable-page',
+        level: 'suggestion',
+      }),
+    ])
+  })
 })
