@@ -47,6 +47,14 @@ function parsePageBreakIntent(line: string): PublicationPageBreakIntent {
   return typeMatch?.[1]?.toLowerCase() === 'forced' ? 'forced' : 'preferred'
 }
 
+function parseNumericAttribute(line: string, name: string): number | undefined {
+  const match = line.match(new RegExp(`${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
+  if (!match) return undefined
+
+  const value = Number(match[1])
+  return Number.isFinite(value) ? value : undefined
+}
+
 function withPendingLayout(
   block: PublicationBlock,
   pendingPageBreak: PublicationPageBreakIntent | undefined,
@@ -68,6 +76,20 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
   if (!block) return false
   if (block.type === 'heading' && block.level === 3) return true
   return block.type === 'paragraph' && /[?:]$/.test(block.text.trim())
+}
+
+function parseMarkdownTableRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '')
+  return trimmed.split('|').map((cell) => cell.trim())
+}
+
+function isMarkdownTableSeparator(line: string): boolean {
+  const cells = parseMarkdownTableRow(line)
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell))
+}
+
+function isMarkdownTableRow(line: string): boolean {
+  return line.includes('|') && parseMarkdownTableRow(line).length >= 2
 }
 
 export function compileGentlePageManuscript(manuscript: string): GentlePageCompilationResult {
@@ -103,7 +125,10 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     })
   }
 
-  lines.forEach((rawLine, index) => {
+  let index = 0
+
+  while (index < lines.length) {
+    const rawLine = lines[index] ?? ''
     const lineNumber = index + 1
     const line = rawLine.trim()
 
@@ -114,28 +139,34 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     if (/^\[\[GP:AUTHOR_NOTE\]\]$/i.test(line)) {
       flushParagraph()
       authorNote = true
-      return
+      index += 1
+      continue
     }
 
     if (authorNote) {
       if (/^\[\[GP:END\]\]$/i.test(line)) {
         authorNote = false
       }
-      return
+      index += 1
+      continue
     }
 
     if (!line) {
       flushParagraph()
-      return
+      index += 1
+      continue
     }
 
     if (/^\[\[GP:PAGE_BREAK(?:\s+[^\]]+)?\]\]$/i.test(line)) {
       flushParagraph()
       pendingPageBreak = parsePageBreakIntent(line)
-      return
+      index += 1
+      continue
     }
 
-    const responseMatch = line.match(/^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i)
+    const responseMatch = line.match(
+      /^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i,
+    )
     if (responseMatch) {
       flushParagraph()
       const previousBlock = blocks[blocks.length - 1]
@@ -160,20 +191,79 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         responseSize: normalizeResponseSize(responseMatch[1]),
         layout: pageBreakBefore ? { pageBreakBefore } : undefined,
       })
-      return
+      index += 1
+      continue
     }
 
     if (/^\[\[GP:RATING\b/i.test(line)) {
       flushParagraph()
-      diagnostics.push({
-        level: 'suggestion',
-        code: 'rating-field-fallback',
-        line: lineNumber,
-        message: 'Rating fields are preserved as publication text until the dedicated rating control lands.',
+      const previousBlock = blocks[blocks.length - 1]
+      let prompt = 'Rating'
+      let inheritedPageBreak: PublicationPageBreakIntent | undefined
+
+      if (isPromptLikeBlock(previousBlock)) {
+        const removed = blocks.pop()
+        if (removed) {
+          prompt = removed.text
+          inheritedPageBreak = removed.layout?.pageBreakBefore
+        }
+      }
+
+      const requestedMin = parseNumericAttribute(line, 'min') ?? 0
+      const requestedMax = parseNumericAttribute(line, 'max') ?? 10
+      const validRange = requestedMax > requestedMin && requestedMax - requestedMin <= 20
+      const min = validRange ? requestedMin : 0
+      const max = validRange ? requestedMax : 10
+
+      if (!validRange) {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'rating-range-normalized',
+          line: lineNumber,
+          message: 'An invalid rating range was normalized to 0–10.',
+        })
+      }
+
+      const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
+      pendingPageBreak = undefined
+
+      blocks.push({
+        id: createBlockId(),
+        type: 'rating-field',
+        text: prompt,
+        min,
+        max,
+        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
       })
-      paragraphLines.push(line)
+      index += 1
+      continue
+    }
+
+    const nextLine = lines[index + 1]?.trim() ?? ''
+    if (isMarkdownTableRow(line) && isMarkdownTableSeparator(nextLine)) {
       flushParagraph()
-      return
+      const columns = parseMarkdownTableRow(line)
+      const rows: string[][] = []
+      index += 2
+
+      while (index < lines.length) {
+        const rowLine = lines[index]?.trim() ?? ''
+        if (!rowLine || !isMarkdownTableRow(rowLine)) break
+
+        const row = parseMarkdownTableRow(rowLine)
+        const normalizedRow = columns.map((_, columnIndex) => row[columnIndex] ?? '')
+        rows.push(normalizedRow)
+        index += 1
+      }
+
+      pushBlock({
+        id: createBlockId(),
+        type: 'table',
+        text: '',
+        columns,
+        rows,
+      })
+      continue
     }
 
     if (/^\[\[GP:/i.test(line)) {
@@ -186,7 +276,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       })
       paragraphLines.push(line)
       flushParagraph()
-      return
+      index += 1
+      continue
     }
 
     const headingMatch = rawLine.match(/^\s*(#{1,3})\s+(.+?)\s*$/)
@@ -197,7 +288,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
 
       if (markdownLevel === 1 && !title) {
         title = text
-        return
+        index += 1
+        continue
       }
 
       pushBlock({
@@ -209,7 +301,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
           keepWithNext: true,
         },
       })
-      return
+      index += 1
+      continue
     }
 
     const checkboxMatch = line.match(/^[-*]\s+\[\s?\]\s+(.+)$/)
@@ -220,7 +313,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         type: 'checkbox-field',
         text: checkboxMatch[1].trim(),
       })
-      return
+      index += 1
+      continue
     }
 
     const bulletMatch = line.match(/^[-*]\s+(.+)$/)
@@ -231,7 +325,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         type: 'paragraph',
         text: `• ${bulletMatch[1].trim()}`,
       })
-      return
+      index += 1
+      continue
     }
 
     const numberedMatch = line.match(/^\d+[.)]\s+(.+)$/)
@@ -242,11 +337,13 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         type: 'paragraph',
         text: line,
       })
-      return
+      index += 1
+      continue
     }
 
     paragraphLines.push(line)
-  })
+    index += 1
+  }
 
   flushParagraph()
 
