@@ -17,6 +17,7 @@ const CAPACITY_UNIT_HEIGHT_POINTS =
   PUBLICATION_CONTENT_HEIGHT_POINTS / PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 const MULTILINE_PROMPT_RESERVE_POINTS = 30
 const CHECKBOX_SIZE_POINTS = 14
+const RATING_SIZE_POINTS = 12
 
 export type PublicationPdfRect = {
   x: number
@@ -31,14 +32,35 @@ export type PublicationPdfBlockPlacement = {
   rect: PublicationPdfRect
 }
 
-export type PublicationPdfInteractiveField = {
+type PublicationPdfInteractiveFieldBase = {
   name: string
   blockId: string
   pageNumber: number
-  kind: 'multiline-text' | 'checkbox'
   label: string
+}
+
+export type PublicationPdfMultilineField = PublicationPdfInteractiveFieldBase & {
+  kind: 'multiline-text'
   rect: PublicationPdfRect
 }
+
+export type PublicationPdfCheckboxField = PublicationPdfInteractiveFieldBase & {
+  kind: 'checkbox'
+  rect: PublicationPdfRect
+}
+
+export type PublicationPdfRatingField = PublicationPdfInteractiveFieldBase & {
+  kind: 'rating'
+  options: Array<{
+    value: string
+    rect: PublicationPdfRect
+  }>
+}
+
+export type PublicationPdfInteractiveField =
+  | PublicationPdfMultilineField
+  | PublicationPdfCheckboxField
+  | PublicationPdfRatingField
 
 export type PublicationPdfPagePlan = {
   sequence: number
@@ -116,6 +138,28 @@ function createInteractiveRect(
   return undefined
 }
 
+function createRatingOptions(
+  block: Extract<PublicationBlock, { type: 'rating-field' }>,
+  placement: PublicationPdfBlockPlacement,
+) {
+  const values = Array.from(
+    { length: Math.max(1, Math.floor(block.max - block.min) + 1) },
+    (_, index) => block.min + index,
+  )
+  const slotWidth = placement.rect.width / values.length
+  const y = placement.rect.y + Math.max(8, Math.min(24, placement.rect.height / 3))
+
+  return values.map((value, index) => ({
+    value: String(value),
+    rect: {
+      x: placement.rect.x + index * slotWidth + Math.max(0, (slotWidth - RATING_SIZE_POINTS) / 2),
+      y,
+      width: RATING_SIZE_POINTS,
+      height: RATING_SIZE_POINTS,
+    },
+  }))
+}
+
 export function createPublicationPdfPlan(publication: Publication): PublicationPdfPlan {
   const layout = createPublicationLayout(publication)
   const interactiveFields: PublicationPdfInteractiveField[] = []
@@ -155,6 +199,17 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
             rect,
           })
         }
+
+        if (block.type === 'rating-field') {
+          interactiveFields.push({
+            name: createFieldName(publication.id, block.id),
+            blockId: block.id,
+            pageNumber,
+            kind: 'rating',
+            label: block.text,
+            options: createRatingOptions(block, placement),
+          })
+        }
       })
     }
 
@@ -165,10 +220,21 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
       width: US_LETTER_WIDTH_POINTS,
       height: US_LETTER_HEIGHT_POINTS,
       margin: PUBLICATION_MARGIN_POINTS,
-      blocks: page.blocks.map((block) => ({
-        ...block,
-        layout: block.layout ? { ...block.layout } : undefined,
-      })),
+      blocks: page.blocks.map((block) => {
+        if (block.type === 'table') {
+          return {
+            ...block,
+            columns: [...block.columns],
+            rows: block.rows.map((row) => [...row]),
+            layout: block.layout ? { ...block.layout } : undefined,
+          }
+        }
+
+        return {
+          ...block,
+          layout: block.layout ? { ...block.layout } : undefined,
+        }
+      }),
       blockPlacements,
     }
   })
