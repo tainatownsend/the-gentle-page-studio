@@ -126,4 +126,62 @@ First paragraph.
       }),
     ])
   })
+
+  it('compiles a rating directive into a first-class rating field', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+### Energy right now
+
+[[GP:RATING min="0" max="10"]]`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'rating-field',
+        text: 'Energy right now',
+        min: 0,
+        max: 10,
+      }),
+    ])
+    expect(result.diagnostics).toEqual([])
+  })
+
+  it('normalizes unsafe rating ranges rather than failing compilation', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:RATING min="10" max="1"]]`)
+
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'rating-field',
+        min: 0,
+        max: 10,
+      }),
+    )
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'rating-range-normalized',
+        level: 'suggestion',
+      }),
+    ])
+  })
+
+  it('preserves markdown worksheets as first-class tables', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+| Area | Current capacity | What would make it easier? |
+| --- | --- | --- |
+| Physical | Low | More rest |
+| Mental | Medium | Fewer decisions |`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'table',
+        columns: ['Area', 'Current capacity', 'What would make it easier?'],
+        rows: [
+          ['Physical', 'Low', 'More rest'],
+          ['Mental', 'Medium', 'Fewer decisions'],
+        ],
+      }),
+    ])
+  })
 })
