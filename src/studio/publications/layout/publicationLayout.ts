@@ -164,8 +164,10 @@ function crossesRepeatablePageBoundary(
     previousGroup?.kind === 'repeatable-page' ? previousGroup.id : undefined
   const currentRepeatableId = currentGroup?.kind === 'repeatable-page' ? currentGroup.id : undefined
 
-  return previousRepeatableId !== currentRepeatableId &&
+  return (
+    previousRepeatableId !== currentRepeatableId &&
     (previousRepeatableId !== undefined || currentRepeatableId !== undefined)
+  )
 }
 
 function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[][] {
@@ -293,6 +295,10 @@ function isRepeatablePage(page: PublicationLayoutPage): boolean {
   return page.blocks.every((block) => block.semanticGroup?.id === semanticGroup.id)
 }
 
+function pageStartsRepeatableGroup(page: PublicationLayoutPage | undefined): boolean {
+  return page?.blocks[0]?.semanticGroup?.kind === 'repeatable-page'
+}
+
 function createDiagnostics(pages: readonly PublicationLayoutPage[]): PublicationLayoutDiagnostic[] {
   const diagnostics: PublicationLayoutDiagnostic[] = []
   const contentPages = pages.filter((page) => page.kind === 'content')
@@ -310,7 +316,9 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
       const current = repeatableGroupUnits.get(group.id)
       repeatableGroupUnits.set(group.id, {
         name: group.name,
-        units: (current?.units ?? 0) + (allocation?.baselineUnits ?? estimatePublicationBlockUnits(block)),
+        units:
+          (current?.units ?? 0) +
+          (allocation?.baselineUnits ?? estimatePublicationBlockUnits(block)),
         pageNumber: current?.pageNumber ?? page.pageNumber,
       })
     })
@@ -328,10 +336,12 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
 
     const isFinalPage = pageIndex === contentPages.length - 1
     const startsWithForcedBreak = page.blocks[0]?.layout?.pageBreakBefore === 'forced'
+    const nextPageStartsRepeatable = pageStartsRepeatableGroup(contentPages[pageIndex + 1])
 
     if (
       !isFinalPage &&
       !startsWithForcedBreak &&
+      !nextPageStartsRepeatable &&
       !isRepeatablePage(page) &&
       page.blocks.length > 0 &&
       page.remainingUnits >= SPARSE_PAGE_REMAINING_UNITS
