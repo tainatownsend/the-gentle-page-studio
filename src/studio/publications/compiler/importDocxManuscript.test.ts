@@ -76,17 +76,21 @@ function createStoredZip(entries: Array<{ name: string; content: string }>): Arr
   return new Uint8Array(output).buffer
 }
 
+function createDocx(xml: string): ArrayBuffer {
+  return createStoredZip([{ name: 'word/document.xml', content: xml }])
+}
+
 const DOCUMENT_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
     <w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Burnout Recovery Journal</w:t></w:r></w:p>
     <w:p><w:r><w:t>A gentle introduction.</w:t></w:r></w:p>
-    <w:p><w:pPr><w:pageBreakBefore/></w:pPr><w:r><w:t>Phase One</w:t></w:r><w:pPr><w:pStyle w:val="Heading1"/></w:pPr></w:p>
-    <w:p><w:r><w:t>What would support you today?</w:t></w:r></w:p>
+    <w:p><w:pPr><w:pStyle w:val="Heading1"/><w:pageBreakBefore/></w:pPr><w:r><w:t>Phase One</w:t></w:r></w:p>
+    <w:p><w:pPr><w:pStyle w:val="JournalPrompt"/></w:pPr><w:r><w:t>What would support you today?</w:t></w:r></w:p>
     <w:p><w:r><w:t>________________________</w:t></w:r></w:p>
     <w:p><w:r><w:t>________________________</w:t></w:r></w:p>
     <w:p><w:r><w:t>________________________</w:t></w:r></w:p>
-    <w:p><w:r><w:t>☐ Protect a break</w:t></w:r></w:p>
+    <w:p><w:r><w:t>☐ Protect a break [ ] Ask for help</w:t></w:r></w:p>
     <w:tbl>
       <w:tr><w:tc><w:p><w:r><w:t>Area</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Capacity</w:t></w:r></w:p></w:tc></w:tr>
       <w:tr><w:tc><w:p><w:r><w:t>Physical</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Low</w:t></w:r></w:p></w:tc></w:tr>
@@ -96,22 +100,93 @@ const DOCUMENT_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 describe('importDocxManuscript', () => {
   it('converts Word structure into a Gentle Page manuscript without external dependencies', async () => {
-    const result = await importDocxManuscript(
-      createStoredZip([{ name: 'word/document.xml', content: DOCUMENT_XML }]),
-      'draft.docx',
-    )
+    const result = await importDocxManuscript(createDocx(DOCUMENT_XML), 'draft.docx')
 
     expect(result.manuscript).toContain('# Burnout Recovery Journal')
     expect(result.manuscript).toContain('[[GP:PAGE_BREAK type="preferred"]]')
     expect(result.manuscript).toContain('## Phase One')
-    expect(result.manuscript).toContain('What would support you today?')
+    expect(result.manuscript).toContain('### What would support you today?')
     expect(result.manuscript).toContain('[[GP:RESPONSE size="long"]]')
     expect(result.manuscript).toContain('- [ ] Protect a break')
+    expect(result.manuscript).toContain('- [ ] Ask for help')
     expect(result.manuscript).toContain('| Area | Capacity |')
     expect(result.manuscript).toContain('| Physical | Low |')
-    expect(result.diagnostics).toEqual([
+    expect(result.diagnostics).toContainEqual(
       expect.objectContaining({ code: 'table-preserved-as-markdown' }),
-    ])
+    )
+  })
+
+  it('normalizes Word checkbox grids instead of flattening them into table text', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Check-in</w:t></w:r></w:p>
+<w:tbl>
+<w:tr><w:tc><w:p><w:r><w:t>[ ] Reduce expectations</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>[ ] Ask for help</w:t></w:r></w:p></w:tc></w:tr>
+<w:tr><w:tc><w:p><w:r><w:t>[ ] Protect a break</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>[ ] Eat / hydrate</w:t></w:r></w:p></w:tc></w:tr>
+</w:tbl>
+</w:body></w:document>`
+
+    const result = await importDocxManuscript(createDocx(xml), 'check-in.docx')
+
+    expect(result.manuscript).toContain('- [ ] Reduce expectations')
+    expect(result.manuscript).toContain('- [ ] Eat / hydrate')
+    expect(result.manuscript).not.toContain('| [ ] Reduce expectations')
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'checkbox-table-normalized' }),
+    )
+  })
+
+  it('normalizes Word label-and-writing-space grids into response fields', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Daily Log</w:t></w:r></w:p>
+<w:tbl>
+<w:tr><w:tc><w:p><w:r><w:t>Date</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>________________________</w:t></w:r></w:p></w:tc></w:tr>
+<w:tr><w:tc><w:p><w:r><w:t>Sleep (hours)</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>________________________</w:t></w:r></w:p></w:tc></w:tr>
+</w:tbl>
+</w:body></w:document>`
+
+    const result = await importDocxManuscript(createDocx(xml), 'daily-log.docx')
+
+    expect(result.manuscript).toContain('### Date\n\n[[GP:RESPONSE size="short"]]')
+    expect(result.manuscript).toContain('### Sleep (hours)')
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'response-grid-normalized' }),
+    )
+  })
+
+  it('uses a short label before writing lines as the response prompt', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Daily Log</w:t></w:r></w:p>
+<w:p><w:r><w:t>Biggest drain</w:t></w:r></w:p>
+<w:p><w:r><w:t>________________________</w:t></w:r></w:p>
+</w:body></w:document>`
+
+    const result = await importDocxManuscript(createDocx(xml), 'daily-log.docx')
+
+    expect(result.manuscript).toContain('### Biggest drain\n\n[[GP:RESPONSE size="short"]]')
+  })
+
+  it('keeps explicit author-only sections out of publication output', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Journal</w:t></w:r></w:p>
+<w:p><w:r><w:t>PRODUCT / LAYOUT NOTE</w:t></w:r></w:p>
+<w:p><w:r><w:t>Keep this page spacious.</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:pageBreakBefore/></w:pPr><w:r><w:t>Next Section</w:t></w:r></w:p>
+<w:p><w:r><w:t>Visible content.</w:t></w:r></w:p>
+</w:body></w:document>`
+
+    const result = await importDocxManuscript(createDocx(xml), 'journal.docx')
+
+    expect(result.manuscript).not.toContain('PRODUCT / LAYOUT NOTE')
+    expect(result.manuscript).not.toContain('Keep this page spacious.')
+    expect(result.manuscript).toContain('## Next Section')
+    expect(result.manuscript).toContain('Visible content.')
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: 'author-only-section-removed' }),
+    )
   })
 
   it('uses the file name when the document has no explicit title style', async () => {
@@ -120,10 +195,7 @@ describe('importDocxManuscript', () => {
       '<w:p><w:r><w:t>Opening paragraph</w:t></w:r></w:p>',
     )
 
-    const result = await importDocxManuscript(
-      createStoredZip([{ name: 'word/document.xml', content: xml }]),
-      '30-Day Energy Audit.docx',
-    )
+    const result = await importDocxManuscript(createDocx(xml), '30-Day Energy Audit.docx')
 
     expect(result.manuscript.startsWith('# 30-Day Energy Audit')).toBe(true)
   })
