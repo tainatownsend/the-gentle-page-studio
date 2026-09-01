@@ -378,7 +378,6 @@ function renderItemsAsManuscript(items: ParsedBodyItem[], fallbackTitle: string)
   }
 
   if (!title) {
-    title = fallbackTitle
     output.unshift(`# ${fallbackTitle}`, '')
   }
 
