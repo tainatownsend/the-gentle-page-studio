@@ -4,3 +4,9 @@ export type {
   GentlePageCompilationDiagnosticLevel,
   GentlePageCompilationResult,
 } from './compileGentlePageManuscript'
+
+export { convertDocxOoxmlToManuscript } from './convertDocxOoxmlToManuscript'
+export type {
+  DocxOoxmlConversionResult,
+  DocxOoxmlDiagnostic,
+} from './convertDocxOoxmlToManuscript'
