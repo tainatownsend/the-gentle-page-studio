@@ -42,14 +42,15 @@ describe('repeatable page layout', () => {
       },
     })
 
-    const pages = createPublicationLayout(publication).pages.filter((page) => page.kind === 'content')
+    const layout = createPublicationLayout(publication)
+    const pages = layout.pages.filter((page) => page.kind === 'content')
 
     expect(pages.map((page) => page.blocks.map((block) => block.id))).toEqual([
       ['intro'],
       ['heading', 'rating', 'response'],
       ['closing'],
     ])
-    expect(pages[1]?.diagnostics).toBeUndefined()
+    expect(layout.diagnostics).toEqual([])
   })
 
   it('does not report an intentionally spacious repeatable page as sparse', () => {
