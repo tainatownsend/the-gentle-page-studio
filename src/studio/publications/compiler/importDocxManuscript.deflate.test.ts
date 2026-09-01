@@ -1,3 +1,5 @@
+import { Blob as NodeBlob } from 'node:buffer'
+
 import { describe, expect, it } from 'vitest'
 
 import { importDocxManuscript } from './importDocxManuscript'
@@ -75,9 +77,22 @@ function createDeflatedDocx(): ArrayBuffer {
 
 describe('importDocxManuscript compressed DOCX support', () => {
   it('reads a standard deflate-compressed Word document entry', async () => {
-    const result = await importDocxManuscript(createDeflatedDocx(), 'compressed.docx')
+    const originalBlob = globalThis.Blob
+    Object.defineProperty(globalThis, 'Blob', {
+      configurable: true,
+      value: NodeBlob,
+    })
 
-    expect(result.manuscript).toContain('# Compressed Journal')
-    expect(result.manuscript).toContain('Visible content.')
+    try {
+      const result = await importDocxManuscript(createDeflatedDocx(), 'compressed.docx')
+
+      expect(result.manuscript).toContain('# Compressed Journal')
+      expect(result.manuscript).toContain('Visible content.')
+    } finally {
+      Object.defineProperty(globalThis, 'Blob', {
+        configurable: true,
+        value: originalBlob,
+      })
+    }
   })
 })
