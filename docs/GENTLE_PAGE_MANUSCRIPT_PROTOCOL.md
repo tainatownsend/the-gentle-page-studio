@@ -55,6 +55,48 @@ A level-three heading or question immediately before a response directive is tre
 [[GP:RESPONSE size="long"]]
 ```
 
+## Rating fields
+
+Use a rating directive when the reader should choose one value from a bounded numeric scale.
+
+```md
+### Energy right now
+
+[[GP:RATING min="0" max="10"]]
+```
+
+The preceding level-three heading or question becomes the rating prompt. The compiler renders the scale as a first-class publication component and, in fillable PDF output, as one radio group with stable options.
+
+Keep rating ranges compact. Invalid or reversed ranges are normalized safely rather than blocking compilation.
+
+## Structured worksheets and tables
+
+Use normal Markdown tables for matrices, trackers, worksheets, or other tabular content.
+
+```md
+| Area | Current capacity | What would make it easier? |
+| --- | --- | --- |
+| Physical | Low | More rest |
+| Mental | Medium | Fewer decisions |
+| Emotional | Low | More support |
+```
+
+Gentle Page Studio preserves the table as structured rows and columns. Do not convert worksheet tables into manually aligned spaces or plain-text columns.
+
+The compiler owns column sizing and page composition. The manuscript owns cell content and table structure.
+
+## Checkbox groups
+
+Use ordinary Markdown task-list syntax:
+
+```md
+- [ ] Reduce expectations
+- [ ] Ask for help
+- [ ] Protect a break
+```
+
+Consecutive checkbox options are treated as a semantic group for pagination. When the group fits on a fresh page, the layout engine avoids stranding only the final options on the next page.
+
 ## Page-break intent
 
 Preferred break:
@@ -93,7 +135,7 @@ Author notes are excluded from publication output.
 
 ## Forward-compatible directives
 
-The protocol is intentionally small in v1. Planned semantic directives include rating fields, repeatable pages, and other structured journal components.
+The protocol is intentionally small in v1. Repeatable-page semantics and additional structured journal components remain planned extensions.
 
 When the compiler encounters a directive it does not yet support, it must preserve the information or surface a non-blocking diagnostic rather than silently dropping manuscript content.
 
@@ -122,6 +164,7 @@ Do not design pages.
 Do not simulate visual layout.
 Do not add decorative spacing.
 Do not use underscore lines to represent writing areas.
+Do not manually align worksheet columns with spaces.
 Do not attempt to optimize final pagination.
 
 Gentle Page Studio will handle typography, spacing, fields, layout, pagination, visual composition, and PDF generation.
@@ -135,6 +178,7 @@ Use Markdown headings:
 
 Use normal Markdown paragraphs and lists.
 Use `- [ ] Option` for checkbox choices.
+Use Markdown tables for worksheets, trackers, matrices, and other genuinely tabular content.
 
 INTERACTIVE FIELDS
 
@@ -146,6 +190,10 @@ For a medium written response:
 
 For a long reflection:
 [[GP:RESPONSE size="long"]]
+
+For a numeric rating scale:
+### Energy right now
+[[GP:RATING min="0" max="10"]]
 
 PAGE INTENT
 
