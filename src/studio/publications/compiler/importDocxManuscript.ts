@@ -378,7 +378,7 @@ function renderPageBreak(intent: 'preferred' | 'forced'): string {
   return `[[GP:PAGE_BREAK type="${intent}"]]`
 }
 
-function isAuthorOnlyMarker(item: ParsedBodyItem): boolean {
+function isAuthorOnlyMarker(item: ParsedBodyItem): item is ParsedParagraph {
   return item.kind === 'paragraph' && AUTHOR_ONLY_MARKERS.has(item.text.trim().toUpperCase())
 }
 
