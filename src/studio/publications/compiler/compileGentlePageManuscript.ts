@@ -4,6 +4,7 @@ import type {
   PublicationHeadingLevel,
   PublicationPageBreakIntent,
   PublicationResponseSizeIntent,
+  PublicationSemanticGroup,
 } from '../types'
 
 export type GentlePageCompilationDiagnosticLevel = 'info' | 'suggestion'
@@ -30,6 +31,14 @@ function createBlockId(): string {
   return `block-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
+function createSemanticGroupId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return `group-${globalThis.crypto.randomUUID()}`
+  }
+
+  return `group-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 function normalizeResponseSize(value: string | undefined): PublicationResponseSizeIntent {
   switch (value?.toLowerCase()) {
     case 'short':
@@ -53,6 +62,14 @@ function parseNumericAttribute(line: string, name: string): number | undefined {
 
   const value = Number(match[1])
   return Number.isFinite(value) ? value : undefined
+}
+
+function parseTextAttribute(line: string, name: string): string | undefined {
+  const quotedMatch = line.match(new RegExp(`${name}\\s*=\\s*["']([^"']+)["']`, 'i'))
+  if (quotedMatch?.[1]?.trim()) return quotedMatch[1].trim()
+
+  const bareMatch = line.match(new RegExp(`${name}\\s*=\\s*([^\\]\s]+)`, 'i'))
+  return bareMatch?.[1]?.trim() || undefined
 }
 
 function withPendingLayout(
@@ -101,6 +118,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
   let authorNote = false
   let pendingPageBreak: PublicationPageBreakIntent | undefined
   let paragraphLines: string[] = []
+  let activeSemanticGroup: PublicationSemanticGroup | undefined
+  let activeSemanticGroupHasContent = false
 
   function consumePendingPageBreak(): PublicationPageBreakIntent | undefined {
     const value = pendingPageBreak
@@ -109,7 +128,19 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
   }
 
   function pushBlock(block: PublicationBlock) {
-    blocks.push(withPendingLayout(block, consumePendingPageBreak()))
+    const withLayout = withPendingLayout(block, consumePendingPageBreak())
+    const groupedBlock = activeSemanticGroup
+      ? {
+          ...withLayout,
+          semanticGroup: { ...activeSemanticGroup },
+        }
+      : withLayout
+
+    blocks.push(groupedBlock)
+
+    if (activeSemanticGroup) {
+      activeSemanticGroupHasContent = true
+    }
   }
 
   function flushParagraph() {
@@ -151,6 +182,54 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       continue
     }
 
+    const repeatableStartMatch = line.match(/^\[\[GP:REPEATABLE_PAGE(?:\s+[^\]]+)?\]\]$/i)
+    if (repeatableStartMatch) {
+      flushParagraph()
+
+      if (activeSemanticGroup) {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'nested-repeatable-page',
+          line: lineNumber,
+          message: 'A repeatable page started before the previous one ended. The previous group was closed automatically.',
+        })
+      }
+
+      activeSemanticGroup = {
+        id: createSemanticGroupId(),
+        kind: 'repeatable-page',
+        name: parseTextAttribute(line, 'name') ?? 'Repeatable page',
+      }
+      activeSemanticGroupHasContent = false
+      index += 1
+      continue
+    }
+
+    if (/^\[\[GP:END_REPEATABLE_PAGE\]\]$/i.test(line)) {
+      flushParagraph()
+
+      if (!activeSemanticGroup) {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'unmatched-repeatable-page-end',
+          line: lineNumber,
+          message: 'A repeatable-page end marker had no matching start marker and was ignored.',
+        })
+      } else if (!activeSemanticGroupHasContent) {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'empty-repeatable-page',
+          line: lineNumber,
+          message: `Repeatable page “${activeSemanticGroup.name}” contains no publication content.`,
+        })
+      }
+
+      activeSemanticGroup = undefined
+      activeSemanticGroupHasContent = false
+      index += 1
+      continue
+    }
+
     if (!line) {
       flushParagraph()
       index += 1
@@ -184,7 +263,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
       pendingPageBreak = undefined
 
-      blocks.push({
+      pushBlock({
         id: createBlockId(),
         type: 'multiline-text-field',
         text: prompt,
@@ -227,7 +306,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
       pendingPageBreak = undefined
 
-      blocks.push({
+      pushBlock({
         id: createBlockId(),
         type: 'rating-field',
         text: prompt,
@@ -352,6 +431,14 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       level: 'suggestion',
       code: 'unterminated-author-note',
       message: 'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.',
+    })
+  }
+
+  if (activeSemanticGroup) {
+    diagnostics.push({
+      level: 'suggestion',
+      code: 'unterminated-repeatable-page',
+      message: `Repeatable page “${activeSemanticGroup.name}” was not closed with [[GP:END_REPEATABLE_PAGE]]. Its content was preserved as one semantic group.`,
     })
   }
 
