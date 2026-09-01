@@ -4,3 +4,5 @@ export type {
   GentlePageCompilationDiagnosticLevel,
   GentlePageCompilationResult,
 } from './compileGentlePageManuscript'
+export { importDocxManuscript } from './importDocxManuscript'
+export type { DocxImportDiagnostic, DocxImportResult } from './importDocxManuscript'
