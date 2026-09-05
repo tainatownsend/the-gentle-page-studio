@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type ReactElement } from 'react'
-import { ArrowLeft, FileUp } from 'lucide-react'
+import { ArrowLeft, Copy, FileUp } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -12,7 +12,11 @@ import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
 
 import { PublicationCreateForm, type PublicationCreateValues } from '../../components'
-import { compileGentlePageManuscript, importDocxManuscript } from '../../compiler'
+import {
+  compileGentlePageManuscript,
+  GENTLE_PAGE_AI_AUTHORING_PROMPT,
+  importDocxManuscript,
+} from '../../compiler'
 import { PUBLICATION_TEMPLATES } from '../../templates'
 
 import styles from './PublicationCreatePage.module.css'
@@ -21,6 +25,8 @@ export type PublicationCreatePageProps = {
   onBack: () => void
   onCreate: (values: PublicationCreateValues) => void
 }
+
+type AiPromptCopyStatus = 'idle' | 'copied' | 'error'
 
 export function PublicationCreatePage({
   onBack,
@@ -32,6 +38,7 @@ export function PublicationCreatePage({
   const [isImportingDocx, setIsImportingDocx] = useState(false)
   const [importDiagnostics, setImportDiagnostics] = useState<string[]>([])
   const [showManualCreation, setShowManualCreation] = useState(false)
+  const [aiPromptCopyStatus, setAiPromptCopyStatus] = useState<AiPromptCopyStatus>('idle')
 
   function createFromManuscript(source: string) {
     const normalizedManuscript = source.trim()
@@ -61,6 +68,19 @@ export function PublicationCreatePage({
 
   function handleCompile() {
     createFromManuscript(manuscript)
+  }
+
+  async function handleCopyAiPrompt() {
+    try {
+      if (!globalThis.navigator?.clipboard?.writeText) {
+        throw new Error('Clipboard API unavailable')
+      }
+
+      await globalThis.navigator.clipboard.writeText(GENTLE_PAGE_AI_AUTHORING_PROMPT)
+      setAiPromptCopyStatus('copied')
+    } catch {
+      setAiPromptCopyStatus('error')
+    }
   }
 
   async function handleDocxUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -127,6 +147,39 @@ export function PublicationCreatePage({
                   Word document. The compiler handles the publication structure and layout.
                 </Text>
               </Stack>
+
+              <div className={styles.aiPromptHandoff}>
+                <Stack gap="xs">
+                  <Text weight="semibold">Generating the journal with AI first?</Text>
+                  <Text tone="secondary">
+                    Copy the Gentle Page authoring instructions into ChatGPT, Gemini, Claude, or any
+                    other AI so it returns a manuscript the compiler can interpret with minimal guesswork.
+                  </Text>
+                </Stack>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  startIcon={<Copy size={18} />}
+                  onClick={() => void handleCopyAiPrompt()}
+                >
+                  {aiPromptCopyStatus === 'copied' ? 'AI prompt copied' : 'Copy AI authoring prompt'}
+                </Button>
+
+                {aiPromptCopyStatus === 'copied' ? (
+                  <Text tone="secondary" role="status">
+                    Paste it into your AI conversation, ask for the journal you want, then bring the
+                    generated manuscript back here.
+                  </Text>
+                ) : null}
+
+                {aiPromptCopyStatus === 'error' ? (
+                  <Text tone="secondary" role="alert">
+                    The browser could not copy the prompt. The DOCX and pasted-manuscript paths remain
+                    available.
+                  </Text>
+                ) : null}
+              </div>
 
               <div className={styles.inputChoices}>
                 <label className={styles.docxUpload} aria-busy={isImportingDocx}>
