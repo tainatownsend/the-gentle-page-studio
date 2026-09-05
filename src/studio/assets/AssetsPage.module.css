@@ -1,0 +1,61 @@
+.page {
+  min-height: 100vh;
+  padding-block: var(--space-xl, 32px);
+  color: var(--color-text-primary, #1f2522);
+  background: var(--color-surface-secondary, #f6f8f7);
+}
+
+.uploadControl {
+  display: inline-flex;
+  gap: var(--space-xs, 8px);
+  align-items: center;
+  width: fit-content;
+  padding: 10px 14px;
+  font-weight: 600;
+  border: 1px solid var(--color-border-subtle, #d9dfdc);
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  background: var(--color-surface-primary, #fff);
+}
+
+.uploadControl input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.errorText {
+  color: var(--color-feedback-danger, #9b2c2c);
+}
+
+.emptyState {
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-md, 16px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface-secondary, #f6f8f7);
+}
+
+@media (min-width: 48rem) {
+  .page {
+    padding-block: var(--space-2xl, 48px);
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,11 +1,15 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { vi } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, vi } from 'vitest'
 
 import { createPublicationFixture } from '../../testing'
 import { PublicationPreviewPage } from './PublicationPreviewPage'
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe('PublicationPreviewPage', () => {
-  it('renders publication metadata and content blocks', () => {
+  it('renders a fixed Gentle Page cover followed by numbered publication content', () => {
     const publication = createPublicationFixture({
       title: 'Gentle Focus Journal',
       description: 'A supportive focus practice.',
@@ -41,25 +45,130 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
+    const cover = document.querySelector('[aria-label="Publication cover"]')
+    const contentPage = document.querySelector(
+      '[aria-label="Publication content page 1"]',
+    )
+
+    expect(cover).not.toBeNull()
+    expect(contentPage).not.toBeNull()
+    expect(cover).toHaveAttribute('data-page-kind', 'cover')
+    expect(cover).toHaveAttribute('data-page-size', 'us-letter')
+    expect(cover).toHaveAttribute('data-orientation', 'portrait')
+    expect(contentPage).toHaveAttribute('data-page-kind', 'content')
+
     expect(document.getElementById('publication-preview-title')).toHaveTextContent(
       'Gentle Focus Journal',
     )
+    expect(within(cover as HTMLElement).getByText('A supportive focus practice.')).toBeInTheDocument()
+    expect(
+      within(cover as HTMLElement).getByText(
+        'Thoughtfully designed tools for everyday clarity.',
+      ),
+    ).toBeInTheDocument()
 
     expect(screen.getByText('Published preview')).toBeInTheDocument()
+    expect(screen.getByText('Ready to export')).toBeInTheDocument()
+    expect(screen.getByText('1 content page')).toBeInTheDocument()
 
     expect(
-      screen.getByText('Pause and notice', {
+      within(contentPage as HTMLElement).getByText('Pause and notice', {
         selector: 'h2',
       }),
     ).toBeInTheDocument()
 
-    expect(screen.getByText('What feels most present right now?')).toBeInTheDocument()
+    expect(
+      within(contentPage as HTMLElement).getByText('What feels most present right now?'),
+    ).toBeInTheDocument()
 
     expect(
-      screen.getByText('Choose one next step', {
+      within(contentPage as HTMLElement).getByText('Choose one next step', {
         selector: 'h3',
       }),
     ).toBeInTheDocument()
+
+    expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
+    expect(document.querySelectorAll('article')).toHaveLength(2)
+  })
+
+  it('renders automatically derived content pages in sequence', () => {
+    const blocks = Array.from({ length: 5 }, (_, index) => ({
+      id: `paragraph-${index + 1}`,
+      type: 'paragraph' as const,
+      text: `${index + 1}-${'a'.repeat(198)}`,
+    }))
+
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          content: {
+            blocks,
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    const firstContentPage = document.querySelector(
+      '[aria-label="Publication content page 1"]',
+    )
+    const secondContentPage = document.querySelector(
+      '[aria-label="Publication content page 2"]',
+    )
+
+    expect(firstContentPage).not.toBeNull()
+    expect(secondContentPage).not.toBeNull()
+    expect(
+      within(firstContentPage as HTMLElement).getByText(blocks[0].text),
+    ).toBeInTheDocument()
+    expect(
+      within(firstContentPage as HTMLElement).getByText(blocks[3].text),
+    ).toBeInTheDocument()
+    expect(
+      within(secondContentPage as HTMLElement).getByText(blocks[4].text),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
+    expect(screen.getByLabelText('Page 2')).toHaveTextContent('2')
+  })
+
+  it('routes focused layout suggestions to the affected semantic item', () => {
+    const onEdit = vi.fn()
+
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'oversized-paragraph',
+                type: 'paragraph',
+                text: 'a'.repeat(3000),
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={onEdit}
+      />,
+    )
+
+    expect(screen.getByText('Review suggested')).toBeInTheDocument()
+    expect(
+      screen.getByText('A content block is taller than one page and may require manual review.'),
+    ).toBeInTheDocument()
+
+    const pageLink = screen.getByRole('link', { name: 'View page 1' })
+    expect(pageLink).toHaveAttribute('href', '#publication-page-1')
+    expect(document.getElementById('publication-page-1')).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Adjust this item' }))
+    expect(onEdit).toHaveBeenLastCalledWith('oversized-paragraph')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review all adjustments' }))
+    expect(onEdit).toHaveBeenLastCalledWith()
+
+    expect(screen.getByRole('button', { name: 'Print / Save as PDF' })).toBeEnabled()
   })
 
   it('renders long unbroken content without changing its text', () => {
@@ -86,7 +195,7 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getByText(longText)).toBeInTheDocument()
   })
 
-  it('renders a focused empty state', () => {
+  it('renders a focused empty state on the content page', () => {
     render(
       <PublicationPreviewPage
         publication={createPublicationFixture()}
@@ -95,10 +204,35 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
+    expect(screen.getByLabelText('Print-oriented publication preview')).toBeInTheDocument()
     expect(screen.getByText('Nothing to preview yet')).toBeInTheDocument()
+    expect(document.querySelector('[aria-label="Publication cover"]')).not.toBeNull()
+    expect(
+      document.querySelector('[aria-label="Publication content page 1"]'),
+    ).not.toBeNull()
   })
 
-  it('connects navigation actions', () => {
+  it('opens the browser print dialog for print and PDF export', () => {
+    const print = vi.spyOn(globalThis, 'print').mockImplementation(() => undefined)
+
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture()}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Print / Save as PDF',
+      }),
+    )
+
+    expect(print).toHaveBeenCalledTimes(1)
+  })
+
+  it('connects navigation actions without inventing a focused block', () => {
     const onBack = vi.fn()
     const onEdit = vi.fn()
 
@@ -118,11 +252,11 @@ describe('PublicationPreviewPage', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Edit publication',
+        name: 'Adjust publication',
       }),
     )
 
     expect(onBack).toHaveBeenCalledTimes(1)
-    expect(onEdit).toHaveBeenCalledTimes(1)
+    expect(onEdit).toHaveBeenCalledWith()
   })
 })

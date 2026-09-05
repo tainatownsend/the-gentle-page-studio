@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
-import { BookOpen, Plus } from 'lucide-react'
+import { BookOpen, Images, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -16,6 +16,7 @@ import styles from './PublicationsPage.module.css'
 export type PublicationsPageProps = {
   publications: readonly Publication[]
   onCreate?: () => void
+  onAssets?: () => void
   onOpen?: (id: string) => void
   onPreview?: (id: string) => void
   onDuplicate?: (id: string) => void
@@ -89,6 +90,7 @@ function DeleteConfirmation({
 export function PublicationsPage({
   publications,
   onCreate,
+  onAssets,
   onOpen,
   onPreview,
   onDuplicate,
@@ -119,10 +121,19 @@ export function PublicationsPage({
               title="Publications"
               description="Create, organize, and prepare thoughtful digital products for release."
               actions={
-                onCreate && hasPublications ? (
-                  <Button startIcon={<Plus size={18} />} onClick={onCreate}>
-                    Create publication
-                  </Button>
+                onAssets || (onCreate && hasPublications) ? (
+                  <div className={styles.headerActions}>
+                    {onAssets ? (
+                      <Button variant="secondary" startIcon={<Images size={18} />} onClick={onAssets}>
+                        Asset library
+                      </Button>
+                    ) : null}
+                    {onCreate && hasPublications ? (
+                      <Button startIcon={<Plus size={18} />} onClick={onCreate}>
+                        Create publication
+                      </Button>
+                    ) : null}
+                  </div>
                 ) : null
               }
             />
