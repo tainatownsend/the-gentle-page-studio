@@ -5,8 +5,7 @@
   background: var(--color-surface-secondary, #f6f8f7);
 }
 
-.exportError,
-.layoutNotice {
+.exportError {
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm, 12px);
@@ -17,14 +16,98 @@
   border-radius: var(--radius-md, 12px);
 }
 
-.exportError p,
-.layoutNotice p {
+.exportError p {
   margin: 0;
 }
 
-.noticeTitle {
-  margin-bottom: var(--space-xs, 8px) !important;
+.readinessReady,
+.readinessReview {
+  display: grid;
+  gap: var(--space-md, 16px);
+  padding: var(--space-lg, 24px);
+  color: var(--color-text-primary, #1f2522);
+  background: var(--color-surface-primary, #ffffff);
+  border: 1px solid var(--color-border-primary, #d5ddd9);
+  border-radius: var(--radius-md, 12px);
+}
+
+.readinessReview {
+  border-color: var(--color-border-strong, #7a8b82);
+}
+
+.readinessHeader {
+  display: flex;
+  gap: var(--space-sm, 12px);
+  align-items: flex-start;
+}
+
+.readinessTitle,
+.readinessSummary,
+.readinessDescription,
+.diagnosticLabel,
+.diagnosticItem p {
+  margin: 0;
+}
+
+.readinessTitle {
   font-weight: 600;
+}
+
+.readinessSummary,
+.readinessDescription {
+  color: var(--color-text-secondary, #626d67);
+}
+
+.readinessSummary {
+  margin-top: 2px;
+  font-size: 0.875rem;
+}
+
+.reviewDetails {
+  display: grid;
+  gap: var(--space-md, 16px);
+}
+
+.reviewDetails > button {
+  justify-self: start;
+}
+
+.diagnosticList {
+  display: grid;
+  gap: var(--space-sm, 12px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.diagnosticItem {
+  display: grid;
+  gap: var(--space-sm, 12px);
+  padding: var(--space-md, 16px);
+  border: 1px solid var(--color-border-subtle, #d9dfdc);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.diagnosticLabel {
+  margin-bottom: 4px !important;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #626d67);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pageLink {
+  width: fit-content;
+  color: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+.pageLink:hover,
+.pageLink:focus-visible {
+  text-decoration-thickness: 2px;
 }
 
 .previewViewport {
@@ -47,6 +130,7 @@
   background: var(--publication-paper);
   border: 1px solid var(--publication-rule);
   box-shadow: var(--shadow-md, 0 10px 30px rgb(20 35 28 / 12%));
+  scroll-margin-top: var(--space-xl, 32px);
 }
 
 .coverBody {
@@ -294,6 +378,11 @@
 @media (min-width: 48rem) {
   .page {
     padding-block: var(--space-2xl, 48px);
+  }
+
+  .diagnosticItem {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 }
 
