@@ -1,5 +1,12 @@
-import type { ReactElement } from 'react'
-import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, type ReactElement } from 'react'
+import {
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 
 import { AssetsPage } from '@/studio/assets'
 import {
@@ -25,8 +32,35 @@ type PublicationEditorRouteProps = {
 
 function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): ReactElement {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { publicationId } = useParams()
   const publication = workspace.getPublication(publicationId)
+  const focusBlockId = searchParams.get('focus') ?? undefined
+  const focusBlockIndex = focusBlockId
+    ? (publication?.content.blocks.findIndex((block) => block.id === focusBlockId) ?? -1)
+    : -1
+
+  useEffect(() => {
+    if (focusBlockIndex < 0) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const blockList = document.querySelector('[aria-label="Publication content blocks"]')
+      const blockItem = blockList?.children.item(focusBlockIndex) as HTMLElement | null
+
+      if (!blockItem) {
+        return
+      }
+
+      blockItem.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+
+      const firstControl = blockItem.querySelector<HTMLElement>('textarea, input, select, button')
+      firstControl?.focus()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [focusBlockIndex])
 
   if (!publication || !publicationId) {
     return <Navigate to="/publications" replace />
@@ -77,7 +111,13 @@ function PublicationPreviewRoute({ workspace }: PublicationPreviewRouteProps): R
     <PublicationPreviewPage
       publication={publication}
       onBack={() => navigate('/publications')}
-      onEdit={() => navigate(`/publications/${encodedPublicationId}/edit`)}
+      onEdit={(blockId) =>
+        navigate(
+          `/publications/${encodedPublicationId}/edit${
+            blockId ? `?focus=${encodeURIComponent(blockId)}` : ''
+          }`,
+        )
+      }
       onHistory={() => navigate(`/publications/${encodedPublicationId}/history`)}
     />
   )

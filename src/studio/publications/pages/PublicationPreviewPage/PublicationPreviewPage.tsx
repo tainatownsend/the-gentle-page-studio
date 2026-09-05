@@ -25,7 +25,7 @@ import styles from './PublicationPreviewPage.module.css'
 export type PublicationPreviewPageProps = {
   publication: Publication
   onBack: () => void
-  onEdit: () => void
+  onEdit: (blockId?: string) => void
   onHistory?: () => void
 }
 
@@ -205,7 +205,11 @@ export function PublicationPreviewPage({
                       Back to publications
                     </Button>
 
-                    <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
+                    <Button
+                      variant="secondary"
+                      startIcon={<Pencil size={18} />}
+                      onClick={() => onEdit()}
+                    >
                       Adjust publication
                     </Button>
 
@@ -279,34 +283,59 @@ export function PublicationPreviewPage({
                     </p>
 
                     <ol className={styles.diagnosticList} aria-label="Layout review suggestions">
-                      {layout.diagnostics.map((diagnostic, index) => (
-                        <li
-                          key={`${diagnostic.code}-${diagnostic.pageNumber ?? 'document'}-${diagnostic.blockId ?? diagnostic.semanticGroupId ?? index}`}
-                          className={styles.diagnosticItem}
-                        >
-                          <div>
-                            <p className={styles.diagnosticLabel}>
-                              {diagnostic.pageNumber !== undefined
-                                ? `Page ${diagnostic.pageNumber}`
-                                : 'Publication'}
-                            </p>
-                            <p>{diagnostic.message}</p>
-                          </div>
+                      {layout.diagnostics.map((diagnostic, index) => {
+                        const page = layout.pages.find(
+                          (candidate) => candidate.pageNumber === diagnostic.pageNumber,
+                        )
+                        const groupedBlockId = diagnostic.semanticGroupId
+                          ? publication.content.blocks.find(
+                              (block) => block.semanticGroup?.id === diagnostic.semanticGroupId,
+                            )?.id
+                          : undefined
+                        const reviewBlockId =
+                          diagnostic.blockId ?? groupedBlockId ?? page?.blocks[0]?.id
 
-                          {diagnostic.pageNumber !== undefined ? (
-                            <a
-                              className={styles.pageLink}
-                              href={`#publication-page-${diagnostic.pageNumber}`}
-                            >
-                              View page {diagnostic.pageNumber}
-                            </a>
-                          ) : null}
-                        </li>
-                      ))}
+                        return (
+                          <li
+                            key={`${diagnostic.code}-${diagnostic.pageNumber ?? 'document'}-${diagnostic.blockId ?? diagnostic.semanticGroupId ?? index}`}
+                            className={styles.diagnosticItem}
+                          >
+                            <div>
+                              <p className={styles.diagnosticLabel}>
+                                {diagnostic.pageNumber !== undefined
+                                  ? `Page ${diagnostic.pageNumber}`
+                                  : 'Publication'}
+                              </p>
+                              <p>{diagnostic.message}</p>
+                            </div>
+
+                            <div className={styles.diagnosticActions}>
+                              {diagnostic.pageNumber !== undefined ? (
+                                <a
+                                  className={styles.pageLink}
+                                  href={`#publication-page-${diagnostic.pageNumber}`}
+                                >
+                                  View page {diagnostic.pageNumber}
+                                </a>
+                              ) : null}
+
+                              {reviewBlockId ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  onClick={() => onEdit(reviewBlockId)}
+                                >
+                                  Adjust this item
+                                </Button>
+                              ) : null}
+                            </div>
+                          </li>
+                        )
+                      })}
                     </ol>
 
-                    <Button type="button" variant="secondary" onClick={onEdit}>
-                      Review adjustments
+                    <Button type="button" variant="secondary" onClick={() => onEdit()}>
+                      Review all adjustments
                     </Button>
                   </div>
                 )}

@@ -132,7 +132,7 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getByLabelText('Page 2')).toHaveTextContent('2')
   })
 
-  it('shows focused layout suggestions without turning preview into a blocking wizard', () => {
+  it('routes focused layout suggestions to the affected semantic item', () => {
     const onEdit = vi.fn()
 
     render(
@@ -162,8 +162,11 @@ describe('PublicationPreviewPage', () => {
     expect(pageLink).toHaveAttribute('href', '#publication-page-1')
     expect(document.getElementById('publication-page-1')).not.toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Review adjustments' }))
-    expect(onEdit).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Adjust this item' }))
+    expect(onEdit).toHaveBeenLastCalledWith('oversized-paragraph')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review all adjustments' }))
+    expect(onEdit).toHaveBeenLastCalledWith()
 
     expect(screen.getByRole('button', { name: 'Print / Save as PDF' })).toBeEnabled()
   })
@@ -229,7 +232,7 @@ describe('PublicationPreviewPage', () => {
     expect(print).toHaveBeenCalledTimes(1)
   })
 
-  it('connects navigation actions', () => {
+  it('connects navigation actions without inventing a focused block', () => {
     const onBack = vi.fn()
     const onEdit = vi.fn()
 
@@ -254,6 +257,6 @@ describe('PublicationPreviewPage', () => {
     )
 
     expect(onBack).toHaveBeenCalledTimes(1)
-    expect(onEdit).toHaveBeenCalledTimes(1)
+    expect(onEdit).toHaveBeenCalledWith()
   })
 })
