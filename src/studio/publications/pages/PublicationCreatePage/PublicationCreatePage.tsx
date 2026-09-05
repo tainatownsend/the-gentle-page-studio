@@ -80,10 +80,15 @@ export function PublicationCreatePage({
 
     try {
       const imported = await importDocxManuscript(await file.arrayBuffer(), file.name)
+      const diagnosticMessages = imported.diagnostics.map((diagnostic) => diagnostic.message)
+
       setManuscript(imported.manuscript)
-      setImportDiagnostics(imported.diagnostics.map((diagnostic) => diagnostic.message))
-      if (imported.diagnostics.length === 0) {
-        createFromManuscript(imported.manuscript)
+
+      // DOCX diagnostics are advisory. A readable manuscript should always continue through
+      // the compiler so that users land in Preview without an unnecessary review gate.
+      // Only surface the diagnostics if the compiled manuscript itself cannot be created.
+      if (!createFromManuscript(imported.manuscript)) {
+        setImportDiagnostics(diagnosticMessages)
       }
     } catch (error) {
       setManuscriptError(
@@ -171,10 +176,10 @@ export function PublicationCreatePage({
 
               {importDiagnostics.length > 0 ? (
                 <div className={styles.importReview} role="status">
-                  <Text weight="semibold">Import Review</Text>
+                  <Text weight="semibold">Import details</Text>
                   <Text tone="secondary">
-                    Gentle Page handled the clear structures automatically. Review only these ambiguous
-                    items, adjust the manuscript if needed, then compile.
+                    Gentle Page could not finish this manuscript automatically. These notes may help
+                    identify the content that needs attention before compiling again.
                   </Text>
                   <ul>
                     {importDiagnostics.map((message) => (
@@ -188,7 +193,8 @@ export function PublicationCreatePage({
                 <Text weight="semibold">Zero-touch by default</Text>
                 <Text tone="secondary">
                   Word headings, page-break hints, checkboxes, writing lines, paragraphs, and tables
-                  are interpreted locally in your browser. Manual editing remains an exception path.
+                  are interpreted locally in your browser. Advisory import notes never interrupt a
+                  valid compilation; manual editing remains an exception path.
                 </Text>
               </div>
 
