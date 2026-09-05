@@ -45,7 +45,7 @@ function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): Rea
       return
     }
 
-    const animationFrame = globalThis.requestAnimationFrame(() => {
+    const timeoutId = window.setTimeout(() => {
       const blockList = document.querySelector('[aria-label="Publication content blocks"]')
       const blockItem = blockList?.children.item(focusBlockIndex) as HTMLElement | null
 
@@ -57,9 +57,9 @@ function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): Rea
 
       const firstControl = blockItem.querySelector<HTMLElement>('textarea, input, select, button')
       firstControl?.focus()
-    })
+    }, 0)
 
-    return () => globalThis.cancelAnimationFrame(animationFrame)
+    return () => window.clearTimeout(timeoutId)
   }, [focusBlockIndex])
 
   if (!publication || !publicationId) {
