@@ -30,7 +30,7 @@ describe('PublicationPreviewPage smart layout', () => {
     expect(Number(field.getAttribute('data-allocated-units'))).toBeGreaterThan(0)
   })
 
-  it('surfaces a non-blocking layout review notice for unresolved geometry', () => {
+  it('surfaces non-blocking focused review for unresolved geometry', () => {
     render(
       <PublicationPreviewPage
         publication={createPublicationFixture({
@@ -49,7 +49,13 @@ describe('PublicationPreviewPage smart layout', () => {
       />,
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('Layout review suggested')
+    const readiness = document.querySelector('[data-layout-health="needs-attention"]')
+
+    expect(readiness).not.toBeNull()
+    expect(readiness).toHaveTextContent('Review suggested')
+    expect(readiness).toHaveTextContent(
+      'A content block is taller than one page and may require manual review.',
+    )
     expect(screen.getByRole('button', { name: 'Print / Save as PDF' })).toBeEnabled()
   })
 })
