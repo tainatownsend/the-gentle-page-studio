@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
-import { importDocxManuscript } from '../../compiler'
+import { GENTLE_PAGE_AI_AUTHORING_PROMPT, importDocxManuscript } from '../../compiler'
 import { PublicationCreatePage } from './PublicationCreatePage'
 
 vi.mock('../../compiler', async () => {
@@ -17,6 +17,10 @@ const mockedImportDocxManuscript = vi.mocked(importDocxManuscript)
 
 afterEach(() => {
   mockedImportDocxManuscript.mockReset()
+  Object.defineProperty(globalThis.navigator, 'clipboard', {
+    configurable: true,
+    value: undefined,
+  })
 })
 
 describe('PublicationCreatePage', () => {
@@ -32,7 +36,29 @@ describe('PublicationCreatePage', () => {
 
     expect(screen.getByRole('textbox', { name: /manuscript/i })).toHaveFocus()
     expect(screen.getByRole('button', { name: 'Compile publication' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copy AI authoring prompt' })).toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: /title/i })).not.toBeInTheDocument()
+  })
+
+  it('copies the official AI authoring prompt for use in any writing assistant', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+
+    render(<PublicationCreatePage onBack={() => undefined} onCreate={() => undefined} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy AI authoring prompt' }))
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(GENTLE_PAGE_AI_AUTHORING_PROMPT)
+      expect(screen.getByRole('button', { name: 'AI prompt copied' })).toBeInTheDocument()
+    })
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Paste it into your AI conversation, ask for the journal you want',
+    )
   })
 
   it('requires manuscript content before compiling', () => {
