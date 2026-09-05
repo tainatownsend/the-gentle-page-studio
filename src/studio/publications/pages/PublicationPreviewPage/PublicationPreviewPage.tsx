@@ -1,5 +1,13 @@
 import { useState, type CSSProperties, type ReactElement } from 'react'
-import { AlertCircle, ArrowLeft, Download, History, Pencil, Printer } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  History,
+  Pencil,
+  Printer,
+} from 'lucide-react'
 
 import { PageHeader } from '@/design-system/layouts/PageHeader'
 import { Button } from '@/design-system/primitives/Button'
@@ -146,12 +154,15 @@ export function PublicationPreviewPage({
   const [isDownloadingFillablePdf, setIsDownloadingFillablePdf] = useState(false)
   const [fillablePdfError, setFillablePdfError] = useState<string>()
   const layout = createPublicationLayout(publication)
-  const hasInteractiveFields = publication.content.blocks.some(
+  const contentPageCount = layout.pages.filter((page) => page.kind === 'content').length
+  const interactiveFieldCount = publication.content.blocks.filter(
     (block) =>
       block.type === 'multiline-text-field' ||
       block.type === 'checkbox-field' ||
       block.type === 'rating-field',
-  )
+  ).length
+  const hasInteractiveFields = interactiveFieldCount > 0
+  const isReadyToExport = layout.health === 'healthy'
 
   function handlePrint() {
     globalThis.print()
@@ -195,7 +206,7 @@ export function PublicationPreviewPage({
                     </Button>
 
                     <Button variant="secondary" startIcon={<Pencil size={18} />} onClick={onEdit}>
-                      Edit publication
+                      Adjust publication
                     </Button>
 
                     {onHistory ? (
@@ -228,19 +239,78 @@ export function PublicationPreviewPage({
                 }
               />
 
-              {layout.health === 'needs-attention' ? (
-                <div className={styles.layoutNotice} role="status">
-                  <AlertCircle size={18} aria-hidden="true" />
+              <section
+                className={isReadyToExport ? styles.readinessReady : styles.readinessReview}
+                aria-labelledby="publication-readiness-title"
+                data-layout-health={layout.health}
+              >
+                <div className={styles.readinessHeader}>
+                  {isReadyToExport ? (
+                    <CheckCircle2 size={20} aria-hidden="true" />
+                  ) : (
+                    <AlertCircle size={20} aria-hidden="true" />
+                  )}
+
                   <div>
-                    <p className={styles.noticeTitle}>Layout review suggested</p>
-                    <p>
-                      Automatic pagination resolved most geometry, but {layout.diagnostics.length}{' '}
-                      {layout.diagnostics.length === 1 ? 'item still needs' : 'items still need'} a quick
-                      review.
+                    <p id="publication-readiness-title" className={styles.readinessTitle}>
+                      {isReadyToExport ? 'Ready to export' : 'Review suggested'}
+                    </p>
+                    <p className={styles.readinessSummary}>
+                      {contentPageCount} {contentPageCount === 1 ? 'content page' : 'content pages'}
+                      {interactiveFieldCount > 0
+                        ? ` · ${interactiveFieldCount} interactive ${
+                            interactiveFieldCount === 1 ? 'field' : 'fields'
+                          }`
+                        : ''}
                     </p>
                   </div>
                 </div>
-              ) : null}
+
+                {isReadyToExport ? (
+                  <p className={styles.readinessDescription}>
+                    Automatic layout checks found no composition issues that need attention. You can
+                    export now or adjust the publication only if you prefer a different editorial choice.
+                  </p>
+                ) : (
+                  <div className={styles.reviewDetails}>
+                    <p className={styles.readinessDescription}>
+                      The publication remains exportable. These are focused layout suggestions, not a
+                      required page-by-page review.
+                    </p>
+
+                    <ol className={styles.diagnosticList} aria-label="Layout review suggestions">
+                      {layout.diagnostics.map((diagnostic, index) => (
+                        <li
+                          key={`${diagnostic.code}-${diagnostic.pageNumber ?? 'document'}-${diagnostic.blockId ?? diagnostic.semanticGroupId ?? index}`}
+                          className={styles.diagnosticItem}
+                        >
+                          <div>
+                            <p className={styles.diagnosticLabel}>
+                              {diagnostic.pageNumber !== undefined
+                                ? `Page ${diagnostic.pageNumber}`
+                                : 'Publication'}
+                            </p>
+                            <p>{diagnostic.message}</p>
+                          </div>
+
+                          {diagnostic.pageNumber !== undefined ? (
+                            <a
+                              className={styles.pageLink}
+                              href={`#publication-page-${diagnostic.pageNumber}`}
+                            >
+                              View page {diagnostic.pageNumber}
+                            </a>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+
+                    <Button type="button" variant="secondary" onClick={onEdit}>
+                      Review adjustments
+                    </Button>
+                  </div>
+                )}
+              </section>
 
               {fillablePdfError ? (
                 <div className={styles.exportError} role="alert">
@@ -259,6 +329,11 @@ export function PublicationPreviewPage({
               return (
                 <article
                   key={layoutPage.id}
+                  id={
+                    layoutPage.pageNumber !== undefined
+                      ? `publication-page-${layoutPage.pageNumber}`
+                      : undefined
+                  }
                   className={`${styles.documentPage} ${documentTheme.theme}`}
                   aria-label={
                     isCover
