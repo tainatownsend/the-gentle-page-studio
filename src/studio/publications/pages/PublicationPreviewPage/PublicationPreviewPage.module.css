@@ -97,6 +97,13 @@
   letter-spacing: 0.04em;
 }
 
+.diagnosticActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs, 8px);
+  align-items: center;
+}
+
 .pageLink {
   width: fit-content;
   color: inherit;
@@ -383,6 +390,10 @@
   .diagnosticItem {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .diagnosticActions {
+    justify-content: flex-end;
   }
 }
 
