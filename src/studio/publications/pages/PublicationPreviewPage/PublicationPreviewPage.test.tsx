@@ -68,6 +68,8 @@ describe('PublicationPreviewPage', () => {
     ).toBeInTheDocument()
 
     expect(screen.getByText('Published preview')).toBeInTheDocument()
+    expect(screen.getByText('Ready to export')).toBeInTheDocument()
+    expect(screen.getByText('1 content page')).toBeInTheDocument()
 
     expect(
       within(contentPage as HTMLElement).getByText('Pause and notice', {
@@ -128,6 +130,42 @@ describe('PublicationPreviewPage', () => {
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Page 1')).toHaveTextContent('1')
     expect(screen.getByLabelText('Page 2')).toHaveTextContent('2')
+  })
+
+  it('shows focused layout suggestions without turning preview into a blocking wizard', () => {
+    const onEdit = vi.fn()
+
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'oversized-paragraph',
+                type: 'paragraph',
+                text: 'a'.repeat(3000),
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={onEdit}
+      />,
+    )
+
+    expect(screen.getByText('Review suggested')).toBeInTheDocument()
+    expect(
+      screen.getByText('A content block is taller than one page and may require manual review.'),
+    ).toBeInTheDocument()
+
+    const pageLink = screen.getByRole('link', { name: 'View page 1' })
+    expect(pageLink).toHaveAttribute('href', '#publication-page-1')
+    expect(document.getElementById('publication-page-1')).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review adjustments' }))
+    expect(onEdit).toHaveBeenCalledTimes(1)
+
+    expect(screen.getByRole('button', { name: 'Print / Save as PDF' })).toBeEnabled()
   })
 
   it('renders long unbroken content without changing its text', () => {
@@ -211,7 +249,7 @@ describe('PublicationPreviewPage', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Edit publication',
+        name: 'Adjust publication',
       }),
     )
 
