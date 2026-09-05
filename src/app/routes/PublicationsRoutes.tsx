@@ -1,5 +1,12 @@
 import type { ReactElement } from 'react'
-import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
+import {
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 
 import { AssetsPage } from '@/studio/assets'
 import {
@@ -25,6 +32,7 @@ type PublicationEditorRouteProps = {
 
 function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): ReactElement {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { publicationId } = useParams()
   const publication = workspace.getPublication(publicationId)
 
@@ -35,6 +43,7 @@ function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): Rea
   const resolvedPublicationId = publicationId
   const baseUpdatedAt = publication.updatedAt
   const recoveredDraft = loadPublicationDraftRecovery(resolvedPublicationId, baseUpdatedAt)
+  const initialFocusBlockId = searchParams.get('focus') ?? undefined
 
   function handleSave(values: PublicationEditorValues) {
     workspace.updatePublication(resolvedPublicationId, values)
@@ -50,6 +59,7 @@ function PublicationEditorRoute({ workspace }: PublicationEditorRouteProps): Rea
     <PublicationEditorPage
       publication={publication}
       recoveredDraft={recoveredDraft}
+      initialFocusBlockId={initialFocusBlockId}
       onBack={() => navigate('/publications')}
       onSave={handleSave}
       onDraftAutosave={handleDraftAutosave}
@@ -77,7 +87,13 @@ function PublicationPreviewRoute({ workspace }: PublicationPreviewRouteProps): R
     <PublicationPreviewPage
       publication={publication}
       onBack={() => navigate('/publications')}
-      onEdit={() => navigate(`/publications/${encodedPublicationId}/edit`)}
+      onEdit={(blockId) =>
+        navigate(
+          `/publications/${encodedPublicationId}/edit${
+            blockId ? `?focus=${encodeURIComponent(blockId)}` : ''
+          }`,
+        )
+      }
       onHistory={() => navigate(`/publications/${encodedPublicationId}/history`)}
     />
   )
