@@ -1,6 +1,7 @@
-import { PDFDocument, PDFRadioGroup } from 'pdf-lib'
+import { PDFCheckBox, PDFDocument, PDFRadioGroup, PDFTextField } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 
+import { compilePublicationManuscript } from '../compiler'
 import { createPublicationFixture } from '../testing'
 import { generateFillablePublicationPdf } from './generateFillablePublicationPdf'
 
@@ -56,5 +57,39 @@ describe('structured fillable publication PDF', () => {
 
     expect(document.getPages()).toHaveLength(2)
     expect(document.getForm().getFields()).toEqual([])
+  })
+
+  it('turns response and checkbox directives inside tables into real fillable controls', async () => {
+    const compiled = compilePublicationManuscript(`# Brain-Friendly Planner
+
+## Life Dashboard
+
+| Area | How is this going? | Needs attention soon? |
+| --- | --- | --- |
+| Work | [[GP:RESPONSE size="short"]] | - [ ] |`)
+    const table = compiled.content.blocks.find((block) => block.type === 'table')
+    expect(table?.type).toBe('table')
+    if (table?.type !== 'table') return
+
+    const bytes = await generateFillablePublicationPdf(
+      createPublicationFixture({
+        id: 'brain-friendly-planner',
+        title: compiled.title,
+        content: compiled.content,
+      }),
+    )
+    const document = await PDFDocument.load(bytes)
+    const fields = document.getForm().getFields()
+    const textField = fields.find((field) => field instanceof PDFTextField)
+    const checkbox = fields.find((field) => field instanceof PDFCheckBox)
+
+    expect(textField).toBeInstanceOf(PDFTextField)
+    expect(checkbox).toBeInstanceOf(PDFCheckBox)
+    expect(fields.map((field) => field.getName())).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('cell.0.1.0'),
+        expect.stringContaining('cell.0.2.0'),
+      ]),
+    )
   })
 })
