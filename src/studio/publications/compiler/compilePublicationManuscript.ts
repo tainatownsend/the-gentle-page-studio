@@ -12,17 +12,18 @@ type NormalizedTableCell = {
 
 function normalizeTableCellForOutput(value: string): NormalizedTableCell {
   const parts = parsePublicationTableCell(value)
-  const controls: PublicationTableCellControl[] = parts.flatMap((part) => {
+  const controls: PublicationTableCellControl[] = []
+
+  for (const part of parts) {
     if (part.kind === 'response') {
-      return [{ kind: 'response' as const, size: part.size }]
+      controls.push({ kind: 'response', size: part.size })
+      continue
     }
 
     if (part.kind === 'checkbox') {
-      return [{ kind: 'checkbox' as const }]
+      controls.push({ kind: 'checkbox' })
     }
-
-    return []
-  })
+  }
 
   if (controls.length === 0) {
     return { text: value, controls }
