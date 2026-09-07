@@ -23,3 +23,7 @@ export {
   type PublicationCompoundComponent,
   type PublicationCompoundComponentKind,
 } from './publicationCompoundComponents'
+export {
+  recomposePublicationPages,
+  type PublicationRecompositionOptions,
+} from './publicationRecomposition'
