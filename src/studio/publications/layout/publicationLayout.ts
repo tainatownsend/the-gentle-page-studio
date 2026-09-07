@@ -82,6 +82,9 @@ function cloneBlock(block: PublicationBlock): PublicationBlock {
       ...shared,
       columns: [...block.columns],
       rows: block.rows.map((row) => [...row]),
+      cellControls: block.cellControls?.map((row) =>
+        row.map((controls) => controls.map((control) => ({ ...control }))),
+      ),
     }
   }
 
@@ -438,7 +441,10 @@ export function createPublicationLayout(publication: Publication): PublicationLa
     }),
   ]
 
-  const visualQa = auditPublicationVisualQuality(pages)
+  const visualQa = auditPublicationVisualQuality(pages, {
+    capacityUnits: PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
+    estimateUnits: estimatePublicationBlockUnits,
+  })
   const severeVisualPages = new Set(
     visualQa.issues
       .filter((issue) => issue.code === 'severe-underutilization')
