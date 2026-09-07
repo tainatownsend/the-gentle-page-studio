@@ -39,6 +39,23 @@ function classifyCompoundChildren(
   return undefined
 }
 
+function crossesRepeatableSemanticBoundary(
+  heading: PublicationBlock,
+  candidate: PublicationBlock,
+): boolean {
+  const headingGroup = heading.semanticGroup
+  const candidateGroup = candidate.semanticGroup
+  const headingRepeatableId =
+    headingGroup?.kind === 'repeatable-page' ? headingGroup.id : undefined
+  const candidateRepeatableId =
+    candidateGroup?.kind === 'repeatable-page' ? candidateGroup.id : undefined
+
+  return (
+    headingRepeatableId !== candidateRepeatableId &&
+    (headingRepeatableId !== undefined || candidateRepeatableId !== undefined)
+  )
+}
+
 export function getPublicationCompoundComponentAtIndex(
   blocks: readonly PublicationBlock[],
   startIndex: number,
@@ -48,6 +65,8 @@ export function getPublicationCompoundComponentAtIndex(
 
   let endIndex = startIndex + 1
   while (endIndex < blocks.length && blocks[endIndex]?.type !== 'heading') {
+    const candidate = blocks[endIndex]
+    if (!candidate || crossesRepeatableSemanticBoundary(heading, candidate)) break
     endIndex += 1
   }
 
