@@ -1,4 +1,7 @@
-export { compilePublicationManuscript as compileGentlePageManuscript } from './compilePublicationManuscript'
+export {
+  compilePublicationManuscript,
+  compilePublicationManuscript as compileGentlePageManuscript,
+} from './compilePublicationManuscript'
 export type {
   GentlePageCompilationDiagnostic,
   GentlePageCompilationDiagnosticLevel,
