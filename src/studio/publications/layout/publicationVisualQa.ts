@@ -42,6 +42,19 @@ function blockContainsProtocolSyntax(block: PublicationBlock): boolean {
   return false
 }
 
+function pageStartsRepeatableGroup(page: PublicationVisualQaPage | undefined): boolean {
+  return page?.blocks[0]?.semanticGroup?.kind === 'repeatable-page'
+}
+
+function isRepeatablePage(page: PublicationVisualQaPage): boolean {
+  if (page.blocks.length === 0) return false
+
+  const group = page.blocks[0]?.semanticGroup
+  if (group?.kind !== 'repeatable-page') return false
+
+  return page.blocks.every((block) => block.semanticGroup?.id === group.id)
+}
+
 export function auditPublicationVisualQuality(
   pages: readonly PublicationVisualQaPage[],
 ): PublicationVisualQaResult {
@@ -49,19 +62,22 @@ export function auditPublicationVisualQuality(
   const contentPages = pages.filter((page) => page.kind === 'content')
   const pageByBlockId = new Map<string, number | undefined>()
 
-  contentPages.forEach((page) => {
+  contentPages.forEach((page, pageIndex) => {
     page.blocks.forEach((block) => pageByBlockId.set(block.id, page.pageNumber))
 
     const archetype = inferPublicationPageArchetype(page.blocks)
     const first = page.blocks[0]
     const isIntentionalSectionOpener = archetype === 'section-opener'
     const hasAuthoredBreak = first?.layout?.pageBreakBefore !== undefined
+    const nextPageStartsRepeatable = pageStartsRepeatableGroup(contentPages[pageIndex + 1])
+    const currentPageIsRepeatable = isRepeatablePage(page)
 
     if (
       page.blocks.length === 1 &&
       first?.type === 'heading' &&
       first.level !== 1 &&
-      !hasAuthoredBreak
+      !hasAuthoredBreak &&
+      !currentPageIsRepeatable
     ) {
       issues.push({
         code: 'heading-only-page',
@@ -72,11 +88,13 @@ export function auditPublicationVisualQuality(
       })
     }
 
-    const isFinalPage = page === contentPages[contentPages.length - 1]
+    const isFinalPage = pageIndex === contentPages.length - 1
     if (
       !isFinalPage &&
       !isIntentionalSectionOpener &&
       !hasAuthoredBreak &&
+      !currentPageIsRepeatable &&
+      !nextPageStartsRepeatable &&
       page.blocks.length > 0 &&
       page.remainingUnits >= SEVERE_UNDERUTILIZATION_REMAINING_UNITS
     ) {
