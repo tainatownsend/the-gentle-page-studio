@@ -31,4 +31,5 @@ export type {
   PublicationResponseSizeIntent,
   PublicationSemanticGroup,
   PublicationTableBlock,
+  PublicationTableCellControl,
 } from './publicationContent'
