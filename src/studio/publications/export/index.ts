@@ -2,6 +2,7 @@ export {
   createPublicationPdfFilename,
   downloadFillablePublicationPdf,
 } from './downloadFillablePublicationPdf'
+export { generateFillablePublicationPdf } from './generateFillablePublicationPdf'
 export {
   createPublicationPdfPlan,
   PDF_POINTS_PER_INCH,
