@@ -91,7 +91,7 @@ describe('PublicationPreviewPage', () => {
     expect(document.querySelectorAll('article')).toHaveLength(2)
   })
 
-  it('renders automatically derived content pages in sequence', () => {
+  it('renders automatically derived content pages in balanced sequence', () => {
     const blocks = Array.from({ length: 5 }, (_, index) => ({
       id: `paragraph-${index + 1}`,
       type: 'paragraph' as const,
@@ -123,7 +123,10 @@ describe('PublicationPreviewPage', () => {
       within(firstContentPage as HTMLElement).getByText(blocks[0].text),
     ).toBeInTheDocument()
     expect(
-      within(firstContentPage as HTMLElement).getByText(blocks[3].text),
+      within(firstContentPage as HTMLElement).getByText(blocks[2].text),
+    ).toBeInTheDocument()
+    expect(
+      within(secondContentPage as HTMLElement).getByText(blocks[3].text),
     ).toBeInTheDocument()
     expect(
       within(secondContentPage as HTMLElement).getByText(blocks[4].text),
