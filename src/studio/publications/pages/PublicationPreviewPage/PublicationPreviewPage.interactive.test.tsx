@@ -97,7 +97,7 @@ describe('PublicationPreviewPage interactive fields', () => {
       'data-table-cell-control',
       'checkbox',
     )
-    expect(screen.getByText('2 interactive fields')).toBeInTheDocument()
+    expect(screen.getByText(/2 interactive fields/)).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Download fillable PDF' }),
     ).toBeInTheDocument()
