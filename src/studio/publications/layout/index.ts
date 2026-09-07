@@ -17,3 +17,9 @@ export {
   type PublicationPageDensity,
   type PublicationPageLayoutRecipe,
 } from './publicationLayoutRecipes'
+export {
+  getPublicationCompoundComponentAtIndex,
+  inferPublicationCompoundComponents,
+  type PublicationCompoundComponent,
+  type PublicationCompoundComponentKind,
+} from './publicationCompoundComponents'
