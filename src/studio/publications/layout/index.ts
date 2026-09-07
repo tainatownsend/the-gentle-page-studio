@@ -8,3 +8,7 @@ export {
   type PublicationLayoutPage,
   type PublicationLayoutPageKind,
 } from './publicationLayout'
+export {
+  inferPublicationPageArchetype,
+  type PublicationPageArchetype,
+} from './publicationPageArchetypes'
