@@ -23,6 +23,11 @@ export type PublicationVisualQaPage = {
   remainingUnits: number
 }
 
+export type PublicationVisualQaOptions = {
+  capacityUnits?: number
+  estimateUnits?: (block: PublicationBlock) => number
+}
+
 export type PublicationVisualQaResult = {
   score: number
   issues: PublicationVisualQaIssue[]
@@ -57,13 +62,18 @@ function isRepeatablePage(page: PublicationVisualQaPage): boolean {
 
 export function auditPublicationVisualQuality(
   pages: readonly PublicationVisualQaPage[],
+  options: PublicationVisualQaOptions = {},
 ): PublicationVisualQaResult {
   const issues: PublicationVisualQaIssue[] = []
   const contentPages = pages.filter((page) => page.kind === 'content')
   const pageByBlockId = new Map<string, number | undefined>()
+  const blockById = new Map<string, PublicationBlock>()
 
   contentPages.forEach((page, pageIndex) => {
-    page.blocks.forEach((block) => pageByBlockId.set(block.id, page.pageNumber))
+    page.blocks.forEach((block) => {
+      pageByBlockId.set(block.id, page.pageNumber)
+      blockById.set(block.id, block)
+    })
 
     const archetype = inferPublicationPageArchetype(page.blocks)
     const first = page.blocks[0]
@@ -129,6 +139,15 @@ export function auditPublicationVisualQuality(
     )
 
     if (componentPages.size <= 1) continue
+
+    if (options.capacityUnits !== undefined && options.estimateUnits) {
+      const estimatedUnits = component.blockIds.reduce((total, blockId) => {
+        const block = blockById.get(blockId)
+        return total + (block ? options.estimateUnits?.(block) ?? 0 : 0)
+      }, 0)
+
+      if (estimatedUnits > options.capacityUnits) continue
+    }
 
     const pageNumber = Math.min(...componentPages)
     issues.push({
