@@ -1,26 +1,40 @@
-import type { PublicationBlock } from '../types'
+import type { PublicationBlock, PublicationTableCellControl } from '../types'
 import {
   compileGentlePageManuscript as compileBaseManuscript,
   type GentlePageCompilationResult,
 } from './compileGentlePageManuscript'
 import { parsePublicationTableCell } from './tableCellSemantics'
 
-function normalizeTableCellForOutput(value: string): string {
-  const parts = parsePublicationTableCell(value)
+type NormalizedTableCell = {
+  text: string
+  controls: PublicationTableCellControl[]
+}
 
-  if (!parts.some((part) => part.kind !== 'text')) {
-    return value
+function normalizeTableCellForOutput(value: string): NormalizedTableCell {
+  const parts = parsePublicationTableCell(value)
+  const controls: PublicationTableCellControl[] = parts.flatMap((part) => {
+    if (part.kind === 'response') {
+      return [{ kind: 'response' as const, size: part.size }]
+    }
+
+    if (part.kind === 'checkbox') {
+      return [{ kind: 'checkbox' as const }]
+    }
+
+    return []
+  })
+
+  if (controls.length === 0) {
+    return { text: value, controls }
   }
 
-  return parts
-    .map((part) => {
-      if (part.kind === 'text') return part.text
-      if (part.kind === 'checkbox') return '[ ]'
-      return ''
-    })
-    .filter(Boolean)
+  const text = parts
+    .filter((part) => part.kind === 'text')
+    .map((part) => part.text)
     .join(' ')
     .trim()
+
+  return { text, controls }
 }
 
 function normalizeBlockForOutput(block: PublicationBlock): PublicationBlock {
@@ -28,19 +42,28 @@ function normalizeBlockForOutput(block: PublicationBlock): PublicationBlock {
     return block
   }
 
+  const normalizedRows = block.rows.map((row) => row.map(normalizeTableCellForOutput))
+  const hasCellControls = normalizedRows.some((row) =>
+    row.some((cell) => cell.controls.length > 0),
+  )
+
   return {
     ...block,
-    columns: block.columns.map(normalizeTableCellForOutput),
-    rows: block.rows.map((row) => row.map(normalizeTableCellForOutput)),
+    columns: block.columns.map((cell) => normalizeTableCellForOutput(cell).text),
+    rows: normalizedRows.map((row) => row.map((cell) => cell.text)),
+    cellControls: hasCellControls
+      ? normalizedRows.map((row) => row.map((cell) => cell.controls))
+      : undefined,
   }
 }
 
 /**
  * User-facing compiler entry point.
  *
- * The base parser intentionally preserves unknown source material. This finalization pass removes
- * Gentle Page authoring syntax that has already expressed its intent inside structured table cells
- * so protocol text can never leak into Preview, static PDF, or fillable PDF output.
+ * The base parser intentionally preserves unknown source material. This finalization pass consumes
+ * Gentle Page authoring syntax that has already expressed its intent inside structured table cells.
+ * Reader-facing text is cleaned while interaction intent is retained as semantic metadata so static
+ * and fillable output can render the same worksheet without exposing compiler source syntax.
  */
 export function compilePublicationManuscript(manuscript: string): GentlePageCompilationResult {
   const result = compileBaseManuscript(manuscript)
