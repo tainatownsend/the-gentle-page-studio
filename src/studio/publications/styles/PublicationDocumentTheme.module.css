@@ -38,3 +38,39 @@
   --publication-accent-strong: var(--publication-sage-deep);
   --publication-accent-secondary: var(--publication-clay);
 }
+
+/*
+ * Structural page recipes. These selectors deliberately key off semantic HTML
+ * emitted by the publication renderer so the visual system can begin reacting
+ * to page intent before compound page components are introduced.
+ */
+.theme:has(table) {
+  background:
+    linear-gradient(180deg, var(--publication-sage-soft) 0 0.34rem, transparent 0.34rem),
+    var(--publication-paper);
+}
+
+.theme:has(table) table {
+  box-shadow: 0 0.55rem 1.6rem rgb(83 104 91 / 7%);
+}
+
+.theme:has([data-response-size]):not(:has(table)) {
+  background:
+    radial-gradient(circle at 91% 9%, var(--publication-sand-soft) 0 4.6rem, transparent 4.7rem),
+    var(--publication-paper);
+}
+
+.theme:has(h2):not(:has(h3, h4, table, [data-response-size])) {
+  background:
+    linear-gradient(145deg, var(--publication-sage-soft) 0 22%, transparent 43%),
+    var(--publication-paper);
+}
+
+.theme:has(h2):not(:has(h3, h4, table, [data-response-size])) h2:first-of-type {
+  margin-top: clamp(2rem, 11%, 5.5rem);
+}
+
+.theme:has(h2):not(:has(h3, h4, table, [data-response-size])) p:last-of-type {
+  max-width: 52ch;
+  color: var(--publication-muted-ink);
+}
