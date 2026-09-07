@@ -57,6 +57,52 @@ describe('PublicationPreviewPage interactive fields', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders worksheet cell controls in static preview and counts them for fillable export', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'worksheet-1',
+                type: 'table',
+                text: 'Life dashboard',
+                columns: ['Area', 'Reflection', 'Needs attention?'],
+                rows: [['Work', '', '']],
+                cellControls: [
+                  [
+                    [],
+                    [{ kind: 'response', size: 'short' }],
+                    [{ kind: 'checkbox' }],
+                  ],
+                ],
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(screen.getByLabelText('Response field in row 1, column 2')).toHaveAttribute(
+      'data-table-cell-control',
+      'response',
+    )
+    expect(screen.getByLabelText('Response field in row 1, column 2')).toHaveAttribute(
+      'data-response-size',
+      'short',
+    )
+    expect(screen.getByLabelText('Checkbox in row 1, column 3')).toHaveAttribute(
+      'data-table-cell-control',
+      'checkbox',
+    )
+    expect(screen.getByText('2 interactive fields')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Download fillable PDF' }),
+    ).toBeInTheDocument()
+  })
+
   it('does not show fillable export for static-only publications', () => {
     render(
       <PublicationPreviewPage
