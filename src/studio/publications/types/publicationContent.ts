@@ -52,11 +52,22 @@ export type PublicationRatingFieldBlock = PublicationBlockBase & {
   max: number
 }
 
+export type PublicationTableCellControl =
+  | {
+      kind: 'response'
+      size: PublicationResponseSizeIntent
+    }
+  | {
+      kind: 'checkbox'
+    }
+
 export type PublicationTableBlock = PublicationBlockBase & {
   type: 'table'
   text: string
   columns: string[]
   rows: string[][]
+  /** Reader-facing controls parsed from Gentle Page directives inside data cells. */
+  cellControls?: PublicationTableCellControl[][][]
 }
 
 export type PublicationInteractiveBlock =
