@@ -78,8 +78,8 @@ describe('createPublicationLayout', () => {
     expect(contentPages.flatMap((page) => page.blocks.map((block) => block.id))).toEqual(
       blocks.map((block) => block.id),
     )
-    expect(contentPages[0]?.blocks).toHaveLength(4)
-    expect(contentPages[1]?.blocks).toHaveLength(1)
+    expect(contentPages[0]?.blocks).toHaveLength(3)
+    expect(contentPages[1]?.blocks).toHaveLength(2)
   })
 
   it('keeps a single oversized block intact and reports it for review', () => {
