@@ -6,6 +6,11 @@ import type {
 } from '../types'
 import { getPublicationCompoundComponentAtIndex } from './publicationCompoundComponents'
 import { recomposePublicationPages } from './publicationRecomposition'
+import { healPublicationPages } from './publicationSelfHealing'
+import {
+  auditPublicationVisualQuality,
+  type PublicationVisualQaIssueCode,
+} from './publicationVisualQa'
 
 export type PublicationLayoutPageKind = 'cover' | 'content'
 
@@ -27,8 +32,14 @@ export type PublicationLayoutPage = {
   remainingUnits: number
 }
 
+export type PublicationLayoutDiagnosticCode =
+  | 'oversized-block'
+  | 'sparse-page'
+  | 'repeatable-group-overflow'
+  | PublicationVisualQaIssueCode
+
 export type PublicationLayoutDiagnostic = {
-  code: 'oversized-block' | 'sparse-page' | 'repeatable-group-overflow'
+  code: PublicationLayoutDiagnosticCode
   message: string
   pageNumber?: number
   blockId?: string
@@ -39,6 +50,7 @@ export type PublicationLayout = {
   settings: PublicationDocumentSettings
   pages: PublicationLayoutPage[]
   health: 'healthy' | 'needs-attention'
+  qualityScore: number
   diagnostics: PublicationLayoutDiagnostic[]
 }
 
@@ -393,9 +405,13 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
 
 export function createPublicationLayout(publication: Publication): PublicationLayout {
   const initiallyPaginated = paginateBlocks(publication.content.blocks)
-  const contentPages = recomposePublicationPages(initiallyPaginated, {
+  const recomposedPages = recomposePublicationPages(initiallyPaginated, {
     capacityUnits: PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
     minimumBalancedPageUnits: RECOMPOSITION_MINIMUM_BALANCED_PAGE_UNITS,
+    estimateUnits: estimatePublicationBlockUnits,
+  })
+  const contentPages = healPublicationPages(recomposedPages, {
+    capacityUnits: PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
     estimateUnits: estimatePublicationBlockUnits,
   })
   const pages: PublicationLayoutPage[] = [
@@ -421,12 +437,32 @@ export function createPublicationLayout(publication: Publication): PublicationLa
       }
     }),
   ]
-  const diagnostics = createDiagnostics(pages)
+
+  const visualQa = auditPublicationVisualQuality(pages)
+  const severeVisualPages = new Set(
+    visualQa.issues
+      .filter((issue) => issue.code === 'severe-underutilization')
+      .map((issue) => issue.pageNumber),
+  )
+  const structuralDiagnostics = createDiagnostics(pages).filter(
+    (diagnostic) =>
+      diagnostic.code !== 'sparse-page' || !severeVisualPages.has(diagnostic.pageNumber),
+  )
+  const diagnostics: PublicationLayoutDiagnostic[] = [
+    ...structuralDiagnostics,
+    ...visualQa.issues.map((issue) => ({
+      code: issue.code,
+      message: issue.message,
+      pageNumber: issue.pageNumber,
+      blockId: issue.blockId,
+    })),
+  ]
 
   return {
     settings: cloneDocumentSettings(publication.documentSettings),
     pages,
     health: diagnostics.length === 0 ? 'healthy' : 'needs-attention',
+    qualityScore: visualQa.score,
     diagnostics,
   }
 }
