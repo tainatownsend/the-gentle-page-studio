@@ -4,6 +4,7 @@ import type {
   PublicationDocumentSettings,
   PublicationTableBlock,
 } from '../types'
+import { getPublicationCompoundComponentAtIndex } from './publicationCompoundComponents'
 
 export type PublicationLayoutPageKind = 'cover' | 'content'
 
@@ -152,6 +153,18 @@ function getCheckboxGroupUnits(
   return total
 }
 
+function getCompoundComponentUnits(
+  blocks: readonly PublicationBlock[],
+  startIndex: number,
+): number | undefined {
+  const component = getPublicationCompoundComponentAtIndex(blocks, startIndex)
+  if (!component) return undefined
+
+  return blocks
+    .slice(component.startIndex, component.endIndex)
+    .reduce((total, componentBlock) => total + estimatePublicationBlockUnits(componentBlock), 0)
+}
+
 function crossesRepeatablePageBoundary(
   blocks: readonly PublicationBlock[],
   index: number,
@@ -192,6 +205,13 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       pairFitsOnFreshPage &&
       currentUnits + blockUnits + nextBlockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
+    const compoundComponentUnits = getCompoundComponentUnits(blocks, index)
+    const wouldSplitCompoundComponent =
+      currentPage.length > 0 &&
+      compoundComponentUnits !== undefined &&
+      compoundComponentUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
+      currentUnits + compoundComponentUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
+
     const checkboxGroupUnits = getCheckboxGroupUnits(blocks, index)
     const startsCheckboxGroup =
       block.type === 'checkbox-field' && blocks[index - 1]?.type !== 'checkbox-field'
@@ -217,6 +237,7 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       semanticBoundaryBreak ||
       forcedBreak ||
       preferredBreak ||
+      wouldSplitCompoundComponent ||
       wouldOrphanKeepWithNextBlock ||
       wouldSplitCheckboxGroup ||
       capacityBreak
