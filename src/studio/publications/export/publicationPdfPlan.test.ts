@@ -155,7 +155,7 @@ describe('createPublicationPdfPlan', () => {
     }
   })
 
-  it('preserves field page assignment after automatic pagination', () => {
+  it('preserves field identities while editorial recomposition rebalances page assignment', () => {
     const plan = createPublicationPdfPlan(
       createPublicationFixture({
         id: 'journal-2',
@@ -186,6 +186,12 @@ describe('createPublicationPdfPlan', () => {
       }),
     )
 
-    expect(plan.interactiveFields.map((field) => field.pageNumber)).toEqual([1, 1, 1, 2])
+    expect(plan.interactiveFields.map((field) => field.blockId)).toEqual([
+      'response-1',
+      'response-2',
+      'response-3',
+      'response-4',
+    ])
+    expect(plan.interactiveFields.map((field) => field.pageNumber)).toEqual([1, 1, 2, 2])
   })
 })
