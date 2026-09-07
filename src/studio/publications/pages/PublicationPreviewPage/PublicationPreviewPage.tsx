@@ -18,7 +18,7 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { downloadFillablePublicationPdf } from '../../export'
 import { createPublicationLayout } from '../../layout'
 import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
-import type { Publication, PublicationBlock } from '../../types'
+import type { Publication, PublicationBlock, PublicationTableCellControl } from '../../types'
 
 import styles from './PublicationPreviewPage.module.css'
 
@@ -32,6 +32,72 @@ export type PublicationPreviewPageProps = {
 type PublicationBlockPreviewProps = {
   block: PublicationBlock
   allocatedUnits?: number
+}
+
+function renderTableCellControl(
+  control: PublicationTableCellControl,
+  blockId: string,
+  rowIndex: number,
+  columnIndex: number,
+  controlIndex: number,
+): ReactElement {
+  const key = `${blockId}-row-${rowIndex}-column-${columnIndex}-control-${controlIndex}`
+
+  if (control.kind === 'checkbox') {
+    return (
+      <span
+        key={key}
+        className={styles.checkboxMark}
+        role="img"
+        aria-label={`Checkbox in row ${rowIndex + 1}, column ${columnIndex + 1}`}
+        data-table-cell-control="checkbox"
+      />
+    )
+  }
+
+  const responseAreaClassName = `${styles.responseArea} ${
+    control.size === 'short'
+      ? styles.responseAreaShort
+      : control.size === 'medium'
+        ? styles.responseAreaMedium
+        : styles.responseAreaLong
+  }`
+
+  return (
+    <div
+      key={key}
+      className={responseAreaClassName}
+      role="img"
+      aria-label={`Response field in row ${rowIndex + 1}, column ${columnIndex + 1}`}
+      data-table-cell-control="response"
+      data-response-size={control.size}
+    />
+  )
+}
+
+function countInteractiveFields(publication: Publication): number {
+  let count = 0
+
+  for (const block of publication.content.blocks) {
+    if (
+      block.type === 'multiline-text-field' ||
+      block.type === 'checkbox-field' ||
+      block.type === 'rating-field'
+    ) {
+      count += 1
+      continue
+    }
+
+    if (block.type === 'table' && block.cellControls) {
+      for (const row of block.cellControls) {
+        for (const cell of row) {
+          count += cell.length
+        }
+      }
+    }
+  }
+
+  return count
 }
 
 function PublicationBlockPreview({
@@ -128,11 +194,25 @@ function PublicationBlockPreview({
             <tbody>
               {block.rows.map((row, rowIndex) => (
                 <tr key={`${block.id}-row-${rowIndex}`}>
-                  {block.columns.map((_, columnIndex) => (
-                    <td key={`${block.id}-row-${rowIndex}-column-${columnIndex}`}>
-                      {row[columnIndex] ?? ''}
-                    </td>
-                  ))}
+                  {block.columns.map((_, columnIndex) => {
+                    const cellText = row[columnIndex] ?? ''
+                    const controls = block.cellControls?.[rowIndex]?.[columnIndex] ?? []
+
+                    return (
+                      <td key={`${block.id}-row-${rowIndex}-column-${columnIndex}`}>
+                        {cellText ? <div>{cellText}</div> : null}
+                        {controls.map((control, controlIndex) =>
+                          renderTableCellControl(
+                            control,
+                            block.id,
+                            rowIndex,
+                            columnIndex,
+                            controlIndex,
+                          ),
+                        )}
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -155,12 +235,7 @@ export function PublicationPreviewPage({
   const [fillablePdfError, setFillablePdfError] = useState<string>()
   const layout = createPublicationLayout(publication)
   const contentPageCount = layout.pages.filter((page) => page.kind === 'content').length
-  const interactiveFieldCount = publication.content.blocks.filter(
-    (block) =>
-      block.type === 'multiline-text-field' ||
-      block.type === 'checkbox-field' ||
-      block.type === 'rating-field',
-  ).length
+  const interactiveFieldCount = countInteractiveFields(publication)
   const hasInteractiveFields = interactiveFieldCount > 0
   const isReadyToExport = layout.health === 'healthy'
 
