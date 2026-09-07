@@ -12,3 +12,8 @@ export {
   inferPublicationPageArchetype,
   type PublicationPageArchetype,
 } from './publicationPageArchetypes'
+export {
+  getPublicationPageLayoutRecipe,
+  type PublicationPageDensity,
+  type PublicationPageLayoutRecipe,
+} from './publicationLayoutRecipes'
