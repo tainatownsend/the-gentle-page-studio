@@ -1,17 +1,40 @@
 .theme {
-  --publication-font-family-display: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --publication-font-family-display: Georgia, "Times New Roman", serif;
   --publication-font-family-body: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --publication-font-size-cover-title: clamp(2rem, 5vw, 3.5rem);
+
+  --publication-font-size-cover-title: clamp(2.35rem, 5.4vw, 4.25rem);
   --publication-font-size-heading-1: 2rem;
-  --publication-font-size-heading-2: 1.5rem;
-  --publication-font-size-heading-3: 1.125rem;
-  --publication-font-size-body: 1rem;
-  --publication-line-height-tight: 1.2;
-  --publication-line-height-body: 1.6;
-  --publication-letter-spacing-display: -0.02em;
-  --publication-ink: var(--color-text-primary, #1f2522);
-  --publication-muted-ink: var(--color-text-secondary, #66736d);
-  --publication-paper: var(--color-surface-primary, #ffffff);
-  --publication-rule: var(--color-border-primary, #d5ddd9);
-  --publication-accent: var(--color-accent-primary, #728b7b);
+  --publication-font-size-heading-2: 1.45rem;
+  --publication-font-size-heading-3: 0.98rem;
+  --publication-font-size-body: 0.98rem;
+
+  --publication-line-height-tight: 1.12;
+  --publication-line-height-body: 1.62;
+  --publication-letter-spacing-display: -0.025em;
+
+  --publication-ink: #2b302d;
+  --publication-muted-ink: #6b746e;
+  --publication-paper: #fcfaf6;
+  --publication-paper-strong: #fffdf9;
+  --publication-rule: #d7ddd9;
+
+  --publication-sage: #7a9080;
+  --publication-sage-deep: #53685b;
+  --publication-sage-soft: #e8eee9;
+
+  --publication-clay: #b98575;
+  --publication-clay-soft: #f2e6e1;
+
+  --publication-sand: #d6c39e;
+  --publication-sand-soft: #f3eddf;
+
+  --publication-mist: #e9eef0;
+  --publication-field: #faf7f1;
+  --publication-panel: #f6f2ea;
+  --publication-table-header: #e7ede8;
+  --publication-table-zebra: #fbf8f2;
+
+  --publication-accent: var(--publication-sage);
+  --publication-accent-strong: var(--publication-sage-deep);
+  --publication-accent-secondary: var(--publication-clay);
 }
