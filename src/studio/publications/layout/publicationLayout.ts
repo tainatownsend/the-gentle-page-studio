@@ -5,6 +5,7 @@ import type {
   PublicationTableBlock,
 } from '../types'
 import { getPublicationCompoundComponentAtIndex } from './publicationCompoundComponents'
+import { recomposePublicationPages } from './publicationRecomposition'
 
 export type PublicationLayoutPageKind = 'cover' | 'content'
 
@@ -44,6 +45,7 @@ export type PublicationLayout = {
 export const PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS = 48
 const PREFERRED_PAGE_BREAK_MINIMUM_FILL_UNITS = 20
 const SPARSE_PAGE_REMAINING_UNITS = 18
+const RECOMPOSITION_MINIMUM_BALANCED_PAGE_UNITS = 18
 
 function cloneDocumentSettings(
   settings: PublicationDocumentSettings,
@@ -390,7 +392,12 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
 }
 
 export function createPublicationLayout(publication: Publication): PublicationLayout {
-  const contentPages = paginateBlocks(publication.content.blocks)
+  const initiallyPaginated = paginateBlocks(publication.content.blocks)
+  const contentPages = recomposePublicationPages(initiallyPaginated, {
+    capacityUnits: PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
+    minimumBalancedPageUnits: RECOMPOSITION_MINIMUM_BALANCED_PAGE_UNITS,
+    estimateUnits: estimatePublicationBlockUnits,
+  })
   const pages: PublicationLayoutPage[] = [
     {
       id: `${publication.id}-cover`,
