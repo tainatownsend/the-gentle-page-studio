@@ -1,116 +1,126 @@
 # Roadmap
 
-The Gentle Page Studio MVP is now consolidated in `release/mvp-manual-acceptance` / PR0028. Automated implementation work for the current MVP scope is complete; the remaining release gate is manual browser and PDF-viewer acceptance tracked in issue #73.
+Gentle Page Studio has reached the **Editorial North Star release-candidate stage** in `release/editorial-north-star-manual-acceptance` / PR #99. The remaining release gate is manual visual and PDF-viewer acceptance tracked in issue #73.
 
 ## 1. Platform foundation — complete
 
-- [x] Project structure and architecture boundaries
-- [x] Semantic design tokens
-- [x] Theme engine with system preference support
-- [x] Foundation primitives and layouts
-- [x] Publications application shell and routing
-- [x] Reusable resource collection infrastructure
-- [x] Unified lint / test / build quality gate
-- [x] `npm run quality:release` combining high-severity dependency audit + quality checks
-- [x] GitHub Quality enforcement of the release gate
-- [x] Reviewed dependency remediation and ongoing Dependabot maintenance
+- [x] project architecture and design-system foundation
+- [x] theme engine and responsive application shell
+- [x] publication persistence and migrations
+- [x] unified lint / test / build quality gate
+- [x] `npm run quality:release` with high-severity dependency audit
+- [x] GitHub Quality workflow
+- [x] reviewed dependency remediation and Dependabot maintenance
 
 ## 2. Publication lifecycle — complete
 
-- [x] Publication domain model
-- [x] Local persistence and storage migration
-- [x] Create publication flow
-- [x] Dedicated `/publications/new` route
-- [x] Edit and save publication metadata
-- [x] Duplicate publication
-- [x] Delete publication with confirmation
-- [x] Draft and Published status flow
-- [x] Unsaved changes protection
-- [x] Publication preview route
-- [x] Autosave and best-effort draft recovery
+- [x] Draft / Published lifecycle
+- [x] create, edit, save, duplicate, delete, and preview flows
+- [x] unsaved-change protection
+- [x] autosave and local draft recovery
+- [x] immutable published revisions
+- [x] version comparison and restore-as-Draft
+- [x] local image asset library
 
-## 3. Content editor — complete for MVP
+## 3. Publication Compiler — complete for v1
 
-- [x] Durable ordered content blocks
-- [x] Heading and paragraph blocks
-- [x] Multiline response and checkbox blocks
-- [x] Add and remove blocks
-- [x] Move blocks up and down
-- [x] Duplicate blocks
-- [x] Preserve block values and order
-- [x] Return Published publications to Draft after content edits
-- [x] Render saved content in preview
-- [x] Blank, Guided journal, and Daily check-in starter templates
+North Star input model:
 
-## 4. Editorial document foundation — complete
+**ChatGPT / Gemini / Claude / Word / Markdown → Gentle Page Compiler**
 
-MVP defaults are locked: US Letter, portrait, fixed Gentle Page margins, automatic pagination, bottom-center page numbers, fixed Gentle Page typography, and a fixed Gentle Page cover as page one.
+- [x] manuscript-first creation flow
+- [x] Gentle Page Manuscript Protocol
+- [x] copyable AI authoring prompt
+- [x] Markdown and directive parsing
+- [x] direct compile-to-preview path
+- [x] first-class headings, paragraphs, response fields, checkboxes, ratings, tables, and matrices
+- [x] semantic table-cell controls
+- [x] local DOCX / OOXML ingestion
+- [x] paragraph/table document-order preservation
+- [x] Word heading and page-break interpretation
+- [x] writing-line and checkbox inference
+- [x] author-only note filtering
+- [x] exception-only import review behavior
+- [x] repeatable-page semantics
 
-- [x] Durable document settings defaults
-- [x] Derived page-based publication layout
-- [x] US Letter portrait geometry and Gentle Page safe area
-- [x] Gentle Page document typography tokens
-- [x] Print-oriented document preview
-- [x] Automatic content flow and deterministic page breaks
-- [x] Fixed cover rendering
-- [x] Bottom-center page numbering
+## 4. Editorial composition engine — complete for v1
 
-## 5. Product export — implementation complete, manual acceptance pending
+The compiler, not the user, is responsible for normal page composition.
 
-- [x] Print stylesheet and static browser PDF path
-- [x] Fillable field authoring and preview
-- [x] Library-independent fillable PDF planning
-- [x] Binary AcroForm serializer using `pdf-lib`
-- [x] Browser `Download fillable PDF` action
-- [x] Recoverable fillable-export error handling
-- [x] Lazy-load heavy fillable-PDF serialization code
-- [ ] Execute the release-candidate browser and PDF-viewer acceptance runbook in issue #73
-- [ ] Remediate only reproducible blocking compatibility defects, if any
+- [x] US Letter portrait defaults and fixed Gentle Page margins
+- [x] Gentle Page editorial typography and visual identity
+- [x] branded cover
+- [x] semantic page archetypes and layout recipes
+- [x] smart pagination
+- [x] preferred / forced page-break intent
+- [x] elastic response-field sizing
+- [x] heading look-ahead and orphan prevention
+- [x] prompt/response and checkbox grouping
+- [x] compound journal component inference
+- [x] cross-page editorial recomposition
+- [x] Visual QA diagnostics
+- [x] deterministic safe self-healing
+- [x] Brain-Friendly Planner golden acceptance gates
 
-## 6. Publication history — complete for MVP
+## 5. Static and fillable output — implementation complete
 
-- [x] Immutable publish snapshots
-- [x] Local revision persistence
-- [x] Version history route
-- [x] Restore historical version as a new Draft
-- [x] Revision comparison domain utility
-- [x] Compare each published revision with its previous snapshot
+- [x] print-oriented browser Preview
+- [x] browser Print / Save as PDF
+- [x] deterministic PDF page plan
+- [x] fillable PDF serializer using `pdf-lib`
+- [x] multiline text fields
+- [x] checkboxes
+- [x] rating controls
+- [x] fillable worksheet/table controls
+- [x] stable AcroForm field names
+- [x] recoverable export errors
+- [x] lazy-load boundary for the heavy PDF serializer
 
-## 7. Local asset library — complete for MVP
+Manual viewer acceptance is still required because automated tests cannot prove final browser print appearance or saved-field persistence across real PDF viewers.
 
-- [x] Asset-library route and navigation
-- [x] PNG, JPEG, and WebP upload validation
-- [x] Local asset persistence
-- [x] Image preview and metadata
-- [x] Permanent asset deletion
+## 6. Editorial North Star release gate — current
 
-Direct asset placement into publication pages is intentionally post-MVP.
+PR #99 remains Draft until issue #73 records **PASS** or **PASS WITH FOLLOW-UP** with no blocking defect.
 
-## 8. MVP release gate — current
+Required acceptance cases:
 
-PR0028 stays in Draft until `docs/MVP_ACCEPTANCE.md` / issue #73 is completed with either:
+1. zero-touch Brain-Friendly Planner from the current AI authoring prompt
+2. Burnout Recovery Journal DOCX
+3. 30-Day Energy Audit DOCX
+4. static vs fillable PDF parity
+5. real PDF-viewer field persistence
+6. existing Studio regression smoke test
 
-- **PASS**, or
-- **PASS WITH FOLLOW-UP** and no blocking defects.
+Release target:
 
-The release candidate must be validated in real browsers and PDF viewers because automated tests cannot prove viewer-specific form persistence, browser print geometry, saved-field behavior, or final print appearance.
+**Paste / Upload → Compile → beautiful publication → Preview → Export**
 
-## 9. Post-MVP Studio evolution
+The ordinary workflow should require **0 manual layout interventions**. DOCX imports may tolerate isolated semantic preferences, but never page-by-page reconstruction.
 
-- [ ] Authentication and backend synchronization
-- [ ] Collaboration
-- [ ] Cloud-backed asset library
-- [ ] Asset placement inside publications
-- [ ] Additional fillable field types
-- [ ] Rich text capabilities
-- [ ] Configurable document geometry and visual themes
-- [ ] Multiple export formats
-- [ ] Publishing/distribution workflows
-- [ ] Scheduled publishing
-- [ ] AI-assisted creation
+## 7. Immediately after acceptance
 
-## Engineering follow-up
+- [ ] squash-merge PR #99 to `main`
+- [ ] close issue #60 after the accepted dependency remediation reaches `main`
+- [ ] apply `main` branch protection and required Quality checks (issue #74)
+- [ ] remove obsolete release branches
+- [ ] tag the accepted Editorial North Star baseline
 
-The high-severity npm audit findings tracked in issue #60 have been remediated in the release candidate without forced upgrades. The high-severity audit is now part of `npm run quality:release` and the GitHub Quality workflow. Keep issue #60 open until PR0028 is accepted and merged to `main`, then close it as part of release cleanup.
+## 8. Post-v1 evolution
 
-See `BACKLOG.md` for the current release gate and deferred work, `docs/MVP_ACCEPTANCE.md` for the manual acceptance runbook, and the ADR series for accepted architecture decisions.
+- [ ] authentication and backend synchronization
+- [ ] collaboration
+- [ ] cloud-backed asset library
+- [ ] direct asset placement in publications
+- [ ] richer text formatting
+- [ ] additional interactive field types
+- [ ] configurable page geometry and publication themes
+- [ ] additional output formats
+- [ ] publishing/distribution workflows
+- [ ] scheduled publishing
+- [ ] optional direct AI API integration
+
+## Product rule
+
+**AI creates the manuscript. Gentle Page creates the publication.**
+
+The editor remains a correction/refinement layer. The product should not evolve into a smaller Canva or a Word-style page-layout tool.
