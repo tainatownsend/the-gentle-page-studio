@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPublicationFixture } from '../testing'
 import {
   LEGACY_PUBLICATIONS_STORAGE_KEY,
+  LEGACY_PUBLICATIONS_STORAGE_KEY_V2,
+  LEGACY_PUBLICATIONS_STORAGE_KEY_V3,
   loadPublications,
   PUBLICATIONS_STORAGE_KEY,
   savePublications,
@@ -13,25 +15,24 @@ const publication = createPublicationFixture({
   description: 'A supportive focus practice.',
   content: {
     blocks: [
+      { id: 'heading-1', type: 'heading', level: 1, text: 'Gentle Focus' },
+      { id: 'paragraph-1', type: 'paragraph', text: 'Begin with one small step.' },
       {
-        id: 'heading-1',
-        type: 'heading',
-        level: 1,
-        text: 'Gentle Focus',
+        id: 'field-1',
+        type: 'multiline-text-field',
+        text: 'What would support you today?',
       },
       {
-        id: 'paragraph-1',
-        type: 'paragraph',
-        text: 'Begin with one small step.',
+        id: 'checkbox-1',
+        type: 'checkbox-field',
+        text: 'I completed this reflection.',
       },
     ],
   },
 })
 
 describe('publicationsStorage', () => {
-  beforeEach(() => {
-    localStorage.clear()
-  })
+  beforeEach(() => localStorage.clear())
 
   afterEach(() => {
     vi.restoreAllMocks()
@@ -42,19 +43,67 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([])
   })
 
-  it('loads a valid version 2 workspace', () => {
+  it('loads a valid version 4 workspace with interactive blocks', () => {
     localStorage.setItem(
       PUBLICATIONS_STORAGE_KEY,
-      JSON.stringify({
-        version: 2,
-        publications: [publication],
-      }),
+      JSON.stringify({ version: 4, publications: [publication] }),
     )
 
     expect(loadPublications()).toEqual([publication])
   })
 
-  it('migrates a version 1 workspace with empty content', () => {
+  it('migrates a version 3 workspace without changing authored content', () => {
+    const legacyPublication = createPublicationFixture({
+      content: {
+        blocks: [
+          { id: 'heading-1', type: 'heading', level: 1, text: 'Legacy heading' },
+          { id: 'paragraph-1', type: 'paragraph', text: 'Legacy paragraph.' },
+        ],
+      },
+    })
+
+    localStorage.setItem(
+      LEGACY_PUBLICATIONS_STORAGE_KEY_V3,
+      JSON.stringify({ version: 3, publications: [legacyPublication] }),
+    )
+
+    expect(loadPublications()).toEqual([legacyPublication])
+  })
+
+  it('migrates a version 2 workspace with default document settings', () => {
+    const legacyPublication = {
+      id: publication.id,
+      title: publication.title,
+      description: publication.description,
+      status: publication.status,
+      content: {
+        blocks: [
+          { id: 'heading-1', type: 'heading' as const, level: 1 as const, text: 'Gentle Focus' },
+          { id: 'paragraph-1', type: 'paragraph' as const, text: 'Begin with one small step.' },
+        ],
+      },
+      createdAt: publication.createdAt,
+      updatedAt: publication.updatedAt,
+    }
+
+    localStorage.setItem(
+      LEGACY_PUBLICATIONS_STORAGE_KEY_V2,
+      JSON.stringify({ version: 2, publications: [legacyPublication] }),
+    )
+
+    expect(loadPublications()).toEqual([
+      {
+        ...legacyPublication,
+        documentSettings: {
+          pageSize: 'us-letter',
+          orientation: 'portrait',
+          margins: { top: 0.75, right: 0.75, bottom: 0.75, left: 0.75 },
+        },
+      },
+    ])
+  })
+
+  it('migrates a version 1 workspace with empty content and default document settings', () => {
     const legacyPublication = {
       id: publication.id,
       title: publication.title,
@@ -66,17 +115,17 @@ describe('publicationsStorage', () => {
 
     localStorage.setItem(
       LEGACY_PUBLICATIONS_STORAGE_KEY,
-      JSON.stringify({
-        version: 1,
-        publications: [legacyPublication],
-      }),
+      JSON.stringify({ version: 1, publications: [legacyPublication] }),
     )
 
     expect(loadPublications()).toEqual([
       {
         ...legacyPublication,
-        content: {
-          blocks: [],
+        content: { blocks: [] },
+        documentSettings: {
+          pageSize: 'us-letter',
+          orientation: 'portrait',
+          margins: { top: 0.75, right: 0.75, bottom: 0.75, left: 0.75 },
         },
       },
     ])
@@ -84,35 +133,44 @@ describe('publicationsStorage', () => {
 
   it.each([
     ['invalid JSON', '{invalid-json'],
-    [
-      'unknown version',
-      JSON.stringify({
-        version: 3,
-        publications: [publication],
-      }),
-    ],
-    [
-      'invalid collection',
-      JSON.stringify({
-        version: 2,
-        publications: {},
-      }),
-    ],
+    ['unknown version', JSON.stringify({ version: 5, publications: [publication] })],
+    ['invalid collection', JSON.stringify({ version: 4, publications: {} })],
     [
       'invalid publication content',
       JSON.stringify({
-        version: 2,
+        version: 4,
+        publications: [
+          {
+            ...publication,
+            content: { blocks: [{ id: '', type: 'paragraph', text: 'Invalid' }] },
+          },
+        ],
+      }),
+    ],
+    [
+      'invalid interactive block',
+      JSON.stringify({
+        version: 4,
         publications: [
           {
             ...publication,
             content: {
-              blocks: [
-                {
-                  id: '',
-                  type: 'paragraph',
-                  text: 'Invalid block',
-                },
-              ],
+              blocks: [{ id: 'field-1', type: 'multiline-text-field' }],
+            },
+          },
+        ],
+      }),
+    ],
+    [
+      'invalid document settings',
+      JSON.stringify({
+        version: 4,
+        publications: [
+          {
+            ...publication,
+            documentSettings: {
+              ...publication.documentSettings,
+              orientation: 'landscape',
             },
           },
         ],
@@ -120,7 +178,6 @@ describe('publicationsStorage', () => {
     ],
   ])('falls back safely for %s', (_label, payload) => {
     localStorage.setItem(PUBLICATIONS_STORAGE_KEY, payload)
-
     expect(loadPublications()).toEqual([])
   })
 
@@ -132,11 +189,11 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([])
   })
 
-  it('writes a version 2 workspace', () => {
+  it('writes a version 4 workspace', () => {
     savePublications([publication])
 
     expect(JSON.parse(localStorage.getItem(PUBLICATIONS_STORAGE_KEY) ?? '')).toEqual({
-      version: 2,
+      version: 4,
       publications: [publication],
     })
   })

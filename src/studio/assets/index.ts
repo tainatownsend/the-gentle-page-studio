@@ -1,0 +1,7 @@
+export { AssetsPage } from './AssetsPage'
+export type { AssetsPageProps } from './AssetsPage'
+export { ASSETS_STORAGE_KEY, loadAssets, saveAssets } from './assetsStorage'
+export { useAssetsLibrary } from './useAssetsLibrary'
+export type { AddAssetResult } from './useAssetsLibrary'
+export { ACCEPTED_ASSET_TYPES, MAX_ASSET_BYTES } from './types'
+export type { StudioAsset } from './types'
