@@ -2,7 +2,7 @@ import { PDFDocument } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 
 import { compilePublicationManuscript } from '../compiler'
-import { generateFillablePublicationPdf } from '../export'
+import { generateFillablePublicationPdf } from '../export/generateFillablePublicationPdf'
 import { createPublicationLayout } from '../layout'
 import { createPublicationFixture } from './createPublicationFixture'
 
