@@ -1,8 +1,8 @@
 # Backlog
 
-This backlog reflects the consolidated MVP release candidate in `release/mvp-manual-acceptance` / PR0028.
+This backlog reflects the consolidated **Editorial North Star** release candidate in `release/editorial-north-star-manual-acceptance` / PR #99.
 
-## Implemented in the MVP release candidate
+## Implemented in the release candidate
 
 ### Platform and quality
 
@@ -13,127 +13,126 @@ This backlog reflects the consolidated MVP release candidate in `release/mvp-man
 - [x] high-severity dependency audit enforced in GitHub Quality
 - [x] snapshot-first repair workflow
 - [x] deterministic test interaction guidance
-- [x] repository hygiene cleanup
-- [x] reviewed high-severity dependency remediation without forced upgrades
+- [x] reviewed dependency remediation without forced upgrades
 - [x] weekly Dependabot npm maintenance
-- [x] lazy loading of the fillable-PDF serializer
+- [x] lazy loading boundary for the heavy fillable-PDF serializer
 
 ### Publication lifecycle
 
 - [x] local publication persistence and migrations
-- [x] dedicated publication creation route
 - [x] Draft / Published lifecycle
 - [x] edit, save, duplicate, delete, and preview flows
 - [x] unsaved-change protection
 - [x] autosave and best-effort draft recovery
-- [x] recovery invalidation when the canonical saved publication is newer
+- [x] immutable published revisions, comparison, and restore-as-Draft
 
-### Content authoring
+### Publication Compiler
 
-- [x] heading blocks
-- [x] paragraph blocks
-- [x] multiline response fields
-- [x] checkbox fields
-- [x] add, remove, duplicate, and move block controls
-- [x] heading levels
-- [x] starter templates: Blank publication, Guided journal, and Daily check-in
+- [x] manuscript-first Create publication experience
+- [x] Gentle Page Manuscript Protocol
+- [x] official AI authoring prompt for ChatGPT / Gemini / Claude / similar tools
+- [x] direct Paste → Compile → Preview flow
+- [x] local `.docx` ingestion through OOXML
+- [x] paragraph/table body-order preservation
+- [x] Word heading and page-break intent preservation
+- [x] writing-line, checkbox, table, matrix, and rating interpretation
+- [x] author-only note filtering
+- [x] exception-only import diagnostics
+- [x] semantic table-cell response and checkbox controls
+- [x] zero reader-facing Gentle Page protocol syntax after compilation
 
-### Editorial document output
+### Editorial composition
 
-- [x] US Letter portrait defaults
-- [x] fixed Gentle Page margins
-- [x] Gentle Page cover and typography
-- [x] automatic derived pagination
-- [x] bottom-center page numbers
-- [x] print-oriented preview
+- [x] US Letter portrait publication defaults and fixed Gentle Page margins
+- [x] Gentle Page publication-facing editorial design system
+- [x] branded cover, hierarchy, typography, palette, rules, cards, and worksheet styling
+- [x] semantic page archetypes and layout recipes
+- [x] smart pagination and preferred/forced page-break intent
+- [x] elastic response-field sizing
+- [x] heading orphan prevention
+- [x] prompt/response and checkbox grouping
+- [x] repeatable-page semantics
+- [x] compound journal component recognition
+- [x] cross-page editorial recomposition
+- [x] Visual QA diagnostics and deterministic self-healing
+- [x] Brain-Friendly Planner golden acceptance automation
+
+### Static and fillable output
+
+- [x] print-oriented browser Preview
 - [x] static browser Print / Save as PDF
-
-### Fillable PDF
-
-- [x] deterministic PDF layout planning
-- [x] stable interactive field identities
-- [x] binary `pdf-lib` serializer
-- [x] multiline AcroForm text fields
+- [x] deterministic shared PDF layout planning
+- [x] multiline AcroForm response fields
 - [x] AcroForm checkboxes
-- [x] deterministic download filenames
-- [x] browser Download fillable PDF action
+- [x] rating controls
+- [x] fillable response/checkbox controls inside tables and matrices
+- [x] worksheet-only publications expose fillable PDF export
 - [x] export error handling and retry behavior
-- [x] duplicate-export protection
-
-### Publication history
-
-- [x] immutable snapshots on explicit publish transitions
-- [x] local revision persistence
-- [x] version history UI
-- [x] restore historical version as a new Draft
-- [x] deterministic revision comparison
-- [x] adjacent published-version comparison UI
+- [x] stable field identities
 
 ### Studio assets
 
-- [x] local image asset library
-- [x] PNG, JPEG, and WebP upload validation
-- [x] local persistence and preview
-- [x] permanent asset deletion
+- [x] local PNG / JPEG / WebP asset library
+- [x] upload validation, persistence, preview, and deletion
 
-## Current release gate — manual acceptance
+## Current release gate — manual Editorial North Star acceptance
 
-Run `docs/MVP_ACCEPTANCE.md` against PR0028 and track the result in issue #73.
+Run issue #73 against PR #99.
 
-The MVP remains a release candidate until browser and real PDF-viewer acceptance is complete.
+The required zero-touch path is:
 
-Required manual evidence:
+**Paste / Upload → Compile → beautiful publication → Preview → Export**
 
-1. publication creation and template smoke test
-2. autosave/recovery smoke test
-3. editor and automatic-pagination smoke test
-4. local asset-library smoke test
-5. static Print / Save as PDF validation
-6. fillable PDF download, edit, save, close, reopen, and print validation
-7. version history, comparison, and restore validation
-8. light/dark and desktop/narrow viewport smoke test
+Primary acceptance cases:
+
+1. Brain-Friendly Planner generated with the current Gentle Page AI authoring prompt
+2. `Burnout_Recovery_Journal_English_Draft.docx`
+3. `The_30-Day_Energy_Audit_English_Draft.docx`
+4. static/fillable PDF parity in a real PDF viewer
+5. regression smoke test for lifecycle, recovery, history, assets, themes, and narrow/mobile UI
 
 Acceptance outcome must be one of:
 
 - **PASS**
-- **PASS WITH FOLLOW-UP** with no blocking defects
-- **FAIL** with reproducible blocking defects recorded
+- **PASS WITH FOLLOW-UP** with no blocking defect
+- **FAIL** with a reproducible blocking defect
 
-## Follow-up only if acceptance exposes a defect
+### Release-blocking defects
 
-- [ ] remediate reproducible browser print incompatibilities
-- [ ] remediate reproducible PDF-viewer compatibility issues
-- [ ] adjust pagination or field geometry only when a real acceptance case demonstrates a problem
+- manuscript content is lost
+- compilation fails for representative AI or DOCX input
+- `[[GP:...]]` / Markdown control syntax leaks into reader output
+- clipping or overlap makes pages unusable
+- structured worksheets are materially corrupted
+- fillable fields are missing, unusable, or fail to preserve values
+- widespread heading-only / mechanically fragmented pages remain
+- ordinary publications still require page-by-page desktop-publishing work
 
-## Post-MVP evolution
+## After acceptance
 
-These items are intentionally outside the current manual-acceptance gate:
+- [ ] merge PR #99 to `main` using the normal squash strategy
+- [ ] close issue #60 once the accepted dependency remediation reaches `main`
+- [ ] protect `main` with required Quality checks (issue #74)
+- [ ] remove obsolete release branches after the accepted merge
 
-- authentication
-- backend synchronization
+## Post-v1 evolution
+
+These items are intentionally outside the Editorial North Star release gate:
+
+- authentication and backend synchronization
 - collaboration
-- cloud asset storage
-- placing library assets directly into publication pages
-- additional fillable field types
+- cloud-backed asset library
+- placing image assets directly into publication pages
 - richer text formatting
-- drag-and-drop block reordering
-- keyboard shortcuts for block movement
-- bulk block selection
-- user-selectable page sizes and orientation
-- custom margins
-- manual pagination
-- custom page-number placement
-- per-publication visual themes
-- customizable cover layouts
+- additional interactive field types
+- configurable page sizes, orientation, margins, and themes
 - multiple export formats
 - publishing/distribution integrations
 - scheduled publishing
-- AI-assisted creation
+- optional direct AI API integration
 
-## Architectural notes
+## Architectural rule
 
-Authored content remains a semantic ordered stream. Page objects belong to derived layout used by preview and export, preventing persisted page boundaries from becoming stale after content or typography changes.
+**AI creates the manuscript. Gentle Page creates the publication.**
 
-Explicit publish creates an immutable snapshot; ordinary Draft saves do not create versions; restore creates a new Draft rather than rewriting history.
-
-Reader response data remains outside publication authoring state. Fillable PDF fields are output controls derived from durable authored blocks.
+Authored content remains semantic. Page composition is derived and recompilable. Manual editing is an exception/correction layer rather than the primary typesetting workflow.
