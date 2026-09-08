@@ -2,7 +2,10 @@ export {
   createPublicationPdfFilename,
   downloadFillablePublicationPdf,
 } from './downloadFillablePublicationPdf'
-export { generateFillablePublicationPdf } from './generateFillablePublicationPdf'
+
+// Keep the binary serializer out of this public barrel. The download helper loads
+// generateFillablePublicationPdf dynamically so pdf-lib stays out of the initial app bundle.
+// Tests and serializer-internal code that need the generator should import its module directly.
 export {
   createPublicationPdfPlan,
   PDF_POINTS_PER_INCH,
