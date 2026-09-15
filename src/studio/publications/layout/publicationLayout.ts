@@ -95,34 +95,48 @@ function cloneBlock(block: PublicationBlock): PublicationBlock {
 
 function estimateTableUnits(block: PublicationTableBlock): number {
   const columnCount = Math.max(block.columns.length, 1)
+  const charactersPerVisualLine = Math.max(40 * columnCount, 1)
   const headerCharacters = block.columns.reduce((total, cell) => total + cell.length, 0)
-  const headerUnits = 5 + Math.ceil(headerCharacters / Math.max(36 * columnCount, 1)) * 2
+  const headerVisualLines = Math.max(1, Math.ceil(headerCharacters / charactersPerVisualLine))
+  const chromeUnits = block.text ? 3 : 2
+  const headerUnits = 2 + Math.max(0, headerVisualLines - 1)
   const rowUnits = block.rows.reduce((total, row) => {
     const rowCharacters = row.reduce((sum, cell) => sum + cell.length, 0)
-    return total + 3 + Math.ceil(rowCharacters / Math.max(42 * columnCount, 1)) * 2
+    const visualLines = Math.max(1, Math.ceil(rowCharacters / charactersPerVisualLine))
+    return total + 2 + Math.max(0, visualLines - 1)
   }, 0)
 
-  return headerUnits + rowUnits
+  return chromeUnits + headerUnits + rowUnits
 }
 
 export function estimatePublicationBlockUnits(block: PublicationBlock): number {
   const textLength = Math.max(block.text.trim().length, 1)
 
   switch (block.type) {
-    case 'heading':
-      return 5 + Math.ceil(textLength / 45) * 2
-    case 'paragraph':
-      return 3 + Math.ceil(textLength / 70) * 3
+    case 'heading': {
+      const baseUnits = block.level === 1 ? 5 : 3
+      const visualLines = Math.max(1, Math.ceil(textLength / 45))
+      return baseUnits + Math.max(0, visualLines - 1) * 2
+    }
+    case 'paragraph': {
+      const visualLines = Math.max(1, Math.ceil(textLength / 75))
+      return 3 + Math.max(0, visualLines - 1) * 2
+    }
     case 'multiline-text-field': {
       const baseUnits =
-        block.responseSize === 'short' ? 7 : block.responseSize === 'medium' ? 10 : 14
-      return baseUnits + Math.ceil(textLength / 70) * 2
+        block.responseSize === 'short' ? 8 : block.responseSize === 'medium' ? 10 : 12
+      const promptLines = Math.max(1, Math.ceil(textLength / 75))
+      return baseUnits + Math.max(0, promptLines - 1) * 2
     }
-    case 'checkbox-field':
-      return 4 + Math.ceil(textLength / 70) * 2
+    case 'checkbox-field': {
+      const visualLines = Math.max(1, Math.ceil(textLength / 75))
+      return 3 + Math.max(0, visualLines - 1) * 2
+    }
     case 'rating-field': {
       const optionCount = Math.max(1, Math.floor(block.max - block.min) + 1)
-      return 7 + Math.ceil(textLength / 70) * 2 + Math.ceil(optionCount / 6) * 3
+      const promptLines = Math.max(1, Math.ceil(textLength / 75))
+      const optionRows = Math.max(1, Math.ceil(optionCount / 14))
+      return 7 + Math.max(0, promptLines - 1) * 2 + Math.max(0, optionRows - 1) * 3
     }
     case 'table':
       return estimateTableUnits(block)
