@@ -108,6 +108,52 @@ PRODUCT / LAYOUT NOTE: Keep this page spacious.
     expect(result.manuscript).toContain('Visible reflection.')
   })
 
+  it('filters table-contained product notes without hiding adjacent reader content', () => {
+    const result = convertDocxOoxmlToManuscript(
+      documentXml(`
+        <w:p><w:r><w:t>Visible introduction.</w:t></w:r></w:p>
+        <w:tbl>
+          <w:tr><w:tc>
+            <w:p><w:r><w:t>PRODUCT / LAYOUT NOTE</w:t></w:r></w:p>
+            <w:p><w:r><w:t>Internal layout guidance that must never reach readers.</w:t></w:r></w:p>
+          </w:tc></w:tr>
+        </w:tbl>
+        <w:p><w:r><w:t>Visible reflection.</w:t></w:r></w:p>
+      `),
+    )
+
+    expect(result.manuscript).toBe(`Visible introduction.
+
+Visible reflection.`)
+    expect(result.manuscript).not.toContain('PRODUCT / LAYOUT NOTE')
+    expect(result.manuscript).not.toContain('Internal layout guidance')
+  })
+
+  it('treats a standalone INTERNAL DRAFT NOTE as the start of a trailing author-only section', () => {
+    const result = convertDocxOoxmlToManuscript(
+      documentXml(`
+        <w:p><w:r><w:t>Visible closing reflection.</w:t></w:r></w:p>
+        <w:p><w:r><w:t>INTERNAL DRAFT NOTE</w:t></w:r></w:p>
+        <w:p><w:r><w:t>Product Component Library</w:t></w:r></w:p>
+        <w:tbl>
+          <w:tr><w:tc><w:p><w:r><w:t>Component</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Digital opportunity</w:t></w:r></w:p></w:tc></w:tr>
+          <w:tr><w:tc><w:p><w:r><w:t>Quick capture</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Internal only</w:t></w:r></w:p></w:tc></w:tr>
+        </w:tbl>
+        <w:tbl>
+          <w:tr><w:tc>
+            <w:p><w:r><w:t>PRODUCT / LAYOUT NOTE</w:t></w:r></w:p>
+            <w:p><w:r><w:t>Do not expose this guidance.</w:t></w:r></w:p>
+          </w:tc></w:tr>
+        </w:tbl>
+      `),
+    )
+
+    expect(result.manuscript).toBe('Visible closing reflection.')
+    expect(result.manuscript).not.toContain('INTERNAL DRAFT NOTE')
+    expect(result.manuscript).not.toContain('Product Component Library')
+    expect(result.manuscript).not.toContain('Quick capture')
+  })
+
   it('returns a safe diagnostic when the document body is missing', () => {
     const result = convertDocxOoxmlToManuscript(
       `<?xml version="1.0"?><w:document xmlns:w="${WORD_NS}" />`,
