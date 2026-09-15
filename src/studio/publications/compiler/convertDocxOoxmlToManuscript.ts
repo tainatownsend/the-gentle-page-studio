@@ -151,8 +151,24 @@ function isWritingLine(text: string): boolean {
   return /^_{5,}$/.test(compact)
 }
 
+function isAuthorOnlyNote(text: string): boolean {
+  return /^(PRODUCT\s*\/\s*LAYOUT NOTE|INTERNAL DRAFT NOTE)\b/i.test(text.trim())
+}
+
+function isInternalDraftNoteSentinel(text: string): boolean {
+  return /^INTERNAL DRAFT NOTE\s*$/i.test(text.trim())
+}
+
+function tableStartsWithAuthorOnlyNote(table: Element): boolean {
+  const firstParagraphText = descendantsByLocalName(table, 'p')
+    .map(paragraphText)
+    .find((text) => Boolean(text.trim()))
+
+  return firstParagraphText ? isAuthorOnlyNote(firstParagraphText) : false
+}
+
 function authorNote(text: string): string | undefined {
-  if (!/^(PRODUCT\s*\/\s*LAYOUT NOTE|INTERNAL DRAFT NOTE)\b/i.test(text)) {
+  if (!isAuthorOnlyNote(text)) {
     return undefined
   }
 
@@ -300,15 +316,31 @@ export function convertDocxOoxmlToManuscript(
   }
 
   const items: DocxSemanticItem[] = []
+  let suppressTrailingInternalDraftSection = false
 
   Array.from(body.children).forEach((element) => {
+    if (suppressTrailingInternalDraftSection) {
+      return
+    }
+
     if (element.localName === 'p') {
+      const text = paragraphText(element)
+
+      if (isInternalDraftNoteSentinel(text)) {
+        suppressTrailingInternalDraftSection = true
+        return
+      }
+
       const item = paragraphToItem(element, styleNames)
       if (item) items.push(item)
       return
     }
 
     if (element.localName === 'tbl') {
+      if (tableStartsWithAuthorOnlyNote(element)) {
+        return
+      }
+
       const table = tableToMarkdown(element)
       if (table) {
         items.push({ kind: 'content', text: table })
