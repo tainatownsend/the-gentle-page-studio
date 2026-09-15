@@ -64,9 +64,17 @@ export function getPublicationCompoundComponentAtIndex(
   if (heading?.type !== 'heading') return undefined
 
   let endIndex = startIndex + 1
-  while (endIndex < blocks.length && blocks[endIndex]?.type !== 'heading') {
+  while (endIndex < blocks.length) {
     const candidate = blocks[endIndex]
     if (!candidate || crossesRepeatableSemanticBoundary(heading, candidate)) break
+
+    if (
+      candidate.type === 'heading' &&
+      candidate.level <= heading.level
+    ) {
+      break
+    }
+
     endIndex += 1
   }
 
