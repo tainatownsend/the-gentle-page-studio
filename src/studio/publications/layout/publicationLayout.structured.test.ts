@@ -69,4 +69,33 @@ describe('structured publication layout', () => {
     expect(pages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
     expect(pages[1]?.blocks.map((block) => block.id)).toEqual(['check-1', 'check-2', 'check-3'])
   })
+
+  it('reserves extra row height for interactive table controls', () => {
+    const staticTable = {
+      id: 'static-table',
+      type: 'table' as const,
+      text: '',
+      columns: ['Area', 'Response'],
+      rows: [
+        ['Work', ''],
+        ['Home', ''],
+        ['Health', ''],
+      ],
+    }
+    const interactiveTable = {
+      ...staticTable,
+      id: 'interactive-table',
+      cellControls: [
+        [[], [{ kind: 'response' as const, size: 'short' as const }]],
+        [[], [{ kind: 'response' as const, size: 'short' as const }]],
+        [[], [{ kind: 'response' as const, size: 'short' as const }]],
+      ],
+    }
+
+    const staticUnits = estimatePublicationBlockUnits(staticTable)
+    const interactiveUnits = estimatePublicationBlockUnits(interactiveTable)
+
+    expect(interactiveUnits).toBeGreaterThan(staticUnits)
+    expect(interactiveUnits).toBeLessThan(48)
+  })
 })
