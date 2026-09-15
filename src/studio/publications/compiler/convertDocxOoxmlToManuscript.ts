@@ -129,6 +129,7 @@ function markdownHeadingPrefix(style: string): string | undefined {
 
   if (normalized === 'title') return '#'
   if (normalized === 'heading1' || normalized === 'heading01') return '##'
+  if (normalized === 'smalllabel') return '###'
   if (
     normalized === 'heading2' ||
     normalized === 'heading02' ||
@@ -176,7 +177,7 @@ function authorNote(text: string): string | undefined {
 }
 
 function escapeMarkdownCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>').trim()
+  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 function tableToMarkdown(table: Element): string | undefined {
@@ -196,6 +197,14 @@ function tableToMarkdown(table: Element): string | undefined {
   const normalizedRows = rows.map((row) =>
     Array.from({ length: columnCount }, (_, index) => row[index] ?? ''),
   )
+
+  if (columnCount === 1) {
+    return normalizedRows
+      .map((row) => row[0]?.trim() ?? '')
+      .filter(Boolean)
+      .join('\n\n')
+  }
+
   const header = normalizedRows[0] ?? Array.from({ length: columnCount }, () => '')
   const bodyRows = normalizedRows.slice(1)
   const separator = Array.from({ length: columnCount }, () => '---')
