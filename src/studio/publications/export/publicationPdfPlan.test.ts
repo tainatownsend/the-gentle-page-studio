@@ -56,8 +56,8 @@ describe('createPublicationPdfPlan', () => {
       kind: 'multiline-text',
       label: 'What would support you today?',
       rect: {
-        x: 54,
-        width: 504,
+        x: 68,
+        width: 476,
       },
     })
     expect(responseField?.kind).toBe('multiline-text')
