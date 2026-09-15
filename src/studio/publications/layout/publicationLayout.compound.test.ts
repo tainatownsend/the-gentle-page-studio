@@ -57,4 +57,51 @@ describe('compound journal pagination', () => {
       'check-4',
     ])
   })
+
+  it('uses sparse-page capacity before splitting a long checklist across pages', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'heading',
+            type: 'heading',
+            level: 2,
+            text: 'Permission Slips',
+          },
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'Choose only the permissions that reduce pressure today.',
+          },
+          ...Array.from({ length: 7 }, (_, index) => ({
+            id: `check-${index + 1}`,
+            type: 'checkbox-field' as const,
+            text: `Permission option ${index + 1}`,
+          })),
+        ],
+      },
+    })
+
+    const pages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(pages).toHaveLength(2)
+    expect(pages[0]?.blocks.map((block) => block.id)).toEqual(
+      expect.arrayContaining(['heading', 'intro', 'check-1']),
+    )
+    expect(pages[0]?.blocks.at(-1)?.type).toBe('checkbox-field')
+    expect(pages[1]?.blocks[0]?.type).toBe('checkbox-field')
+    expect(pages.flatMap((page) => page.blocks).map((block) => block.id)).toEqual([
+      'heading',
+      'intro',
+      'check-1',
+      'check-2',
+      'check-3',
+      'check-4',
+      'check-5',
+      'check-6',
+      'check-7',
+    ])
+  })
 })
