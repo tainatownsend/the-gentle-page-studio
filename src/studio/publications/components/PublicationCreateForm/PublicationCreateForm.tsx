@@ -13,21 +13,30 @@ import { Stack } from '@/design-system/primitives/Stack'
 import { Text } from '@/design-system/primitives/Text'
 import { Textarea } from '@/design-system/primitives/Textarea'
 
+import type { PublicationContent } from '../../types'
+
 import styles from './PublicationCreateForm.module.css'
+
+export type PublicationCreationMode = 'manual' | 'compiled'
 
 export type PublicationCreateValues = {
   title: string
   description?: string
+  templateId?: string
+  content?: PublicationContent
+  creationMode?: PublicationCreationMode
 }
 
 export type PublicationCreateFormProps = {
   onSubmit: (values: PublicationCreateValues) => void
   onCancel: () => void
+  templateId?: string
 }
 
 export function PublicationCreateForm({
   onSubmit,
   onCancel,
+  templateId,
 }: PublicationCreateFormProps): ReactElement {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -49,6 +58,8 @@ export function PublicationCreateForm({
     onSubmit({
       title: normalizedTitle,
       description: normalizedDescription || undefined,
+      templateId,
+      creationMode: 'manual',
     })
   }
 
@@ -57,18 +68,11 @@ export function PublicationCreateForm({
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="lg">
           <Stack gap="xs">
-            <Text
-              as="h2"
-              id="create-publication-title"
-              variant="h2"
-              weight="semibold"
-            >
-              Create publication
+            <Text as="h2" id="create-publication-title" variant="h2" weight="semibold">
+              Create publication manually
             </Text>
-
             <Text tone="secondary">
-              Start with the essentials. You can shape the full publication in
-              the editor afterward.
+              Use this only when you want to start from a template or build the publication block by block.
             </Text>
           </Stack>
 
@@ -79,24 +83,17 @@ export function PublicationCreateForm({
             description="Use a clear working title. You can change it later."
           >
             <Input
-              autoFocus
               fullWidth
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value)
-
-                if (titleError) {
-                  setTitleError(undefined)
-                }
+                if (titleError) setTitleError(undefined)
               }}
               placeholder="e.g. ADHD Emotional Regulation Journal"
             />
           </Field>
 
-          <Field
-            label="Description"
-            description="Add a short note about the purpose of this publication."
-          >
+          <Field label="Description" description="Add a short note about the purpose of this publication.">
             <Textarea
               fullWidth
               rows={4}
@@ -110,7 +107,6 @@ export function PublicationCreateForm({
             <Button type="button" variant="ghost" onClick={onCancel}>
               Cancel
             </Button>
-
             <Button type="submit">Create draft</Button>
           </Cluster>
         </Stack>

@@ -1,8 +1,19 @@
-import type { Publication, PublicationBlock, PublicationContent, PublicationStatus } from '../types'
+import {
+  createDefaultPublicationDocumentSettings,
+  type Publication,
+  type PublicationBlock,
+  type PublicationContent,
+  type PublicationDocumentSettings,
+  type PublicationStatus,
+} from '../types'
 
 export const LEGACY_PUBLICATIONS_STORAGE_KEY = 'the-gentle-page:publications-workspace:v1'
 
-export const PUBLICATIONS_STORAGE_KEY = 'the-gentle-page:publications-workspace:v2'
+export const LEGACY_PUBLICATIONS_STORAGE_KEY_V2 = 'the-gentle-page:publications-workspace:v2'
+
+export const LEGACY_PUBLICATIONS_STORAGE_KEY_V3 = 'the-gentle-page:publications-workspace:v3'
+
+export const PUBLICATIONS_STORAGE_KEY = 'the-gentle-page:publications-workspace:v4'
 
 type LegacyPublicationV1 = {
   id: string
@@ -13,6 +24,31 @@ type LegacyPublicationV1 = {
   updatedAt: string
 }
 
+type LegacyPublicationBlockV3 =
+  | {
+      id: string
+      type: 'heading'
+      level: 1 | 2 | 3
+      text: string
+    }
+  | {
+      id: string
+      type: 'paragraph'
+      text: string
+    }
+
+type LegacyPublicationContentV3 = {
+  blocks: LegacyPublicationBlockV3[]
+}
+
+type LegacyPublicationV2 = LegacyPublicationV1 & {
+  content: LegacyPublicationContentV3
+}
+
+type LegacyPublicationV3 = LegacyPublicationV2 & {
+  documentSettings: PublicationDocumentSettings
+}
+
 type PersistedPublicationsWorkspaceV1 = {
   version: 1
   publications: LegacyPublicationV1[]
@@ -20,6 +56,16 @@ type PersistedPublicationsWorkspaceV1 = {
 
 type PersistedPublicationsWorkspaceV2 = {
   version: 2
+  publications: LegacyPublicationV2[]
+}
+
+type PersistedPublicationsWorkspaceV3 = {
+  version: 3
+  publications: LegacyPublicationV3[]
+}
+
+type PersistedPublicationsWorkspaceV4 = {
+  version: 4
   publications: Publication[]
 }
 
@@ -51,7 +97,7 @@ function isBasePublication(value: unknown): boolean {
   )
 }
 
-function isPublicationBlock(value: unknown): value is PublicationBlock {
+function isLegacyPublicationBlockV3(value: unknown): value is LegacyPublicationBlockV3 {
   if (
     !isRecord(value) ||
     typeof value.id !== 'string' ||
@@ -68,16 +114,84 @@ function isPublicationBlock(value: unknown): value is PublicationBlock {
   return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
 }
 
+function isPublicationBlock(value: unknown): value is PublicationBlock {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    value.id.trim().length === 0 ||
+    typeof value.text !== 'string'
+  ) {
+    return false
+  }
+
+  if (
+    value.type === 'paragraph' ||
+    value.type === 'multiline-text-field' ||
+    value.type === 'checkbox-field'
+  ) {
+    return true
+  }
+
+  return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
+}
+
+function isLegacyPublicationContentV3(value: unknown): value is LegacyPublicationContentV3 {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.blocks) &&
+    value.blocks.every(isLegacyPublicationBlockV3)
+  )
+}
+
 function isPublicationContent(value: unknown): value is PublicationContent {
   return isRecord(value) && Array.isArray(value.blocks) && value.blocks.every(isPublicationBlock)
+}
+
+function isMarginValue(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+}
+
+function isPublicationDocumentSettings(value: unknown): value is PublicationDocumentSettings {
+  if (!isRecord(value) || value.pageSize !== 'us-letter' || value.orientation !== 'portrait') {
+    return false
+  }
+
+  const { margins } = value
+
+  return (
+    isRecord(margins) &&
+    isMarginValue(margins.top) &&
+    isMarginValue(margins.right) &&
+    isMarginValue(margins.bottom) &&
+    isMarginValue(margins.left)
+  )
 }
 
 function isLegacyPublicationV1(value: unknown): value is LegacyPublicationV1 {
   return isBasePublication(value)
 }
 
+function isLegacyPublicationV2(value: unknown): value is LegacyPublicationV2 {
+  return isBasePublication(value) && isRecord(value) && isLegacyPublicationContentV3(value.content)
+}
+
+function isLegacyPublicationV3(value: unknown): value is LegacyPublicationV3 {
+  if (!isLegacyPublicationV2(value)) {
+    return false
+  }
+
+  return isPublicationDocumentSettings(
+    (value as LegacyPublicationV2 & Record<string, unknown>).documentSettings,
+  )
+}
+
 function isPublication(value: unknown): value is Publication {
-  return isBasePublication(value) && isRecord(value) && isPublicationContent(value.content)
+  return (
+    isBasePublication(value) &&
+    isRecord(value) &&
+    isPublicationContent(value.content) &&
+    isPublicationDocumentSettings(value.documentSettings)
+  )
 }
 
 function isPersistedWorkspaceV1(value: unknown): value is PersistedPublicationsWorkspaceV1 {
@@ -94,6 +208,24 @@ function isPersistedWorkspaceV2(value: unknown): value is PersistedPublicationsW
     isRecord(value) &&
     value.version === 2 &&
     Array.isArray(value.publications) &&
+    value.publications.every(isLegacyPublicationV2)
+  )
+}
+
+function isPersistedWorkspaceV3(value: unknown): value is PersistedPublicationsWorkspaceV3 {
+  return (
+    isRecord(value) &&
+    value.version === 3 &&
+    Array.isArray(value.publications) &&
+    value.publications.every(isLegacyPublicationV3)
+  )
+}
+
+function isPersistedWorkspaceV4(value: unknown): value is PersistedPublicationsWorkspaceV4 {
+  return (
+    isRecord(value) &&
+    value.version === 4 &&
+    Array.isArray(value.publications) &&
     value.publications.every(isPublication)
   )
 }
@@ -103,6 +235,26 @@ function migratePublicationV1(publication: LegacyPublicationV1): Publication {
     ...publication,
     content: {
       blocks: [],
+    },
+    documentSettings: createDefaultPublicationDocumentSettings(),
+  }
+}
+
+function migratePublicationV2(publication: LegacyPublicationV2): Publication {
+  return {
+    ...publication,
+    content: {
+      blocks: publication.content.blocks.map((block) => ({ ...block })),
+    },
+    documentSettings: createDefaultPublicationDocumentSettings(),
+  }
+}
+
+function migratePublicationV3(publication: LegacyPublicationV3): Publication {
+  return {
+    ...publication,
+    content: {
+      blocks: publication.content.blocks.map((block) => ({ ...block })),
     },
   }
 }
@@ -135,14 +287,26 @@ export function loadPublications(): Publication[] {
   try {
     const currentWorkspace = readWorkspace(storage, PUBLICATIONS_STORAGE_KEY)
 
-    if (isPersistedWorkspaceV2(currentWorkspace)) {
+    if (isPersistedWorkspaceV4(currentWorkspace)) {
       return currentWorkspace.publications
     }
 
-    const legacyWorkspace = readWorkspace(storage, LEGACY_PUBLICATIONS_STORAGE_KEY)
+    const legacyWorkspaceV3 = readWorkspace(storage, LEGACY_PUBLICATIONS_STORAGE_KEY_V3)
 
-    if (isPersistedWorkspaceV1(legacyWorkspace)) {
-      return legacyWorkspace.publications.map(migratePublicationV1)
+    if (isPersistedWorkspaceV3(legacyWorkspaceV3)) {
+      return legacyWorkspaceV3.publications.map(migratePublicationV3)
+    }
+
+    const legacyWorkspaceV2 = readWorkspace(storage, LEGACY_PUBLICATIONS_STORAGE_KEY_V2)
+
+    if (isPersistedWorkspaceV2(legacyWorkspaceV2)) {
+      return legacyWorkspaceV2.publications.map(migratePublicationV2)
+    }
+
+    const legacyWorkspaceV1 = readWorkspace(storage, LEGACY_PUBLICATIONS_STORAGE_KEY)
+
+    if (isPersistedWorkspaceV1(legacyWorkspaceV1)) {
+      return legacyWorkspaceV1.publications.map(migratePublicationV1)
     }
 
     return []
@@ -158,8 +322,8 @@ export function savePublications(publications: readonly Publication[]): void {
     return
   }
 
-  const workspace: PersistedPublicationsWorkspaceV2 = {
-    version: 2,
+  const workspace: PersistedPublicationsWorkspaceV4 = {
+    version: 4,
     publications: [...publications],
   }
 

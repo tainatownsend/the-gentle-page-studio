@@ -4,7 +4,7 @@ import { vi } from 'vitest'
 import { PublicationCreateForm } from './PublicationCreateForm'
 
 describe('PublicationCreateForm', () => {
-  it('submits normalized publication values', () => {
+  it('submits normalized publication values as a manual creation', () => {
     const onSubmit = vi.fn()
 
     render(<PublicationCreateForm onSubmit={onSubmit} onCancel={() => undefined} />)
@@ -35,6 +35,7 @@ describe('PublicationCreateForm', () => {
     expect(onSubmit).toHaveBeenCalledWith({
       title: 'Gentle Focus Journal',
       description: 'A supportive focus practice.',
+      creationMode: 'manual',
     })
   })
 

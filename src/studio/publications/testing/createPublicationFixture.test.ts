@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { createPublicationFixture, DEFAULT_PUBLICATION_TIMESTAMP } from './createPublicationFixture'
+import {
+  createPublicationFixture,
+  DEFAULT_PUBLICATION_TIMESTAMP,
+} from './createPublicationFixture'
 
 describe('createPublicationFixture', () => {
   it('creates a complete publication with stable defaults', () => {
@@ -10,6 +13,16 @@ describe('createPublicationFixture', () => {
       status: 'draft',
       content: {
         blocks: [],
+      },
+      documentSettings: {
+        pageSize: 'us-letter',
+        orientation: 'portrait',
+        margins: {
+          top: 0.75,
+          right: 0.75,
+          bottom: 0.75,
+          left: 0.75,
+        },
       },
       createdAt: DEFAULT_PUBLICATION_TIMESTAMP,
       updatedAt: DEFAULT_PUBLICATION_TIMESTAMP,
@@ -46,6 +59,16 @@ describe('createPublicationFixture', () => {
             text: 'Ready.',
           },
         ],
+      },
+      documentSettings: {
+        pageSize: 'us-letter',
+        orientation: 'portrait',
+        margins: {
+          top: 0.75,
+          right: 0.75,
+          bottom: 0.75,
+          left: 0.75,
+        },
       },
       createdAt: DEFAULT_PUBLICATION_TIMESTAMP,
       updatedAt: DEFAULT_PUBLICATION_TIMESTAMP,
