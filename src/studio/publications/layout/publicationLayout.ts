@@ -35,7 +35,6 @@ export type PublicationLayoutPage = {
 export type PublicationLayoutDiagnosticCode =
   | 'oversized-block'
   | 'sparse-page'
-  | 'repeatable-group-overflow'
   | PublicationVisualQaIssueCode
 
 export type PublicationLayoutDiagnostic = {
@@ -100,7 +99,7 @@ function estimateTableUnits(block: PublicationTableBlock): number {
   const headerUnits = 5 + Math.ceil(headerCharacters / Math.max(36 * columnCount, 1)) * 2
   const rowUnits = block.rows.reduce((total, row) => {
     const rowCharacters = row.reduce((sum, cell) => sum + cell.length, 0)
-    return total + 4 + Math.ceil(rowCharacters / Math.max(42 * columnCount, 1)) * 2
+    return total + 3 + Math.ceil(rowCharacters / Math.max(42 * columnCount, 1)) * 2
   }, 0)
 
   return headerUnits + rowUnits
@@ -120,7 +119,7 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
       return baseUnits + Math.ceil(textLength / 70) * 2
     }
     case 'checkbox-field':
-      return 5 + Math.ceil(textLength / 70) * 2
+      return 4 + Math.ceil(textLength / 70) * 2
     case 'rating-field': {
       const optionCount = Math.max(1, Math.floor(block.max - block.min) + 1)
       return 7 + Math.ceil(textLength / 70) * 2 + Math.ceil(optionCount / 6) * 3
@@ -139,7 +138,7 @@ function getFlexibleResponseUnits(block: PublicationBlock): number {
     case 'short':
       return 4
     case 'medium':
-      return 8
+      return 10
     case 'long':
       return 14
     default:
@@ -223,8 +222,17 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       currentUnits + blockUnits + nextBlockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
     const compoundComponentUnits = getCompoundComponentUnits(blocks, index)
+    const currentPageIsMeaningfullyFilled =
+      currentUnits >= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS - SPARSE_PAGE_REMAINING_UNITS
+    const wouldStartLongCompoundComponent =
+      currentPage.length > 0 &&
+      block.type === 'heading' &&
+      compoundComponentUnits !== undefined &&
+      compoundComponentUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
+      currentUnits >= PREFERRED_PAGE_BREAK_MINIMUM_FILL_UNITS
     const wouldSplitCompoundComponent =
       currentPage.length > 0 &&
+      currentPageIsMeaningfullyFilled &&
       compoundComponentUnits !== undefined &&
       compoundComponentUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
       currentUnits + compoundComponentUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
@@ -232,9 +240,12 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
     const checkboxGroupUnits = getCheckboxGroupUnits(blocks, index)
     const startsCheckboxGroup =
       block.type === 'checkbox-field' && blocks[index - 1]?.type !== 'checkbox-field'
+    const headingAlreadyIntroducesCheckboxGroup =
+      currentPage[currentPage.length - 1]?.type === 'heading'
     const wouldSplitCheckboxGroup =
       currentPage.length > 0 &&
       startsCheckboxGroup &&
+      !headingAlreadyIntroducesCheckboxGroup &&
       checkboxGroupUnits !== undefined &&
       checkboxGroupUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
       currentUnits + checkboxGroupUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
@@ -254,6 +265,7 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       semanticBoundaryBreak ||
       forcedBreak ||
       preferredBreak ||
+      wouldStartLongCompoundComponent ||
       wouldSplitCompoundComponent ||
       wouldOrphanKeepWithNextBlock ||
       wouldSplitCheckboxGroup ||
@@ -340,27 +352,7 @@ function pageStartsRepeatableGroup(page: PublicationLayoutPage | undefined): boo
 function createDiagnostics(pages: readonly PublicationLayoutPage[]): PublicationLayoutDiagnostic[] {
   const diagnostics: PublicationLayoutDiagnostic[] = []
   const contentPages = pages.filter((page) => page.kind === 'content')
-  const repeatableGroupUnits = new Map<
-    string,
-    { name: string; units: number; pageNumber?: number }
-  >()
-
   contentPages.forEach((page, pageIndex) => {
-    page.blocks.forEach((block, blockIndex) => {
-      const group = block.semanticGroup
-      if (group?.kind !== 'repeatable-page') return
-
-      const allocation = page.allocations[blockIndex]
-      const current = repeatableGroupUnits.get(group.id)
-      repeatableGroupUnits.set(group.id, {
-        name: group.name,
-        units:
-          (current?.units ?? 0) +
-          (allocation?.baselineUnits ?? estimatePublicationBlockUnits(block)),
-        pageNumber: current?.pageNumber ?? page.pageNumber,
-      })
-    })
-
     page.allocations.forEach((allocation) => {
       if (allocation.baselineUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS) {
         diagnostics.push({
@@ -388,17 +380,6 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
         code: 'sparse-page',
         pageNumber: page.pageNumber,
         message: 'This page remains unusually sparse after automatic response-field expansion.',
-      })
-    }
-  })
-
-  repeatableGroupUnits.forEach((group, groupId) => {
-    if (group.units > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS) {
-      diagnostics.push({
-        code: 'repeatable-group-overflow',
-        semanticGroupId: groupId,
-        pageNumber: group.pageNumber,
-        message: `Repeatable page “${group.name}” exceeds one page and needs a quick content or layout review.`,
       })
     }
   })
