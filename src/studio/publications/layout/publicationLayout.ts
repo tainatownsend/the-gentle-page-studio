@@ -95,14 +95,40 @@ function cloneBlock(block: PublicationBlock): PublicationBlock {
 
 function estimateTableUnits(block: PublicationTableBlock): number {
   const columnCount = Math.max(block.columns.length, 1)
+  const charactersPerVisualLine = Math.max(40 * columnCount, 1)
   const headerCharacters = block.columns.reduce((total, cell) => total + cell.length, 0)
-  const headerUnits = 5 + Math.ceil(headerCharacters / Math.max(36 * columnCount, 1)) * 2
-  const rowUnits = block.rows.reduce((total, row) => {
+  const headerVisualLines = Math.max(
+    1,
+    Math.ceil(headerCharacters / charactersPerVisualLine),
+  )
+  const captionUnits = block.text ? 3 : 0
+  const headerUnits = 3 + Math.max(0, headerVisualLines - 1)
+
+  const rowUnits = block.rows.reduce((total, row, rowIndex) => {
     const rowCharacters = row.reduce((sum, cell) => sum + cell.length, 0)
-    return total + 3 + Math.ceil(rowCharacters / Math.max(42 * columnCount, 1)) * 2
+    const visualLines = Math.max(
+      1,
+      Math.ceil(rowCharacters / charactersPerVisualLine),
+    )
+    const textUnits = 2 + Math.max(0, visualLines - 1)
+    const controls = block.cellControls?.[rowIndex]?.flat() ?? []
+    const responseMinimum = controls.reduce((minimum, control) => {
+      if (control.kind !== 'response') return minimum
+      const controlMinimum =
+        control.size === 'short' ? 5 : control.size === 'medium' ? 7 : 8
+      return Math.max(minimum, controlMinimum)
+    }, 0)
+    const interactiveMinimum =
+      responseMinimum > 0
+        ? responseMinimum
+        : controls.some((control) => control.kind === 'checkbox')
+          ? 3
+          : 0
+
+    return total + Math.max(textUnits, interactiveMinimum)
   }, 0)
 
-  return headerUnits + rowUnits
+  return captionUnits + headerUnits + rowUnits
 }
 
 export function estimatePublicationBlockUnits(block: PublicationBlock): number {
