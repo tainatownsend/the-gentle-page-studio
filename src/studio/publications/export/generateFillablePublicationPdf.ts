@@ -131,6 +131,31 @@ function drawPageFoundation(page: PDFPage): void {
   })
 }
 
+function drawContentPageDecoration(page: PDFPage, blocks: readonly PublicationBlock[]): void {
+  const hasTable = blocks.some((block) => block.type === 'table')
+  const hasResponse = blocks.some((block) => block.type === 'multiline-text-field')
+
+  if (hasTable) {
+    page.drawRectangle({
+      x: 0,
+      y: page.getHeight() - 4,
+      width: page.getWidth(),
+      height: 4,
+      color: SAGE_SOFT,
+    })
+    return
+  }
+
+  page.drawEllipse({
+    x: page.getWidth() - 42,
+    y: page.getHeight() - 66,
+    xScale: 58,
+    yScale: 58,
+    color: hasResponse ? SAND_SOFT : SAGE_SOFT,
+    opacity: 0.72,
+  })
+}
+
 function drawCover(
   page: PDFPage,
   publication: Publication,
@@ -150,13 +175,22 @@ function drawCover(
     color: SAGE,
   })
 
-  page.drawRectangle({
-    x: 478,
-    y: 68,
-    width: 134,
-    height: 134,
+  page.drawEllipse({
+    x: 548,
+    y: 135,
+    xScale: 67,
+    yScale: 67,
     color: SAND_SOFT,
     opacity: 0.78,
+  })
+
+  page.drawEllipse({
+    x: 566,
+    y: 724,
+    xScale: 58,
+    yScale: 58,
+    color: SAGE_SOFT,
+    opacity: 0.72,
   })
 
   page.drawRectangle({
@@ -539,13 +573,7 @@ export async function generateFillablePublicationPdf(
       continue
     }
 
-    page.drawRectangle({
-      x: PUBLICATION_MARGIN_POINTS,
-      y: pagePlan.height - PUBLICATION_MARGIN_POINTS + 8,
-      width: 52,
-      height: 2.5,
-      color: SAGE,
-    })
+    drawContentPageDecoration(page, pagePlan.blocks)
 
     pagePlan.blocks.forEach((block, index) => {
       const placement = pagePlan.blockPlacements[index]
