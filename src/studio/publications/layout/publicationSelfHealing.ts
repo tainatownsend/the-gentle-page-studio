@@ -17,8 +17,8 @@ function hasRepeatableContent(blocks: readonly PublicationBlock[]): boolean {
   return blocks.some((block) => block.semanticGroup?.kind === 'repeatable-page')
 }
 
-function hasAuthoredBoundary(blocks: readonly PublicationBlock[]): boolean {
-  return blocks[0]?.layout?.pageBreakBefore !== undefined
+function hasForcedBoundary(blocks: readonly PublicationBlock[]): boolean {
+  return blocks[0]?.layout?.pageBreakBefore === 'forced'
 }
 
 function canMergeStrandedHeading(
@@ -30,7 +30,7 @@ function canMergeStrandedHeading(
 
   const heading = current[0]
   if (heading?.type !== 'heading' || heading.level === 1) return false
-  if (hasAuthoredBoundary(current) || hasAuthoredBoundary(next)) return false
+  if (hasForcedBoundary(current) || hasForcedBoundary(next)) return false
   if (hasRepeatableContent(current) || hasRepeatableContent(next)) return false
   if (inferPublicationPageArchetype(current) === 'section-opener') return false
 
