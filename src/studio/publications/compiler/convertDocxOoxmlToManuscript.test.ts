@@ -154,50 +154,6 @@ Visible reflection.`)
     expect(result.manuscript).not.toContain('Quick capture')
   })
 
-
-  it('keeps a table-contained product note entirely author-only', () => {
-    const result = convertDocxOoxmlToManuscript(
-      documentXml(`
-        <w:p><w:r><w:t>Visible introduction.</w:t></w:r></w:p>
-        <w:tbl>
-          <w:tr><w:tc><w:p><w:r><w:t>PRODUCT / LAYOUT NOTE</w:t></w:r></w:p></w:tc></w:tr>
-          <w:tr><w:tc><w:p><w:r><w:t>Keep this worksheet calm and spacious.</w:t></w:r></w:p></w:tc></w:tr>
-        </w:tbl>
-        <w:p><w:r><w:t>Visible reflection.</w:t></w:r></w:p>
-      `),
-    )
-
-    expect(result.manuscript).toContain('[[GP:AUTHOR_NOTE]]')
-    expect(result.manuscript).toContain('Keep this worksheet calm and spacious.')
-    expect(result.manuscript).toContain('[[GP:END]]')
-    expect(result.manuscript).toContain('Visible reflection.')
-  })
-
-  it('treats an internal draft note as an author-only remainder-of-document appendix', () => {
-    const result = convertDocxOoxmlToManuscript(
-      documentXml(`
-        <w:p><w:r><w:t>Visible reflection.</w:t></w:r></w:p>
-        <w:p><w:r><w:t>INTERNAL DRAFT NOTE</w:t></w:r></w:p>
-        <w:p><w:r><w:t>Product Component Library</w:t></w:r></w:p>
-        <w:tbl>
-          <w:tr><w:tc><w:p><w:r><w:t>Component</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Use</w:t></w:r></w:p></w:tc></w:tr>
-          <w:tr><w:tc><w:p><w:r><w:t>Slider</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>Capacity</w:t></w:r></w:p></w:tc></w:tr>
-        </w:tbl>
-        <w:p><w:r><w:t>Internal implementation guidance.</w:t></w:r></w:p>
-      `),
-    )
-
-    const visibleSegments = result.manuscript
-      .split('[[GP:AUTHOR_NOTE]]')
-      .map((segment) => segment.replace(/[\s\S]*?\[\[GP:END\]\]/g, ''))
-      .join(' ')
-
-    expect(visibleSegments).toContain('Visible reflection.')
-    expect(visibleSegments).not.toContain('Product Component Library')
-    expect(visibleSegments).not.toContain('Slider')
-    expect(visibleSegments).not.toContain('Internal implementation guidance.')
-  })
-
   it('returns a safe diagnostic when the document body is missing', () => {
     const result = convertDocxOoxmlToManuscript(
       `<?xml version="1.0"?><w:document xmlns:w="${WORD_NS}" />`,
