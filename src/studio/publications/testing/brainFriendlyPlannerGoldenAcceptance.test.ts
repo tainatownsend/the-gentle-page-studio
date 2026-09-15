@@ -8,27 +8,30 @@ import { createPublicationFixture } from './createPublicationFixture'
 
 const BRAIN_FRIENDLY_PLANNER_MANUSCRIPT = `# The Brain-Friendly Planner
 
-A gentle planning system for working with attention, energy, memory, and real-life capacity.
+A gentle planning system for making attention, energy, memory, and real-life capacity visible before deciding what to do next.
 
-## Part One: Build Your Brain-Friendly System
+[[GP:AUTHOR_NOTE]]
+Keep this publication calm, practical, gender-neutral, and low-shame. Do not expose this note to the reader.
+[[GP:END]]
 
-Notice what tends to make life harder without judging yourself for it.
+## Start With Your Brain, Not an Ideal Week
 
-### Remembering
+Planning works better when the system reflects how your attention and energy actually behave.
+
+### What tends to make planning harder?
 
 - [ ] I remember things at inconvenient times.
 - [ ] If I cannot see something, I may forget it exists.
-- [ ] I lose track of appointments or deadlines.
-- [ ] I create reminders and then stop noticing them.
-- [ ] I forget what I was doing after an interruption.
+- [ ] Everything can feel equally important.
+- [ ] I underestimate how long transitions take.
+- [ ] Interruptions make it hard to resume.
+- [ ] A full list can make me freeze instead of start.
 
-### Prioritizing
+### What already helps?
 
-- [ ] Everything feels important.
-- [ ] Everything feels urgent.
-- [ ] I choose easy tasks instead of important ones.
-- [ ] I struggle to decide what to do first.
-- [ ] I spend too long deciding.
+What tools, routines, people, environments, or reminders make follow-through easier?
+
+[[GP:RESPONSE size="medium"]]
 
 ## Weekly Reset
 
@@ -42,29 +45,37 @@ What are you currently trying not to forget?
 
 ### Step 2: Look ahead
 
-What already has a time or deadline?
+What already has a time, deadline, appointment, or dependency?
 
 [[GP:RESPONSE size="medium"]]
 
 ### Step 3: Choose your Big Three
 
-What three outcomes do you most want to protect?
+What three outcomes matter most if the week becomes busier than expected?
 
 [[GP:RESPONSE size="medium"]]
 
 ### Step 4: Notice your capacity
 
+How much realistic capacity do you have for this week?
+
 [[GP:RATING min="0" max="10"]]
 
-### Step 5: Make the week easier
+### Step 5: Lower the friction
 
-What can you prepare, automate, delegate, cancel, simplify, or decide in advance?
+What can you prepare, automate, delegate, cancel, simplify, move, or decide in advance?
 
 [[GP:RESPONSE size="medium"]]
 
+[[GP:PAGE_BREAK type="preferred"]]
+
+[[GP:REPEATABLE_PAGE name="Daily Compass"]]
+
 ## Daily Compass
 
-### How much capacity do I have today?
+A short check-in for choosing what fits today instead of forcing yesterday's plan.
+
+### Capacity right now
 
 [[GP:RATING min="0" max="10"]]
 
@@ -75,6 +86,7 @@ What can you prepare, automate, delegate, cancel, simplify, or decide in advance
 - [ ] Restless
 - [ ] Distracted
 - [ ] Tired
+- [ ] Overloaded
 
 ### The One Thing
 
@@ -82,21 +94,65 @@ If I only move one meaningful thing forward today, let it be:
 
 [[GP:RESPONSE size="medium"]]
 
+### Make starting easier
+
+What is the smallest visible next step?
+
+[[GP:RESPONSE size="short"]]
+
+What support or setup would reduce friction?
+
+[[GP:RESPONSE size="short"]]
+
+[[GP:END_REPEATABLE_PAGE]]
+
 ## Life Dashboard
+
+Use this as a scan, not a scorecard. Notice where attention may be useful.
 
 | Area | How is this going? | Needs attention soon? |
 | --- | --- | --- |
 | Work / study | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
 | Home | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
 | Health / body needs | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
+| Relationships | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
+| Money / admin | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
 
-## What Gives and Takes Energy?
+## Energy Pattern Matrix
+
+Mark the pattern that feels most typical right now.
 
 | Activity / situation | Usually gives energy | Neutral | Usually takes energy |
 | --- | --- | --- | --- |
 | Morning routine | - [ ] | - [ ] | - [ ] |
-| Meetings | - [ ] | - [ ] | - [ ] |
+| Focused work | - [ ] | - [ ] | - [ ] |
+| Meetings / conversations | - [ ] | - [ ] | - [ ] |
 | Errands | - [ ] | - [ ] | - [ ] |
+| Housework | - [ ] | - [ ] | - [ ] |
+
+## Friction-to-Support Plan
+
+Turn recurring friction into an experiment instead of a character judgment.
+
+| Friction I notice | What might be contributing? | One support to try |
+| --- | --- | --- | --- |
+| [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
+| [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
+| [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] | [[GP:RESPONSE size="short"]] |
+
+## End-of-Week Reflection
+
+### What worked better than expected?
+
+[[GP:RESPONSE size="medium"]]
+
+### What created avoidable friction?
+
+[[GP:RESPONSE size="medium"]]
+
+### What do I want to carry into next week?
+
+[[GP:RESPONSE size="medium"]]
 `
 
 function createGoldenPublication() {
@@ -129,22 +185,64 @@ describe('Brain-Friendly Planner golden acceptance', () => {
       layout.diagnostics.some((diagnostic) => diagnostic.code === 'heading-only-page'),
     ).toBe(false)
     expect(contentPages.every((page) => !(page.blocks.length === 1 && page.blocks[0]?.type === 'heading'))).toBe(true)
-    expect(contentPages.length).toBeLessThan(14)
+    expect(
+      layout.diagnostics.some(
+        (diagnostic) =>
+          diagnostic.code === 'sparse-page' ||
+          diagnostic.code === 'severe-underutilization',
+      ),
+    ).toBe(false)
+    expect(layout.health).toBe('healthy')
+    expect(contentPages.length).toBeLessThanOrEqual(13)
     expect(layout.qualityScore).toBeGreaterThanOrEqual(80)
+
+    const pageForBlock = (blockId: string) =>
+      contentPages.find((page) => page.blocks.some((block) => block.id === blockId))?.pageNumber
+    const headingByText = (text: string) =>
+      compiled.content.blocks.find((block) => block.type === 'heading' && block.text === text)
+    const tables = compiled.content.blocks.filter((block) => block.type === 'table')
+    const lifeHeading = headingByText('Life Dashboard')
+    const energyHeading = headingByText('Energy Pattern Matrix')
+    const brainFeelsHeading = headingByText('My brain feels...')
+    const brainFeelsIndex = compiled.content.blocks.findIndex(
+      (block) => block.id === brainFeelsHeading?.id,
+    )
+    const brainFeelsCheckboxes = compiled.content.blocks
+      .slice(brainFeelsIndex + 1, brainFeelsIndex + 7)
+      .filter((block) => block.type === 'checkbox-field')
+
+    expect(lifeHeading).toBeDefined()
+    expect(energyHeading).toBeDefined()
+    expect(tables).toHaveLength(3)
+    expect(pageForBlock(lifeHeading?.id ?? '')).toBe(pageForBlock(tables[0]?.id ?? ''))
+    expect(pageForBlock(energyHeading?.id ?? '')).toBe(pageForBlock(tables[1]?.id ?? ''))
+    expect(brainFeelsCheckboxes).toHaveLength(6)
+    expect(
+      new Set([
+        pageForBlock(brainFeelsHeading?.id ?? ''),
+        ...brainFeelsCheckboxes.map((block) => pageForBlock(block.id)),
+      ]).size,
+    ).toBe(1)
   })
 
   it('preserves table writing and checkbox intent as semantic controls', () => {
     const { compiled } = createGoldenPublication()
     const tables = compiled.content.blocks.filter((block) => block.type === 'table')
 
-    expect(tables).toHaveLength(2)
+    expect(tables).toHaveLength(3)
     expect(tables[0]?.type).toBe('table')
     expect(tables[1]?.type).toBe('table')
+    expect(tables[2]?.type).toBe('table')
 
-    if (tables[0]?.type !== 'table' || tables[1]?.type !== 'table') return
+    if (
+      tables[0]?.type !== 'table' ||
+      tables[1]?.type !== 'table' ||
+      tables[2]?.type !== 'table'
+    ) return
 
-    expect(tables[0].cellControls?.flat(2).filter((control) => control.kind === 'response')).toHaveLength(6)
-    expect(tables[1].cellControls?.flat(2).filter((control) => control.kind === 'checkbox')).toHaveLength(9)
+    expect(tables[0].cellControls?.flat(2).filter((control) => control.kind === 'response')).toHaveLength(10)
+    expect(tables[1].cellControls?.flat(2).filter((control) => control.kind === 'checkbox')).toHaveLength(15)
+    expect(tables[2].cellControls?.flat(2).filter((control) => control.kind === 'response')).toHaveLength(9)
   })
 
   it('exports the golden planner with real AcroForm fields, including structured table cells', async () => {
