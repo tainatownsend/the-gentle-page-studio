@@ -16,6 +16,7 @@ const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title" /></w:style>
   <w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1" /></w:style>
   <w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2" /></w:style>
+  <w:style w:type="paragraph" w:styleId="SmallLabel"><w:name w:val="Small Label" /></w:style>
 </w:styles>`
 
 describe('convertDocxOoxmlToManuscript', () => {
@@ -46,6 +47,62 @@ Notice what gives and takes energy.
 
 ### Reflection`)
     expect(result.diagnostics).toEqual([])
+  })
+
+  it('maps Word small-label paragraphs to compact headings that can stay with their section', () => {
+    const result = convertDocxOoxmlToManuscript(
+      documentXml(`
+        <w:p><w:pPr><w:pStyle w:val="SmallLabel" /><w:pageBreakBefore /></w:pPr><w:r><w:t>PHASE 3</w:t></w:r></w:p>
+        <w:p><w:pPr><w:pStyle w:val="Heading1" /></w:pPr><w:r><w:t>Energy Audit</w:t></w:r></w:p>
+      `),
+      stylesXml,
+    )
+
+    expect(result.manuscript).toBe(`[[GP:PAGE_BREAK type="preferred"]]
+
+### PHASE 3
+
+## Energy Audit`)
+  })
+
+  it('flattens single-column Word callouts instead of leaking Markdown table syntax', () => {
+    const result = convertDocxOoxmlToManuscript(
+      documentXml(`
+        <w:tbl>
+          <w:tr><w:tc>
+            <w:p><w:r><w:t>Today's mini-experiment</w:t></w:r></w:p>
+            <w:p><w:r><w:t>Observe your normal rhythm.</w:t></w:r></w:p>
+          </w:tc></w:tr>
+        </w:tbl>
+      `),
+    )
+
+    expect(result.manuscript).toBe("Today's mini-experiment Observe your normal rhythm.")
+    expect(result.manuscript).not.toContain('|')
+    expect(result.manuscript).not.toContain('---')
+  })
+
+  it('normalizes Word table line breaks without exposing HTML break markers', () => {
+    const result = convertDocxOoxmlToManuscript(
+      documentXml(`
+        <w:tbl>
+          <w:tr>
+            <w:tc><w:p><w:r><w:t>Field</w:t></w:r></w:p></w:tc>
+            <w:tc><w:p><w:r><w:t>Value</w:t></w:r></w:p></w:tc>
+          </w:tr>
+          <w:tr>
+            <w:tc>
+              <w:p><w:r><w:t>Date</w:t></w:r></w:p>
+              <w:p><w:r><w:t>________________</w:t></w:r></w:p>
+            </w:tc>
+            <w:tc><w:p><w:r><w:t>Today</w:t></w:r></w:p></w:tc>
+          </w:tr>
+        </w:tbl>
+      `),
+    )
+
+    expect(result.manuscript).toContain('| Date ________________ | Today |')
+    expect(result.manuscript).not.toContain('<br>')
   })
 
   it('maps pageBreakBefore and manual page breaks to preferred and forced page intent', () => {
