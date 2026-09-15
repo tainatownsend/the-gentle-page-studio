@@ -397,6 +397,8 @@ export function createPublicationLayout(publication: Publication): PublicationLa
   const contentPages = healPublicationPages(recomposedPages, {
     capacityUnits: PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
     estimateUnits: estimatePublicationBlockUnits,
+    minimumCompoundMoveFillUnits:
+      PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS - SPARSE_PAGE_REMAINING_UNITS,
   })
   const pages: PublicationLayoutPage[] = [
     {
