@@ -200,8 +200,9 @@ function tableToMarkdown(table: Element): string | undefined {
   const bodyRows = normalizedRows.slice(1)
   const separator = Array.from({ length: columnCount }, () => '---')
   const renderRow = (row: string[]) => `| ${row.join(' | ')} |`
+  const markdown = [renderRow(header), renderRow(separator), ...bodyRows.map(renderRow)].join('\n')
 
-  return [renderRow(header), renderRow(separator), ...bodyRows.map(renderRow)].join('\n')
+  return rows.flat().some(isAuthorNoteMarker) ? wrapAuthorNoteBlock(markdown) : markdown
 }
 
 function paragraphToItem(
