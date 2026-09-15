@@ -17,7 +17,7 @@ describe('structured publication layout', () => {
     expect(units).toBeLessThan(48)
   })
 
-  it('keeps a markdown-style worksheet table intact on a fresh page when it fits there', () => {
+  it('keeps a compact worksheet table intact while using available page capacity', () => {
     const publication = createPublicationFixture({
       content: {
         blocks: [
@@ -43,9 +43,8 @@ describe('structured publication layout', () => {
 
     const pages = createPublicationLayout(publication).pages.filter((page) => page.kind === 'content')
 
-    expect(pages).toHaveLength(2)
-    expect(pages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
-    expect(pages[1]?.blocks.map((block) => block.id)).toEqual(['table-1'])
+    expect(pages).toHaveLength(1)
+    expect(pages[0]?.blocks.map((block) => block.id)).toEqual(['intro', 'table-1'])
   })
 
   it('moves a consecutive checkbox group together instead of stranding its final options', () => {
