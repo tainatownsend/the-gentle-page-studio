@@ -26,6 +26,7 @@ export type PublicationVisualQaPage = {
 export type PublicationVisualQaOptions = {
   capacityUnits?: number
   estimateUnits?: (block: PublicationBlock) => number
+  minimumCompoundMoveFillUnits?: number
 }
 
 export type PublicationVisualQaResult = {
@@ -147,6 +148,28 @@ export function auditPublicationVisualQuality(
       }, 0)
 
       if (estimatedUnits > options.capacityUnits) continue
+
+      const pageNumber = Math.min(...componentPages)
+      const firstPage = contentPages.find((page) => page.pageNumber === pageNumber)
+      const componentIds = new Set(component.blockIds)
+      const componentStartIndex =
+        firstPage?.blocks.findIndex((block) => block.id === component.blockIds[0]) ?? -1
+      const componentBlocksOnFirstPage =
+        firstPage?.blocks.filter((block) => componentIds.has(block.id)).length ?? 0
+      const precedingUnits =
+        firstPage && componentStartIndex > 0
+          ? firstPage.blocks
+              .slice(0, componentStartIndex)
+              .reduce((total, block) => total + (options.estimateUnits?.(block) ?? 0), 0)
+          : 0
+      const minimumMoveFill =
+        options.minimumCompoundMoveFillUnits ?? Math.ceil(options.capacityUnits * 0.625)
+      const fragmentationAvoidsSparsePredecessor =
+        componentBlocksOnFirstPage > 1 &&
+        precedingUnits > 0 &&
+        precedingUnits < minimumMoveFill
+
+      if (fragmentationAvoidsSparsePredecessor) continue
     }
 
     const pageNumber = Math.min(...componentPages)
