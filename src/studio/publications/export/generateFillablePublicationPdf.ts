@@ -10,6 +10,7 @@ import {
 import type { Publication, PublicationBlock } from '../types'
 import {
   createPublicationPdfPlan,
+  createPublicationPdfTableGeometry,
   PUBLICATION_MARGIN_POINTS,
   type PublicationPdfBlockPlacement,
   type PublicationPdfInteractiveField,
@@ -246,13 +247,8 @@ function drawTableBlock(
   bodyFont: PDFFont,
   bodyBoldFont: PDFFont,
 ): void {
-  const columnCount = Math.max(block.columns.length, 1)
-  const rowCount = block.rows.length + 1
-  const columnWidth = placement.rect.width / columnCount
-  const captionReserve = block.text ? 22 : 0
-  const tableHeight = Math.max(24, placement.rect.height - captionReserve)
-  const rowHeight = tableHeight / Math.max(rowCount, 1)
-  const tableTop = placement.rect.y + placement.rect.height - captionReserve
+  const geometry = createPublicationPdfTableGeometry(block, placement)
+  const columnWidth = geometry.columnWidth
 
   if (block.text) {
     drawWrappedText(
@@ -264,24 +260,26 @@ function drawTableBlock(
       placement.rect.y + placement.rect.height,
       placement.rect.width,
       14,
-      captionReserve,
+      geometry.captionReserve,
       SAGE_DEEP,
     )
   }
 
   const allRows = [block.columns, ...block.rows]
+  const rowHeights = [geometry.headerHeight, ...geometry.rowHeights]
+  let cellTop = geometry.tableTop
 
   allRows.forEach((row, rowIndex) => {
-    const cellTop = tableTop - rowIndex * rowHeight
+    const rowHeight = rowHeights[rowIndex] ?? 24
+    const cellBottom = cellTop - rowHeight
 
     block.columns.forEach((_, columnIndex) => {
       const x = placement.rect.x + columnIndex * columnWidth
-      const y = cellTop - rowHeight
       const fill = rowIndex === 0 ? SAGE_SOFT : rowIndex % 2 === 0 ? SAND_SOFT : PAPER_STRONG
 
       page.drawRectangle({
         x,
-        y,
+        y: cellBottom,
         width: columnWidth,
         height: rowHeight,
         color: fill,
@@ -294,14 +292,16 @@ function drawTableBlock(
         row[columnIndex] ?? '',
         rowIndex === 0 ? bodyBoldFont : bodyFont,
         8.5,
-        x + 5,
-        cellTop - 4,
-        Math.max(8, columnWidth - 10),
+        x + 8,
+        cellTop - 6,
+        Math.max(8, columnWidth - 16),
         10.5,
-        Math.max(8, rowHeight - 8),
+        Math.max(8, rowHeight - 12),
         rowIndex === 0 ? SAGE_DEEP : INK,
       )
     })
+
+    cellTop = cellBottom
   })
 }
 
@@ -413,9 +413,9 @@ function drawStaticBlock(
       block.text || 'Response',
       bodyBoldFont,
       11,
-      placement.rect.x + 8,
-      top - 4,
-      placement.rect.width - 16,
+      placement.rect.x + 14,
+      top - 8,
+      placement.rect.width - 28,
       14,
       28,
       SAGE_DEEP,
