@@ -28,6 +28,24 @@ describe('healPublicationPages', () => {
     ])
   })
 
+  it('heals a stranded heading across a preferred page break when the combined page fits', () => {
+    const preferredHeading: PublicationBlock = {
+      id: 'heading-6',
+      type: 'heading',
+      level: 2,
+      text: 'Flexible break',
+      layout: { pageBreakBefore: 'preferred' },
+    }
+
+    const healed = healPublicationPages(
+      [[preferredHeading], [{ id: 'paragraph-8', type: 'paragraph', text: 'Body' }]],
+      { capacityUnits: 48, estimateUnits },
+    )
+
+    expect(healed).toHaveLength(1)
+    expect(healed[0]?.map((block) => block.id)).toEqual(['heading-6', 'paragraph-8'])
+  })
+
   it('preserves authored and level-one section openers', () => {
     const forcedHeading: PublicationBlock = {
       id: 'heading-6',
