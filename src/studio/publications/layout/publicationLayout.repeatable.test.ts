@@ -81,7 +81,7 @@ describe('repeatable page layout', () => {
     expect(layout.diagnostics.some((diagnostic) => diagnostic.code === 'sparse-page')).toBe(false)
   })
 
-  it('reports a repeatable group that exceeds one page without dropping content', () => {
+  it('allows an intrinsically multi-page repeatable tool without treating its size as a defect', () => {
     const blocks = Array.from({ length: 5 }, (_, index) => ({
       id: `response-${index}`,
       type: 'multiline-text-field' as const,
@@ -100,13 +100,8 @@ describe('repeatable page layout', () => {
     expect(layout.pages.flatMap((page) => page.blocks).map((block) => block.id)).toEqual(
       blocks.map((block) => block.id),
     )
-    expect(layout.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: 'repeatable-group-overflow',
-          semanticGroupId: 'daily-check-in',
-        }),
-      ]),
-    )
+    expect(
+      layout.diagnostics.some((diagnostic) => diagnostic.semanticGroupId === 'daily-check-in'),
+    ).toBe(false)
   })
 })
