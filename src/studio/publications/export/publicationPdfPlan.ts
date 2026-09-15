@@ -1,6 +1,5 @@
 import {
   createPublicationLayout,
-  PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS,
   type PublicationLayoutBlockAllocation,
 } from '../layout'
 import type { Publication, PublicationBlock, PublicationTableBlock } from '../types'
@@ -13,13 +12,16 @@ export const PUBLICATION_PAGE_NUMBER_RESERVE_POINTS = 24
 export const PUBLICATION_CONTENT_WIDTH_POINTS = 504
 export const PUBLICATION_CONTENT_HEIGHT_POINTS = 660
 
-const CAPACITY_UNIT_HEIGHT_POINTS =
-  PUBLICATION_CONTENT_HEIGHT_POINTS / PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
-const MULTILINE_PROMPT_RESERVE_POINTS = 30
+export const PUBLICATION_PDF_BLOCK_GAP_POINTS = 16
+
+const RESPONSE_AREA_UNIT_HEIGHT_POINTS = 6
+const MULTILINE_HORIZONTAL_PADDING_POINTS = 14
+const MULTILINE_BOTTOM_PADDING_POINTS = 12
+const MULTILINE_PROMPT_RESERVE_POINTS = 50
 const CHECKBOX_SIZE_POINTS = 14
 const RATING_SIZE_POINTS = 12
 const TABLE_CAPTION_RESERVE_POINTS = 22
-const TABLE_CELL_PADDING_POINTS = 5
+const TABLE_CELL_PADDING_POINTS = 8
 
 export type PublicationPdfRect = {
   x: number
@@ -96,18 +98,122 @@ function createTableCellFieldName(
   return `publication.${publicationId}.block.${blockId}.cell.${rowIndex}.${columnIndex}.${controlIndex}`
 }
 
+function estimateVisualLines(text: string, charactersPerLine: number): number {
+  return Math.max(1, Math.ceil(Math.max(text.trim().length, 1) / charactersPerLine))
+}
+
+function responseAreaMinimumPoints(size: 'short' | 'medium' | 'long' | undefined): number {
+  switch (size) {
+    case 'short':
+      return 42
+    case 'medium':
+      return 66
+    case 'long':
+    default:
+      return 90
+  }
+}
+
+function createTableNaturalRowHeights(block: PublicationTableBlock): {
+  headerHeight: number
+  rowHeights: number[]
+} {
+  const columnCount = Math.max(block.columns.length, 1)
+  const headerLines = Math.max(
+    ...block.columns.map((cell) => estimateVisualLines(cell, Math.max(18, 52 / columnCount))),
+    1,
+  )
+  const headerHeight = 30 + (headerLines - 1) * 11
+
+  const rowHeights = block.rows.map((row, rowIndex) => {
+    const textLines = Math.max(
+      ...row.map((cell) => estimateVisualLines(cell, Math.max(20, 58 / columnCount))),
+      1,
+    )
+    const textHeight = 30 + (textLines - 1) * 11
+    const controls = block.cellControls?.[rowIndex]?.flat() ?? []
+    const responseHeight = controls.reduce((height, control) => {
+      if (control.kind !== 'response') return height
+      return Math.max(height, responseAreaMinimumPoints(control.size) + 16)
+    }, 0)
+    const checkboxHeight = controls.some((control) => control.kind === 'checkbox') ? 32 : 0
+
+    return Math.max(textHeight, responseHeight, checkboxHeight)
+  })
+
+  return { headerHeight, rowHeights }
+}
+
+function estimatePdfBlockHeight(
+  block: PublicationBlock,
+  allocation: PublicationLayoutBlockAllocation | undefined,
+): number {
+  const allocatedUnits = allocation?.allocatedUnits ?? allocation?.baselineUnits ?? 0
+
+  switch (block.type) {
+    case 'heading': {
+      const charactersPerLine = block.level === 1 ? 44 : block.level === 2 ? 58 : 72
+      const lines = estimateVisualLines(block.text, charactersPerLine)
+      if (block.level === 1) return 62 + (lines - 1) * 24
+      if (block.level === 2) return 28 + (lines - 1) * 19
+      return 18 + (lines - 1) * 13
+    }
+    case 'paragraph': {
+      const lines = estimateVisualLines(block.text, 78)
+      return 18 + (lines - 1) * 15
+    }
+    case 'multiline-text-field': {
+      const promptLines = estimateVisualLines(block.text, 72)
+      const responseHeight = Math.max(
+        responseAreaMinimumPoints(block.responseSize),
+        allocatedUnits * RESPONSE_AREA_UNIT_HEIGHT_POINTS,
+      )
+      return 48 + (promptLines - 1) * 14 + responseHeight
+    }
+    case 'checkbox-field': {
+      const lines = estimateVisualLines(block.text, 72)
+      return 26 + (lines - 1) * 15
+    }
+    case 'rating-field': {
+      const promptLines = estimateVisualLines(block.text, 72)
+      const optionCount = Math.max(1, Math.floor(block.max - block.min) + 1)
+      const optionRows = Math.max(1, Math.ceil(optionCount / 14))
+      return 76 + (promptLines - 1) * 14 + (optionRows - 1) * 26
+    }
+    case 'table': {
+      const geometry = createTableNaturalRowHeights(block)
+      return (
+        (block.text ? TABLE_CAPTION_RESERVE_POINTS : 0) +
+        geometry.headerHeight +
+        geometry.rowHeights.reduce((total, height) => total + height, 0)
+      )
+    }
+  }
+}
+
 function createBlockPlacements(
   blocks: readonly PublicationBlock[],
   allocations: readonly PublicationLayoutBlockAllocation[],
 ): PublicationPdfBlockPlacement[] {
+  if (blocks.length === 0) return []
+
   const allocationByBlockId = new Map(
-    allocations.map((allocation) => [allocation.blockId, allocation.allocatedUnits]),
+    allocations.map((allocation) => [allocation.blockId, allocation]),
   )
+  const desiredHeights = blocks.map((block) =>
+    estimatePdfBlockHeight(block, allocationByBlockId.get(block.id)),
+  )
+  const totalGapHeight = PUBLICATION_PDF_BLOCK_GAP_POINTS * Math.max(0, blocks.length - 1)
+  const availableBlockHeight = Math.max(1, PUBLICATION_CONTENT_HEIGHT_POINTS - totalGapHeight)
+  const desiredBlockHeight = desiredHeights.reduce((total, height) => total + height, 0)
+  const scale = desiredBlockHeight > availableBlockHeight
+    ? availableBlockHeight / desiredBlockHeight
+    : 1
+
   let top = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
 
-  return blocks.map((block) => {
-    const allocatedUnits = allocationByBlockId.get(block.id) ?? 0
-    const height = allocatedUnits * CAPACITY_UNIT_HEIGHT_POINTS
+  return blocks.map((block, index) => {
+    const height = Math.max(12, (desiredHeights[index] ?? 12) * scale)
     const rect = {
       x: PUBLICATION_MARGIN_POINTS,
       y: top - height,
@@ -115,7 +221,7 @@ function createBlockPlacements(
       height,
     }
 
-    top -= height
+    top -= height + PUBLICATION_PDF_BLOCK_GAP_POINTS
 
     return {
       blockId: block.id,
@@ -131,10 +237,10 @@ function createInteractiveRect(
 ): PublicationPdfRect | undefined {
   if (block.type === 'multiline-text-field') {
     return {
-      x: placement.rect.x,
-      y: placement.rect.y,
-      width: placement.rect.width,
-      height: Math.max(72, placement.rect.height - MULTILINE_PROMPT_RESERVE_POINTS),
+      x: placement.rect.x + MULTILINE_HORIZONTAL_PADDING_POINTS,
+      y: placement.rect.y + MULTILINE_BOTTOM_PADDING_POINTS,
+      width: Math.max(24, placement.rect.width - MULTILINE_HORIZONTAL_PADDING_POINTS * 2),
+      height: Math.max(24, placement.rect.height - MULTILINE_PROMPT_RESERVE_POINTS),
     }
   }
 
@@ -172,6 +278,28 @@ function createRatingOptions(
   }))
 }
 
+export function createPublicationPdfTableGeometry(
+  block: PublicationTableBlock,
+  placement: PublicationPdfBlockPlacement,
+) {
+  const columnCount = Math.max(block.columns.length, 1)
+  const columnWidth = placement.rect.width / columnCount
+  const captionReserve = block.text ? TABLE_CAPTION_RESERVE_POINTS : 0
+  const natural = createTableNaturalRowHeights(block)
+  const naturalTableHeight =
+    natural.headerHeight + natural.rowHeights.reduce((total, height) => total + height, 0)
+  const availableTableHeight = Math.max(24, placement.rect.height - captionReserve)
+  const scale = naturalTableHeight > 0 ? availableTableHeight / naturalTableHeight : 1
+
+  return {
+    columnWidth,
+    captionReserve,
+    headerHeight: natural.headerHeight * scale,
+    rowHeights: natural.rowHeights.map((height) => height * scale),
+    tableTop: placement.rect.y + placement.rect.height - captionReserve,
+  }
+}
+
 function createTableCellInteractiveFields(
   publicationId: string,
   block: PublicationTableBlock,
@@ -181,20 +309,20 @@ function createTableCellInteractiveFields(
   if (!block.cellControls) return []
 
   const fields: PublicationPdfInteractiveField[] = []
-  const columnCount = Math.max(block.columns.length, 1)
-  const rowCount = block.rows.length + 1
-  const columnWidth = placement.rect.width / columnCount
-  const captionReserve = block.text ? TABLE_CAPTION_RESERVE_POINTS : 0
-  const tableHeight = Math.max(24, placement.rect.height - captionReserve)
-  const rowHeight = tableHeight / Math.max(rowCount, 1)
-  const tableTop = placement.rect.y + placement.rect.height - captionReserve
+  const geometry = createPublicationPdfTableGeometry(block, placement)
+  const columnWidth = geometry.columnWidth
 
   block.cellControls.forEach((row, rowIndex) => {
     row.forEach((controls, columnIndex) => {
       if (controls.length === 0) return
 
       const cellX = placement.rect.x + columnIndex * columnWidth
-      const cellY = tableTop - (rowIndex + 2) * rowHeight
+      const rowsBefore = geometry.rowHeights
+        .slice(0, rowIndex)
+        .reduce((total, height) => total + height, 0)
+      const rowHeight = geometry.rowHeights[rowIndex] ?? 24
+      const cellTop = geometry.tableTop - geometry.headerHeight - rowsBefore
+      const cellY = cellTop - rowHeight
       const innerRect = {
         x: cellX + TABLE_CELL_PADDING_POINTS,
         y: cellY + TABLE_CELL_PADDING_POINTS,
