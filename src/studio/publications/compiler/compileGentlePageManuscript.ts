@@ -92,6 +92,16 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
   return block.type === 'paragraph' && /[?:]$/.test(block.text.trim())
 }
 
+function pipeIsEscaped(line: string, pipeIndex: number): boolean {
+  let slashCount = 0
+
+  for (let index = pipeIndex - 1; index >= 0 && line[index] === '\\'; index -= 1) {
+    slashCount += 1
+  }
+
+  return slashCount % 2 === 1
+}
+
 function parseMarkdownTableRow(line: string): string[] {
   let trimmed = line.trim()
 
@@ -99,7 +109,12 @@ function parseMarkdownTableRow(line: string): string[] {
     trimmed = trimmed.slice(1)
   }
 
-  if (trimmed.endsWith('|') && !trimmed.endsWith('\\|')) {
+  const trailingPipeIndex = trimmed.length - 1
+  if (
+    trailingPipeIndex >= 0 &&
+    trimmed[trailingPipeIndex] === '|' &&
+    !pipeIsEscaped(trimmed, trailingPipeIndex)
+  ) {
     trimmed = trimmed.slice(0, -1)
   }
 
@@ -109,9 +124,9 @@ function parseMarkdownTableRow(line: string): string[] {
   for (let index = 0; index < trimmed.length; index += 1) {
     const character = trimmed[index]
 
-    if (character === '\\' && trimmed[index + 1] === '|') {
+    if (character === '|' && pipeIsEscaped(trimmed, index)) {
+      current = current.slice(0, -1)
       current += '|'
-      index += 1
       continue
     }
 
