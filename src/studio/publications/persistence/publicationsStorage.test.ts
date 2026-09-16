@@ -163,6 +163,20 @@ describe('publicationsStorage', () => {
       }),
     ],
     [
+      'invalid rating range',
+      JSON.stringify({
+        version: 4,
+        publications: [
+          {
+            ...publication,
+            content: {
+              blocks: [{ id: 'rating-1', type: 'rating-field', text: 'Rating', min: 10, max: 1 }],
+            },
+          },
+        ],
+      }),
+    ],
+    [
       'invalid interactive block',
       JSON.stringify({
         version: 4,
