@@ -13,6 +13,11 @@ export function loadAssets(): StudioAsset[] {
   }
 }
 
-export function saveAssets(assets: readonly StudioAsset[]): void {
-  localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(assets))
+export function saveAssets(assets: readonly StudioAsset[]): boolean {
+  try {
+    localStorage.setItem(ASSETS_STORAGE_KEY, JSON.stringify(assets))
+    return true
+  } catch {
+    return false
+  }
 }
