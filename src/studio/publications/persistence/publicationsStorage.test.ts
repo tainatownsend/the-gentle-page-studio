@@ -27,6 +27,21 @@ const publication = createPublicationFixture({
         type: 'checkbox-field',
         text: 'I completed this reflection.',
       },
+      {
+        id: 'rating-1',
+        type: 'rating-field',
+        text: 'Energy right now',
+        min: 0,
+        max: 10,
+      },
+      {
+        id: 'table-1',
+        type: 'table',
+        text: 'Capacity',
+        columns: ['Area', 'Response'],
+        rows: [['Energy', '']],
+        cellControls: [[[], [{ kind: 'response', size: 'short' }]]],
+      },
     ],
   },
 })
