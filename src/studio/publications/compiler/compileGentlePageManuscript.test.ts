@@ -185,6 +185,22 @@ First paragraph.
     ])
   })
 
+  it('keeps escaped pipes inside markdown table cells', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+| Context | Note |
+| --- | --- |
+| Work \\| home | Keep the literal pipe |`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'table',
+        columns: ['Context', 'Note'],
+        rows: [['Work | home', 'Keep the literal pipe']],
+      }),
+    ])
+  })
+
   it('tags every block inside a repeatable page with the same semantic group', () => {
     const result = compileGentlePageManuscript(`# Journal
 
