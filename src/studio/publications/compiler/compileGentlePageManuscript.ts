@@ -94,7 +94,37 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
 
 function parseMarkdownTableRow(line: string): string[] {
   const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '')
-  return trimmed.split('|').map((cell) => cell.trim())
+  const cells: string[] = []
+  let current = ''
+  let escaping = false
+
+  for (const character of trimmed) {
+    if (escaping) {
+      current += character
+      escaping = false
+      continue
+    }
+
+    if (character === '\\') {
+      escaping = true
+      continue
+    }
+
+    if (character === '|') {
+      cells.push(current.trim())
+      current = ''
+      continue
+    }
+
+    current += character
+  }
+
+  if (escaping) {
+    current += '\\'
+  }
+
+  cells.push(current.trim())
+  return cells
 }
 
 function isMarkdownTableSeparator(line: string): boolean {
