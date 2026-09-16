@@ -51,6 +51,52 @@ describe('PublicationEditorPage structured blocks', () => {
     )
   })
 
+  it('clears positional table controls after structural row edits', () => {
+    const onSave = vi.fn()
+
+    render(
+      <PublicationEditorPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'table-1',
+                type: 'table',
+                text: 'Capacity baseline',
+                columns: ['Area', 'Response'],
+                rows: [['Physical', '']],
+                cellControls: [
+                  [
+                    [],
+                    [{ kind: 'response', size: 'short' }],
+                  ],
+                ],
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onSave={onSave}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Block 1 table rows'), {
+      target: { value: 'Physical\tLow\nMental\tMedium' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(onSave.mock.calls[0]?.[0].content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'table',
+        rows: [
+          ['Physical', 'Low'],
+          ['Mental', 'Medium'],
+        ],
+        cellControls: undefined,
+      }),
+    )
+  })
+
   it('allows a structured worksheet to be corrected as headings and tab-separated rows', () => {
     const onSave = vi.fn()
 

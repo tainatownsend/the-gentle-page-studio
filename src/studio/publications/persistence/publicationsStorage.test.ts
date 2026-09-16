@@ -52,6 +52,42 @@ describe('publicationsStorage', () => {
     expect(loadPublications()).toEqual([publication])
   })
 
+  it('loads rating and table blocks without discarding the workspace', () => {
+    const structuredPublication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'rating-1',
+            type: 'rating-field',
+            text: 'Energy right now',
+            min: 0,
+            max: 10,
+          },
+          {
+            id: 'table-1',
+            type: 'table',
+            text: 'Capacity',
+            columns: ['Area', 'Response'],
+            rows: [['Physical', '']],
+            cellControls: [
+              [
+                [],
+                [{ kind: 'response', size: 'short' }],
+              ],
+            ],
+          },
+        ],
+      },
+    })
+
+    localStorage.setItem(
+      PUBLICATIONS_STORAGE_KEY,
+      JSON.stringify({ version: 4, publications: [structuredPublication] }),
+    )
+
+    expect(loadPublications()).toEqual([structuredPublication])
+  })
+
   it('migrates a version 3 workspace without changing authored content', () => {
     const legacyPublication = createPublicationFixture({
       content: {

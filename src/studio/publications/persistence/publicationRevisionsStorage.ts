@@ -65,6 +65,35 @@ function isLegacyPublicationBlockV1(value: unknown): value is LegacyPublicationB
   return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
 }
 
+function isResponseSize(value: unknown): value is 'short' | 'medium' | 'long' {
+  return value === 'short' || value === 'medium' || value === 'long'
+}
+
+function isTableCellControl(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  if (value.kind === 'checkbox') {
+    return true
+  }
+
+  return value.kind === 'response' && isResponseSize(value.size)
+}
+
+function isTableCellControls(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (row) =>
+        Array.isArray(row) &&
+        row.every(
+          (cell) => Array.isArray(cell) && cell.every((control) => isTableCellControl(control)),
+        ),
+    )
+  )
+}
+
 function isPublicationBlock(value: unknown): value is PublicationBlock {
   if (
     !isRecord(value) ||
@@ -75,15 +104,41 @@ function isPublicationBlock(value: unknown): value is PublicationBlock {
     return false
   }
 
-  if (
-    value.type === 'paragraph' ||
-    value.type === 'multiline-text-field' ||
-    value.type === 'checkbox-field'
-  ) {
+  if (value.type === 'paragraph' || value.type === 'checkbox-field') {
     return true
   }
 
-  return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
+  if (value.type === 'multiline-text-field') {
+    return value.responseSize === undefined || isResponseSize(value.responseSize)
+  }
+
+  if (value.type === 'heading') {
+    return value.level === 1 || value.level === 2 || value.level === 3
+  }
+
+  if (value.type === 'rating-field') {
+    return (
+      typeof value.min === 'number' &&
+      Number.isFinite(value.min) &&
+      typeof value.max === 'number' &&
+      Number.isFinite(value.max) &&
+      value.min <= value.max
+    )
+  }
+
+  if (value.type === 'table') {
+    return (
+      Array.isArray(value.columns) &&
+      value.columns.every((column) => typeof column === 'string') &&
+      Array.isArray(value.rows) &&
+      value.rows.every(
+        (row) => Array.isArray(row) && row.every((cell) => typeof cell === 'string'),
+      ) &&
+      (value.cellControls === undefined || isTableCellControls(value.cellControls))
+    )
+  }
+
+  return false
 }
 
 function isLegacyPublicationContentV1(value: unknown): boolean {

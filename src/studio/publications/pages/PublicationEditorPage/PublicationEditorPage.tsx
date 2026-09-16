@@ -114,6 +114,9 @@ function cloneBlock(block: PublicationBlock): PublicationBlock {
       ...block,
       columns: [...block.columns],
       rows: block.rows.map((row) => [...row]),
+      cellControls: block.cellControls?.map((row) =>
+        row.map((cell) => cell.map((control) => ({ ...control }))),
+      ),
       layout: block.layout ? { ...block.layout } : undefined,
     }
   }
@@ -880,6 +883,7 @@ export function PublicationEditorPage({
                                                   (_, columnIndex) => row[columnIndex] ?? '',
                                                 ),
                                               ),
+                                              cellControls: undefined,
                                             }
                                           })
                                         }
@@ -903,6 +907,7 @@ export function PublicationEditorPage({
                                                     event.target.value,
                                                     currentBlock.columns.length,
                                                   ),
+                                                  cellControls: undefined,
                                                 }
                                               : currentBlock,
                                           )

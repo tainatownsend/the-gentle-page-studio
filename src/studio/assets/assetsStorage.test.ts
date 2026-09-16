@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ASSETS_STORAGE_KEY, loadAssets, saveAssets } from './assetsStorage'
 import type { StudioAsset } from './types'
@@ -23,5 +23,13 @@ describe('assetsStorage', () => {
   it('falls back safely when stored JSON is invalid', () => {
     localStorage.setItem(ASSETS_STORAGE_KEY, '{')
     expect(loadAssets()).toEqual([])
+  })
+
+  it('returns false instead of throwing when storage is full', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Quota exceeded')
+    })
+
+    expect(saveAssets([asset])).toBe(false)
   })
 })
