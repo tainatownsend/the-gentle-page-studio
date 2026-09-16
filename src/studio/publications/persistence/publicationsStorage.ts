@@ -114,6 +114,21 @@ function isLegacyPublicationBlockV3(value: unknown): value is LegacyPublicationB
   return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
 }
 
+function isPublicationTableCellControl(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  if (value.kind === 'checkbox') {
+    return true
+  }
+
+  return (
+    value.kind === 'response' &&
+    (value.size === 'short' || value.size === 'medium' || value.size === 'long')
+  )
+}
+
 function isPublicationBlock(value: unknown): value is PublicationBlock {
   if (
     !isRecord(value) ||
@@ -130,6 +145,38 @@ function isPublicationBlock(value: unknown): value is PublicationBlock {
     value.type === 'checkbox-field'
   ) {
     return true
+  }
+
+  if (value.type === 'rating-field') {
+    return (
+      typeof value.min === 'number' &&
+      Number.isFinite(value.min) &&
+      typeof value.max === 'number' &&
+      Number.isFinite(value.max)
+    )
+  }
+
+  if (value.type === 'table') {
+    const hasValidColumns =
+      Array.isArray(value.columns) && value.columns.every((column) => typeof column === 'string')
+    const hasValidRows =
+      Array.isArray(value.rows) &&
+      value.rows.every(
+        (row) => Array.isArray(row) && row.every((cell) => typeof cell === 'string'),
+      )
+    const hasValidControls =
+      value.cellControls === undefined ||
+      (Array.isArray(value.cellControls) &&
+        value.cellControls.every(
+          (row) =>
+            Array.isArray(row) &&
+            row.every(
+              (cell) =>
+                Array.isArray(cell) && cell.every(isPublicationTableCellControl),
+            ),
+        ))
+
+    return hasValidColumns && hasValidRows && hasValidControls
   }
 
   return value.type === 'heading' && (value.level === 1 || value.level === 2 || value.level === 3)
