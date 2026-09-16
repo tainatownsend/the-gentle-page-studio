@@ -185,6 +185,22 @@ First paragraph.
     ])
   })
 
+  it('keeps escaped pipes inside markdown table cells', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+| Situation | Note |
+| --- | --- |
+| Work | Choose A \\| B |`)
+
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'table',
+        columns: ['Situation', 'Note'],
+        rows: [['Work', 'Choose A | B']],
+      }),
+    )
+  })
+
   it('tags every block inside a repeatable page with the same semantic group', () => {
     const result = compileGentlePageManuscript(`# Journal
 
