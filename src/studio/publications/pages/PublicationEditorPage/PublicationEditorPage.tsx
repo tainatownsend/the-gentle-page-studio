@@ -880,6 +880,7 @@ export function PublicationEditorPage({
                                                   (_, columnIndex) => row[columnIndex] ?? '',
                                                 ),
                                               ),
+                                              cellControls: undefined,
                                             }
                                           })
                                         }
@@ -903,6 +904,7 @@ export function PublicationEditorPage({
                                                     event.target.value,
                                                     currentBlock.columns.length,
                                                   ),
+                                                  cellControls: undefined,
                                                 }
                                               : currentBlock,
                                           )
