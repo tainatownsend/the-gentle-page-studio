@@ -65,6 +65,7 @@ describe('PublicationEditorPage structured blocks', () => {
                 text: 'Capacity baseline',
                 columns: ['Area', 'Capacity'],
                 rows: [['Physical', 'Low']],
+                cellControls: [[[], [{ kind: 'response', size: 'short' }]]],
               },
             ],
           },
@@ -93,5 +94,6 @@ describe('PublicationEditorPage structured blocks', () => {
         ],
       }),
     )
+    expect(onSave.mock.calls[0]?.[0].content.blocks[0].cellControls).toBeUndefined()
   })
 })
