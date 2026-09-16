@@ -29,13 +29,8 @@ export type AddAssetResult =
   | { ok: false; error: string }
 
 export function useAssetsLibrary() {
-  const assetsRef = useRef<StudioAsset[] | null>(null)
-
-  if (assetsRef.current === null) {
-    assetsRef.current = loadAssets()
-  }
-
-  const [assets, setAssets] = useState<StudioAsset[]>(assetsRef.current ?? [])
+  const [assets, setAssets] = useState<StudioAsset[]>(loadAssets)
+  const assetsRef = useRef(assets)
 
   const addAsset = useCallback(async (file: File): Promise<AddAssetResult> => {
     if (!ACCEPTED_ASSET_TYPES.includes(file.type as (typeof ACCEPTED_ASSET_TYPES)[number])) {
