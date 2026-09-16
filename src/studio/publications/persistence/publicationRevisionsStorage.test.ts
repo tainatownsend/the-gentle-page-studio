@@ -114,6 +114,20 @@ describe('publicationRevisionsStorage', () => {
       }),
     ],
     [
+      'invalid rating range',
+      JSON.stringify({
+        version: 2,
+        revisions: [
+          {
+            ...revision,
+            content: {
+              blocks: [{ id: 'rating-1', type: 'rating-field', text: 'Rating', min: 10, max: 1 }],
+            },
+          },
+        ],
+      }),
+    ],
+    [
       'invalid interactive field',
       JSON.stringify({
         version: 2,
