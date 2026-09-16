@@ -880,7 +880,10 @@ export function PublicationEditorPage({
                                                   (_, columnIndex) => row[columnIndex] ?? '',
                                                 ),
                                               ),
-                                              cellControls: undefined,
+                                              cellControls:
+                                                safeColumns.length === currentBlock.columns.length
+                                                  ? currentBlock.cellControls
+                                                  : undefined,
                                             }
                                           })
                                         }
@@ -898,14 +901,21 @@ export function PublicationEditorPage({
                                         onChange={(event) =>
                                           updateBlock(block.id, (currentBlock) =>
                                             currentBlock.type === 'table'
-                                              ? {
-                                                  ...currentBlock,
-                                                  rows: parseTableRows(
+                                              ? (() => {
+                                                  const rows = parseTableRows(
                                                     event.target.value,
                                                     currentBlock.columns.length,
-                                                  ),
-                                                  cellControls: undefined,
-                                                }
+                                                  )
+
+                                                  return {
+                                                    ...currentBlock,
+                                                    rows,
+                                                    cellControls:
+                                                      rows.length === currentBlock.rows.length
+                                                        ? currentBlock.cellControls
+                                                        : undefined,
+                                                  }
+                                                })()
                                               : currentBlock,
                                           )
                                         }
