@@ -103,7 +103,9 @@ function isPublicationBlock(value: unknown): value is PublicationBlock {
       typeof value.min === 'number' &&
       Number.isFinite(value.min) &&
       typeof value.max === 'number' &&
-      Number.isFinite(value.max)
+      Number.isFinite(value.max) &&
+      value.max > value.min &&
+      value.max - value.min <= 20
     )
   }
 
