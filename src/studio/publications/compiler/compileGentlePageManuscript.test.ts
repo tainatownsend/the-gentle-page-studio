@@ -201,6 +201,22 @@ First paragraph.
     ])
   })
 
+  it('treats a pipe after an even number of backslashes as a delimiter', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+| Path | Note |
+| --- | --- |
+| C:\\\\ | Next cell |`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'table',
+        columns: ['Path', 'Note'],
+        rows: [['C:\\\\', 'Next cell']],
+      }),
+    ])
+  })
+
   it('tags every block inside a repeatable page with the same semantic group', () => {
     const result = compileGentlePageManuscript(`# Journal
 
