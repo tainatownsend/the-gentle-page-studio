@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { loadAssets, saveAssets } from './assetsStorage'
 import {
@@ -31,9 +31,6 @@ export type AddAssetResult =
 export function useAssetsLibrary() {
   const [assets, setAssets] = useState<StudioAsset[]>(loadAssets)
 
-  useEffect(() => {
-    saveAssets(assets)
-  }, [assets])
 
   const addAsset = useCallback(async (file: File): Promise<AddAssetResult> => {
     if (!ACCEPTED_ASSET_TYPES.includes(file.type as (typeof ACCEPTED_ASSET_TYPES)[number])) {
@@ -54,15 +51,28 @@ export function useAssetsLibrary() {
         createdAt: new Date().toISOString(),
       }
 
-      setAssets((current) => [asset, ...current])
+      const nextAssets = [asset, ...assets]
+
+      if (!saveAssets(nextAssets)) {
+        return {
+          ok: false,
+          error: 'Local image storage is full. Delete an existing image and try again.',
+        }
+      }
+
+      setAssets(nextAssets)
       return { ok: true, asset }
     } catch {
       return { ok: false, error: 'The image could not be added. Try another file.' }
     }
-  }, [])
+  }, [assets])
 
   const deleteAsset = useCallback((assetId: string) => {
-    setAssets((current) => current.filter((asset) => asset.id !== assetId))
+    setAssets((current) => {
+      const nextAssets = current.filter((asset) => asset.id !== assetId)
+      saveAssets(nextAssets)
+      return nextAssets
+    })
   }, [])
 
   return useMemo(
