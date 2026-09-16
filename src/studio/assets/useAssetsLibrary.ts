@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { loadAssets, saveAssets } from './assetsStorage'
 import {
@@ -29,8 +29,13 @@ export type AddAssetResult =
   | { ok: false; error: string }
 
 export function useAssetsLibrary() {
-  const [assets, setAssets] = useState<StudioAsset[]>(loadAssets)
+  const assetsRef = useRef<StudioAsset[] | null>(null)
 
+  if (assetsRef.current === null) {
+    assetsRef.current = loadAssets()
+  }
+
+  const [assets, setAssets] = useState<StudioAsset[]>(assetsRef.current)
 
   const addAsset = useCallback(async (file: File): Promise<AddAssetResult> => {
     if (!ACCEPTED_ASSET_TYPES.includes(file.type as (typeof ACCEPTED_ASSET_TYPES)[number])) {
@@ -51,7 +56,7 @@ export function useAssetsLibrary() {
         createdAt: new Date().toISOString(),
       }
 
-      const nextAssets = [asset, ...assets]
+      const nextAssets = [asset, ...(assetsRef.current ?? [])]
 
       if (!saveAssets(nextAssets)) {
         return {
@@ -60,19 +65,24 @@ export function useAssetsLibrary() {
         }
       }
 
+      assetsRef.current = nextAssets
       setAssets(nextAssets)
       return { ok: true, asset }
     } catch {
       return { ok: false, error: 'The image could not be added. Try another file.' }
     }
-  }, [assets])
+  }, [])
 
   const deleteAsset = useCallback((assetId: string) => {
-    setAssets((current) => {
-      const nextAssets = current.filter((asset) => asset.id !== assetId)
-      saveAssets(nextAssets)
-      return nextAssets
-    })
+    const currentAssets = assetsRef.current ?? []
+    const nextAssets = currentAssets.filter((asset) => asset.id !== assetId)
+
+    if (!saveAssets(nextAssets)) {
+      return
+    }
+
+    assetsRef.current = nextAssets
+    setAssets(nextAssets)
   }, [])
 
   return useMemo(
