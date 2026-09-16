@@ -93,8 +93,39 @@ function isPromptLikeBlock(block: PublicationBlock | undefined): boolean {
 }
 
 function parseMarkdownTableRow(line: string): string[] {
-  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '')
-  return trimmed.split('|').map((cell) => cell.trim())
+  let trimmed = line.trim()
+
+  if (trimmed.startsWith('|')) {
+    trimmed = trimmed.slice(1)
+  }
+
+  if (trimmed.endsWith('|') && !trimmed.endsWith('\\|')) {
+    trimmed = trimmed.slice(0, -1)
+  }
+
+  const cells: string[] = []
+  let current = ''
+
+  for (let index = 0; index < trimmed.length; index += 1) {
+    const character = trimmed[index]
+
+    if (character === '\\' && trimmed[index + 1] === '|') {
+      current += '|'
+      index += 1
+      continue
+    }
+
+    if (character === '|') {
+      cells.push(current.trim())
+      current = ''
+      continue
+    }
+
+    current += character
+  }
+
+  cells.push(current.trim())
+  return cells
 }
 
 function isMarkdownTableSeparator(line: string): boolean {
