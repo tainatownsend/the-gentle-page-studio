@@ -60,6 +60,40 @@ describe('publicationRevisionsStorage', () => {
     expect(loadPublicationRevisions()).toEqual([revision])
   })
 
+  it('persists and reloads rating and table revision blocks', () => {
+    const structuredRevision: PublicationRevision = {
+      ...revision,
+      id: 'revision-structured',
+      content: {
+        blocks: [
+          {
+            id: 'rating-1',
+            type: 'rating-field',
+            text: 'Energy',
+            min: 1,
+            max: 5,
+          },
+          {
+            id: 'table-1',
+            type: 'table',
+            text: 'Worksheet',
+            columns: ['Prompt', 'Response'],
+            rows: [['Today', '']],
+            cellControls: [
+              [
+                [],
+                [{ kind: 'response', size: 'medium' }],
+              ],
+            ],
+          },
+        ],
+      },
+    }
+
+    savePublicationRevisions([structuredRevision])
+    expect(loadPublicationRevisions()).toEqual([structuredRevision])
+  })
+
   it('migrates version 1 revision history', () => {
     const legacyRevision = {
       ...revision,
