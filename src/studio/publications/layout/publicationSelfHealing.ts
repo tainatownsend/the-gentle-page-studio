@@ -30,7 +30,12 @@ function canMergeStrandedHeading(
 
   const heading = current[0]
   if (heading?.type !== 'heading' || heading.level === 1) return false
-  if (hasForcedBoundary(current) || hasForcedBoundary(next)) return false
+
+  // A forced break on the stranded heading means “start this section on a new page”.
+  // Moving that heading forward with the content it introduces preserves the authored
+  // boundary because the heading remains the first block on the resulting page. A forced
+  // break on the next page, however, represents a separate authored boundary and must stay.
+  if (hasForcedBoundary(next)) return false
   if (hasRepeatableContent(current) || hasRepeatableContent(next)) return false
   if (inferPublicationPageArchetype(current) === 'section-opener') return false
 
