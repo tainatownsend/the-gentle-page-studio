@@ -1,4 +1,9 @@
-import type { PublicationBlock, PublicationTableCellControl, PublicationTableBlock } from '../types'
+import type {
+  PublicationBlock,
+  PublicationResponseSizeIntent,
+  PublicationTableBlock,
+  PublicationTableCellControl,
+} from '../types'
 import {
   compileGentlePageManuscript as compileBaseManuscript,
   type GentlePageCompilationResult,
@@ -8,6 +13,22 @@ import { normalizeReaderFacingText, parsePublicationTableCell } from './tableCel
 type NormalizedTableCell = {
   text: string
   controls: PublicationTableCellControl[]
+}
+
+const THEMATIC_BREAK_PATTERN = /^(?:-{3,}|\*{3,}|_{3,})$/
+const NUMBERED_RESPONSE_PATTERN =
+  /^(\d+[.)])\s+\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?(short|medium|long)["']?)?\]\]$/i
+
+function normalizeResponseSize(value: string | undefined): PublicationResponseSizeIntent {
+  switch (value?.toLowerCase()) {
+    case 'short':
+      return 'short'
+    case 'medium':
+      return 'medium'
+    case 'long':
+    default:
+      return 'long'
+  }
 }
 
 function normalizeTableCellForOutput(value: string): NormalizedTableCell {
@@ -34,12 +55,79 @@ function normalizeTableCellForOutput(value: string): NormalizedTableCell {
   return { text, controls }
 }
 
-function looksLikeTableContinuation(block: PublicationBlock | undefined): block is Extract<PublicationBlock, { type: 'paragraph' }> {
-  if (!block || block.type !== 'paragraph') return false
-  return /<br\s*\/?\s*>/i.test(block.text) && (/\[\s?\]/.test(block.text) || block.text.includes('|'))
+function isQuestionLikeText(value: string): boolean {
+  return /[?:](?:[)\]}'"’”]+)?$/.test(value.trim())
 }
 
-function appendTableContinuation(table: PublicationTableBlock, continuation: string): PublicationTableBlock {
+function repairReaderFacingSemantics(blocks: PublicationBlock[]): PublicationBlock[] {
+  const repaired: PublicationBlock[] = []
+
+  for (const block of blocks) {
+    if (block.type === 'paragraph' && THEMATIC_BREAK_PATTERN.test(block.text.trim())) {
+      continue
+    }
+
+    if (block.type === 'paragraph') {
+      const numberedResponse = block.text.trim().match(NUMBERED_RESPONSE_PATTERN)
+
+      if (numberedResponse) {
+        repaired.push({
+          id: block.id,
+          type: 'multiline-text-field',
+          text: numberedResponse[1],
+          responseSize: normalizeResponseSize(numberedResponse[2]),
+          layout: block.layout ? { ...block.layout } : undefined,
+          semanticGroup: block.semanticGroup ? { ...block.semanticGroup } : undefined,
+        })
+        continue
+      }
+    }
+
+    if (block.type === 'multiline-text-field' && block.text.trim() === 'Response') {
+      const previous = repaired[repaired.length - 1]
+
+      if (previous?.type === 'paragraph' && isQuestionLikeText(previous.text)) {
+        repaired.pop()
+        const mergedLayout = previous.layout || block.layout
+          ? {
+              ...previous.layout,
+              ...block.layout,
+              pageBreakBefore:
+                block.layout?.pageBreakBefore ?? previous.layout?.pageBreakBefore,
+            }
+          : undefined
+
+        repaired.push({
+          ...block,
+          text: previous.text,
+          layout: mergedLayout,
+          semanticGroup:
+            block.semanticGroup?.kind === 'prompt-response'
+              ? { ...block.semanticGroup, name: previous.text }
+              : block.semanticGroup,
+        })
+        continue
+      }
+    }
+
+    repaired.push(block)
+  }
+
+  return repaired
+}
+
+function looksLikeTableContinuation(
+  block: PublicationBlock | undefined,
+): block is Extract<PublicationBlock, { type: 'paragraph' }> {
+  if (!block || block.type !== 'paragraph') return false
+  return /<br\s*\/?\s*>/i.test(block.text) &&
+    (/\[\s?\]/.test(block.text) || block.text.includes('|'))
+}
+
+function appendTableContinuation(
+  table: PublicationTableBlock,
+  continuation: string,
+): PublicationTableBlock {
   if (table.rows.length === 0 || table.columns.length === 0) return table
 
   const rows = table.rows.map((row) => table.columns.map((_, index) => row[index] ?? ''))
@@ -125,16 +213,19 @@ function normalizeBlockForOutput(block: PublicationBlock): PublicationBlock {
  *
  * The base parser intentionally preserves unknown source material. This finalization pass consumes
  * authoring syntax before any customer-facing renderer receives publication content. It also repairs
- * a narrow malformed-Markdown pattern emitted by AI manuscripts where `<br>`-separated table-cell
- * content continues onto physical lines after the first table row. Interaction intent is retained as
- * semantic metadata so Preview, static print/PDF, and fillable PDF all consume the same clean model.
+ * narrow malformed-AI patterns seen in real product acceptance: multiline table cells, numbered
+ * response directives, prompt/response separation, and Markdown thematic separators. Interaction
+ * intent is retained as semantic metadata so Preview, static print/PDF, and fillable PDF all consume
+ * the same clean publication model.
  */
 export function compilePublicationManuscript(manuscript: string): GentlePageCompilationResult {
   const result = compileBaseManuscript(manuscript)
-  const repairedBlocks = repairStructuredTableContinuations(result.content.blocks)
+  const semanticBlocks = repairReaderFacingSemantics(result.content.blocks)
+  const repairedBlocks = repairStructuredTableContinuations(semanticBlocks)
 
   return {
     ...result,
+    detectedProtocol: result.detectedProtocol || /\[\[GP:/i.test(manuscript),
     title: normalizeReaderFacingText(result.title),
     content: {
       blocks: repairedBlocks.map(normalizeBlockForOutput),
