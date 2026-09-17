@@ -19,13 +19,33 @@ function normalizeResponseSize(value: string | undefined): PublicationResponseSi
   }
 }
 
+/**
+ * Remove authoring-only inline syntax that must never reach reader-facing output.
+ *
+ * The publication model does not currently carry rich-text spans, so emphasis markers are
+ * intentionally collapsed to their visible text while HTML break tags are preserved as semantic
+ * newlines. This keeps Preview, print/static PDF, and fillable PDF on the same clean text model.
+ */
+export function normalizeReaderFacingText(value: string): string {
+  return value
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n')
+    .trim()
+}
+
 export function parsePublicationTableCell(value: string): PublicationTableCellPart[] {
   const parts: PublicationTableCellPart[] = []
   let cursor = 0
 
   for (const match of value.matchAll(TOKEN_PATTERN)) {
     const index = match.index ?? 0
-    const preceding = value.slice(cursor, index).trim()
+    const preceding = normalizeReaderFacingText(value.slice(cursor, index))
 
     if (preceding) {
       parts.push({ kind: 'text', text: preceding })
@@ -40,13 +60,14 @@ export function parsePublicationTableCell(value: string): PublicationTableCellPa
     cursor = index + match[0].length
   }
 
-  const trailing = value.slice(cursor).trim()
+  const trailing = normalizeReaderFacingText(value.slice(cursor))
   if (trailing) {
     parts.push({ kind: 'text', text: trailing })
   }
 
-  if (parts.length === 0 && value.trim()) {
-    return [{ kind: 'text', text: value.trim() }]
+  if (parts.length === 0) {
+    const normalized = normalizeReaderFacingText(value)
+    return normalized ? [{ kind: 'text', text: normalized }] : []
   }
 
   return parts
