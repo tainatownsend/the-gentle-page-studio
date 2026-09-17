@@ -17,6 +17,10 @@ Gentle Page Studio will handle typography, spacing, fields, layout, pagination, 
 FORMAT
 
 Use Markdown headings:
+Markdown heading markers are REQUIRED syntax, not examples.
+Your final manuscript MUST contain exactly one # Publication title.
+Every major tool or section MUST use ## and every subsection or prompt heading MUST use ###.
+Never remove, omit, or replace the #, ##, or ### heading markers.
 # Publication title
 ## Major section or complete journal tool
 ### Subsection, step, or reflection prompt

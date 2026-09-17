@@ -68,7 +68,9 @@ describe('PublicationCreatePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Compile publication' }))
 
-    expect(screen.getByText('Paste a manuscript before compiling the publication.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Paste a manuscript before compiling the publication.'),
+    ).toBeInTheDocument()
     expect(onCreate).not.toHaveBeenCalled()
   })
 
@@ -104,6 +106,25 @@ describe('PublicationCreatePage', () => {
         },
       }),
     )
+  })
+
+  it('blocks a manuscript without a Markdown publication title', () => {
+    const onCreate = vi.fn()
+    render(<PublicationCreatePage onBack={() => undefined} onCreate={onCreate} />)
+
+    fireEvent.change(screen.getByRole('textbox', { name: /manuscript/i }), {
+      target: {
+        value:
+          'The Steady State: An ADHD Regulation Journal & Toolkit\n\nUnderstanding Your Nervous System State\n\nRegulation is not about staying perfectly calm.',
+      },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Compile publication' }))
+
+    expect(onCreate).not.toHaveBeenCalled()
+    expect(
+      screen.getByText(/needs a Markdown publication title beginning with #/i),
+    ).toBeInTheDocument()
   })
 
   it('auto-compiles a readable DOCX even when import diagnostics are advisory', async () => {

@@ -50,6 +50,13 @@ export function PublicationCreatePage({
 
     const result = compileGentlePageManuscript(normalizedManuscript)
 
+    if (result.title === 'Untitled publication') {
+      setManuscriptError(
+        'The manuscript needs a Markdown publication title beginning with #. Example: # My Journal Title',
+      )
+      return false
+    }
+
     if (result.content.blocks.length === 0) {
       setManuscriptError('The manuscript needs publication content in addition to its title.')
       return false
@@ -153,7 +160,8 @@ export function PublicationCreatePage({
                   <Text weight="semibold">Generating the journal with AI first?</Text>
                   <Text tone="secondary">
                     Copy the Gentle Page authoring instructions into ChatGPT, Gemini, Claude, or any
-                    other AI so it returns a manuscript the compiler can interpret with minimal guesswork.
+                    other AI so it returns a manuscript the compiler can interpret with minimal
+                    guesswork.
                   </Text>
                 </Stack>
 
@@ -163,7 +171,9 @@ export function PublicationCreatePage({
                   startIcon={<Copy size={18} />}
                   onClick={() => void handleCopyAiPrompt()}
                 >
-                  {aiPromptCopyStatus === 'copied' ? 'AI prompt copied' : 'Copy AI authoring prompt'}
+                  {aiPromptCopyStatus === 'copied'
+                    ? 'AI prompt copied'
+                    : 'Copy AI authoring prompt'}
                 </Button>
 
                 {aiPromptCopyStatus === 'copied' ? (
@@ -175,8 +185,8 @@ export function PublicationCreatePage({
 
                 {aiPromptCopyStatus === 'error' ? (
                   <Text tone="secondary" role="alert">
-                    The browser could not copy the prompt. The DOCX and pasted-manuscript paths remain
-                    available.
+                    The browser could not copy the prompt. The DOCX and pasted-manuscript paths
+                    remain available.
                   </Text>
                 ) : null}
               </div>
@@ -304,7 +314,11 @@ export function PublicationCreatePage({
                 </Stack>
               </Card>
 
-              <PublicationCreateForm onSubmit={onCreate} onCancel={onBack} templateId={templateId} />
+              <PublicationCreateForm
+                onSubmit={onCreate}
+                onCancel={onBack}
+                templateId={templateId}
+              />
             </>
           ) : null}
         </Stack>
