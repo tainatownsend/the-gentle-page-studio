@@ -1,7 +1,7 @@
 export {
   compilePublicationManuscript,
   compilePublicationManuscript as compileGentlePageManuscript,
-} from './compilePublicationManuscript'
+} from './compilePublicationManuscriptResilient'
 export type {
   GentlePageCompilationDiagnostic,
   GentlePageCompilationDiagnosticLevel,
