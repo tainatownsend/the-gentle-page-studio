@@ -112,4 +112,47 @@ describe('compilePublicationManuscript', () => {
     expect(readerFacing).not.toContain('**')
     expect(readerFacing).not.toContain('- [ ]')
   })
+
+  it('turns numbered inline response directives into real fields', () => {
+    const result = compilePublicationManuscript(`# The Steady State
+
+## Two Supporting Tasks
+
+1. [[GP:RESPONSE size="short"]]
+2. [[GP:RESPONSE size="short"]]
+
+## Personal Go-To Dopamine Seeds
+
+1. [[GP:RESPONSE size="short"]]
+2. [[GP:RESPONSE size="short"]]
+3. [[GP:RESPONSE size="short"]]`)
+
+    const responseFields = result.content.blocks.filter(
+      (block) => block.type === 'multiline-text-field',
+    )
+
+    expect(responseFields).toHaveLength(5)
+    expect(responseFields.map((block) => block.text)).toEqual(['1.', '2.', '1.', '2.', '3.'])
+    expect(responseFields.every((block) => block.responseSize === 'short')).toBe(true)
+    expect(JSON.stringify(result.content)).not.toContain('[[GP:RESPONSE')
+  })
+
+  it('removes Markdown thematic separators from customer-facing output', () => {
+    const result = compilePublicationManuscript(`# The Steady State
+
+## Permission Slip
+
+What can you drop today?
+
+---
+
+## Dopamine Menu`)
+
+    expect(JSON.stringify(result.content)).not.toContain('---')
+    expect(
+      result.content.blocks.some(
+        (block) => block.type === 'paragraph' && block.text.trim() === '---',
+      ),
+    ).toBe(false)
+  })
 })
