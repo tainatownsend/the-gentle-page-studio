@@ -8,12 +8,16 @@ Gentle Page Studio is a **publication compiler**. The user supplies a manuscript
 
 The user should correct exceptions, not typeset the publication page by page.
 
-## Current release candidate
+## Current release state
 
-- Branch: `release/editorial-north-star-manual-acceptance`
-- Pull request: #99
-- Release state: Draft, awaiting manual visual/PDF acceptance
-- Acceptance tracker: issue #73
+The Editorial North Star implementation is now integrated into `main`.
+
+- Editorial release candidate PR #99: merged
+- Post-merge regression fix PR #106: merged
+- Current `main`: `e9eea89710565a1b13fb08f9da39a1091247e1b4`
+- Product state: implementation complete; first sellable journal acceptance pending
+
+The remaining gate is no longer speculative compiler development. It is final product acceptance using a real customer-ready journal and real PDF viewers.
 
 ## Implemented
 
@@ -70,7 +74,7 @@ The user should correct exceptions, not typeset the publication page by page.
 - worksheet-only fillable export detection
 - lazy binary PDF serializer boundary
 
-### Existing Studio capabilities
+### Studio capabilities
 
 - Draft / Published lifecycle
 - autosave and local recovery
@@ -80,9 +84,19 @@ The user should correct exceptions, not typeset the publication page by page.
 - local image asset library
 - light/dark and responsive application UI
 
+### Release-hardening fixes now in main
+
+PR #106 closed the regressions found after the Editorial North Star merge:
+
+- structured rating/table blocks survive publication persistence
+- structured rating/table blocks survive revision-history persistence
+- escaped pipes inside Markdown table cells are preserved
+- local asset quota failures fail safely instead of reporting false success
+- positional table controls are reconciled after structural table edits
+
 ## Automated release evidence
 
-The release stack includes automated gates for:
+The integrated release stack includes automated gates for:
 
 - high-severity dependency audit
 - lint
@@ -98,20 +112,27 @@ The release stack includes automated gates for:
 - Brain-Friendly Planner golden acceptance
 - static structured worksheet controls
 - fillable AcroForm controls inside tables/matrices
+- structured persistence regressions
+- asset quota failure handling
 
-## Remaining release gate
+## Remaining product acceptance gate
 
-No further speculative layout tuning should be promoted before the zero-touch manual acceptance result is inspected.
+Do not resume speculative layout tuning unless the real journal acceptance test exposes a reproducible defect.
 
-Manual acceptance must evaluate:
+The next release gate is the first complete **ADHD Emotional Regulation Journal**:
 
-1. a fresh Brain-Friendly Planner generated with the current AI authoring prompt;
-2. `Burnout_Recovery_Journal_English_Draft.docx`;
-3. `The_30-Day_Energy_Audit_English_Draft.docx`;
-4. static and fillable PDF parity in a real viewer;
-5. existing Studio regression behaviors.
+1. generate the journal from the current production path;
+2. inspect the complete browser Preview without manual layout intervention;
+3. export the static PDF;
+4. export the fillable PDF;
+5. fill representative fields in a real PDF viewer;
+6. save, close, and reopen the fillable PDF and confirm values persist;
+7. verify cover, hierarchy, spacing, page flow, writing space, tables, checkboxes, ratings, and page numbers;
+8. record page-specific defects only when they are reproducible;
+9. approve the customer-ready files;
+10. prepare the sellable package and first listing.
 
-### Release target
+### Acceptance target
 
 - no manuscript content loss
 - no protocol syntax leakage
@@ -119,9 +140,10 @@ Manual acceptance must evaluate:
 - no widespread heading-only or mechanically sparse pages
 - no catastrophic prompt/field separation
 - structured worksheets remain usable
-- fillable fields preserve values
+- fillable fields preserve values after save/reopen
+- static and fillable versions remain visually equivalent where expected
 - **0 manual layout interventions** for the optimized AI/Protocol path
-- DOCX imports require, at most, isolated semantic preference changes rather than page-by-page reconstruction
+- no release-blocking visual defect in the first customer-ready ADHD journal
 
 ## Product direction
 
