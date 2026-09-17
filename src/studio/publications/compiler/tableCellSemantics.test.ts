@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  normalizeReaderFacingText,
   parsePublicationTableCell,
   tableCellHasInteractiveIntent,
   tableCellStaticText,
@@ -29,5 +30,24 @@ describe('table cell semantics', () => {
       { kind: 'response', size: 'medium' },
     ])
     expect(tableCellStaticText('Notes [[GP:RESPONSE size="medium"]]')).toBe('Notes')
+  })
+
+  it('removes authoring-only HTML breaks and Markdown emphasis from reader-facing text', () => {
+    expect(normalizeReaderFacingText('**Head & Face**<br><br>Clenched teeth')).toBe(
+      'Head & Face\nClenched teeth',
+    )
+    expect(normalizeReaderFacingText('**1. The Behavior**')).toBe('1. The Behavior')
+  })
+
+  it('does not leak break tags around checkbox controls', () => {
+    expect(parsePublicationTableCell('Clenched teeth<br><br>- [ ] Heavy eyelids<br>')).toEqual([
+      { kind: 'text', text: 'Clenched teeth' },
+      { kind: 'checkbox' },
+      { kind: 'text', text: 'Heavy eyelids' },
+    ])
+
+    expect(tableCellStaticText('Clenched teeth<br><br>- [ ] Heavy eyelids<br>')).toBe(
+      'Clenched teeth Heavy eyelids',
+    )
   })
 })
