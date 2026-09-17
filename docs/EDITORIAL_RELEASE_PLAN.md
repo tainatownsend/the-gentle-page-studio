@@ -1,20 +1,41 @@
 # Gentle Page Editorial Release Plan
 
-The functional compiler baseline is complete, but product release remains gated by editorial output quality.
+The Editorial North Star compiler stack is integrated into `main`. Product release is now gated by the acceptance of the first customer-ready journal, not by additional speculative layout implementation.
 
-## Stack
+## Integrated release foundation
 
-1. PR0034 — Editorial Output Correctness
-2. PR0035 — Gentle Page Editorial Design System
-3. PR0036 — Page Archetypes & Layout Recipes
-4. PR0037 — Compound Journal Components
-5. PR0038 — Editorial Recomposition Engine
-6. PR0039 — Visual QA + Self-Healing
-7. PR0040 — Brain-Friendly Planner Golden Acceptance
+The release line includes the editorial output correctness work, design system, page archetypes and recipes, compound journal components, recomposition engine, Visual QA/self-healing, golden acceptance coverage, and the post-merge structured-persistence fixes from PR #106.
+
+Current production baseline:
+
+- `main`: `e9eea89710565a1b13fb08f9da39a1091247e1b4`
+- PR #99: merged
+- PR #106: merged
+
+## Current release gate
+
+The first **ADHD Emotional Regulation Journal** must pass real-product acceptance as both a static and fillable PDF.
+
+The acceptance sequence is:
+
+1. generate from the current production path;
+2. review the complete publication without page-by-page manual layout work;
+3. export static PDF;
+4. export fillable PDF;
+5. test representative interactive fields in a real PDF viewer;
+6. save, close, reopen, and verify values persist;
+7. resolve only reproducible release-blocking defects;
+8. approve the final customer files;
+9. prepare listing assets, description, pricing, and sellable package;
+10. publish the first real listing.
 
 ## Release rule
 
-Do not promote the functional compiler baseline to `main` as the final release until the generated Brain-Friendly Planner is visually acceptable without page-by-page manual desktop publishing.
+Do not restart broad layout tuning because a page could be subjectively different. Promote a new code change only when final-product acceptance exposes a concrete, reproducible failure against the North Star criteria.
+
+## Done when
+
+A customer-ready printable and fillable ADHD Emotional Regulation Journal is packaged, listed, and able to accept a purchase.
 
 ## North Star
 
