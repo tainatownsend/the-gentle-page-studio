@@ -31,7 +31,7 @@ function normalizeTableCellForOutput(value: string): NormalizedTableCell {
     .join(' ')
     .trim()
 
-  return { text: text || normalizeReaderFacingText(value), controls }
+  return { text, controls }
 }
 
 function looksLikeTableContinuation(block: PublicationBlock | undefined): block is Extract<PublicationBlock, { type: 'paragraph' }> {
