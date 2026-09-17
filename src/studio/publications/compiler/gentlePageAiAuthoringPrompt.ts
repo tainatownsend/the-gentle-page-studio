@@ -16,6 +16,9 @@ Gentle Page Studio will handle typography, spacing, fields, layout, pagination, 
 
 FORMAT
 
+Return raw Markdown/plain text that can be pasted directly into a textarea. Do not render the title as rich text without its Markdown marker.
+The first non-empty line MUST be the publication title and MUST literally begin with \`# \`.
+
 Use Markdown headings:
 # Publication title
 ## Major section or complete journal tool
