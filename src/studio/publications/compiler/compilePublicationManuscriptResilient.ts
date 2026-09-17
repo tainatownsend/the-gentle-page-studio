@@ -31,7 +31,7 @@ function looksLikePlainTextHeading(value: string): boolean {
   if (/[.!?;]$/.test(text)) return false
 
   const words = text
-    .replace(/[()\[\]{}“”"']/g, '')
+    .replace(/[(){}“”"']/g, '')
     .split(/\s+/)
     .filter((word) => /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(word))
 
