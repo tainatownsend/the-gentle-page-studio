@@ -47,4 +47,34 @@ describe('compilePublicationManuscript', () => {
       [{ kind: 'checkbox' }],
     ])
   })
+
+  it('normalizes real-product Markdown and HTML syntax across the shared publication model', () => {
+    const result = compilePublicationManuscript(`# **The Steady Current**
+
+**Offer Context Without Excuse:** Briefly explain the underlying overwhelm.
+
+| Physiological Zone | Early Whisper |
+| --- | --- |
+| **Head & Face** | Clenched teeth<br><br>- [ ] Heavy eyelids<br> |`)
+
+    expect(result.title).toBe('The Steady Current')
+
+    const paragraph = result.content.blocks.find((block) => block.type === 'paragraph')
+    expect(paragraph?.text).toBe(
+      'Offer Context Without Excuse: Briefly explain the underlying overwhelm.',
+    )
+
+    const table = result.content.blocks.find((block) => block.type === 'table')
+    expect(table?.type).toBe('table')
+    if (table?.type !== 'table') return
+
+    expect(table.rows[0]?.[0]).toBe('Head & Face')
+    expect(table.rows[0]?.[1]).toBe('Clenched teeth Heavy eyelids')
+    expect(table.cellControls?.[0]?.[1]).toEqual([{ kind: 'checkbox' }])
+
+    const readerFacing = JSON.stringify(result.content)
+    expect(readerFacing).not.toContain('<br')
+    expect(readerFacing).not.toContain('**')
+    expect(readerFacing).not.toContain('- [ ]')
+  })
 })
