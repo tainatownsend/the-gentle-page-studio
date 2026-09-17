@@ -158,7 +158,11 @@ function inferSemanticGroups(blocks: PublicationBlock[]): void {
     }
 
     let end = index + 1
-    while (end < blocks.length && blocks[end]?.type === 'checkbox-field' && !blocks[end]?.semanticGroup) {
+    while (
+      end < blocks.length &&
+      blocks[end]?.type === 'checkbox-field' &&
+      !blocks[end]?.semanticGroup
+    ) {
       end += 1
     }
 
@@ -257,7 +261,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
           level: 'suggestion',
           code: 'nested-repeatable-page',
           line: lineNumber,
-          message: 'A repeatable page started before the previous one ended. The previous group was closed automatically.',
+          message:
+            'A repeatable page started before the previous one ended. The previous group was closed automatically.',
         })
       }
 
@@ -462,6 +467,21 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       continue
     }
 
+    const bulletResponseMatch = line.match(
+      /^[-*]\s+\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"']*?)["']?)?\]\]$/i,
+    )
+    if (bulletResponseMatch) {
+      flushParagraph()
+      pushBlock({
+        id: createBlockId(),
+        type: 'multiline-text-field',
+        text: '',
+        responseSize: normalizeResponseSize(bulletResponseMatch[1]),
+      })
+      index += 1
+      continue
+    }
+
     const bulletMatch = line.match(/^[-*]\s+(.+)$/)
     if (bulletMatch) {
       flushParagraph()
@@ -496,7 +516,8 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     diagnostics.push({
       level: 'suggestion',
       code: 'unterminated-author-note',
-      message: 'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.',
+      message:
+        'An author-only note was not closed with [[GP:END]]. It was kept out of publication output.',
     })
   }
 
