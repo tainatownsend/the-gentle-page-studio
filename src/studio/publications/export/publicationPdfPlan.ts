@@ -18,8 +18,11 @@ const RESPONSE_AREA_UNIT_HEIGHT_POINTS = 6
 const MULTILINE_HORIZONTAL_PADDING_POINTS = 14
 const MULTILINE_BOTTOM_PADDING_POINTS = 12
 const MULTILINE_PROMPT_RESERVE_POINTS = 50
-const CHECKBOX_SIZE_POINTS = 14
-const RATING_SIZE_POINTS = 12
+// Interactive controls need to remain comfortably tappable on mobile PDF viewers.
+// Keep the visible affordance and the widget hit target aligned so customers do not
+// have to hit a tiny hotspot on top of a printed checkbox or rating circle.
+const CHECKBOX_SIZE_POINTS = 18
+const RATING_SIZE_POINTS = 16
 const TABLE_CAPTION_RESERVE_POINTS = 22
 const TABLE_CELL_PADDING_POINTS = 8
 
@@ -136,7 +139,9 @@ function createTableNaturalRowHeights(block: PublicationTableBlock): {
       if (control.kind !== 'response') return height
       return Math.max(height, responseAreaMinimumPoints(control.size) + 16)
     }, 0)
-    const checkboxHeight = controls.some((control) => control.kind === 'checkbox') ? 32 : 0
+    const checkboxHeight = controls.some((control) => control.kind === 'checkbox')
+      ? CHECKBOX_SIZE_POINTS + 18
+      : 0
 
     return Math.max(textHeight, responseHeight, checkboxHeight)
   })
@@ -172,7 +177,7 @@ function estimatePdfBlockHeight(
     }
     case 'checkbox-field': {
       const lines = estimateVisualLines(block.text, 72)
-      return 26 + (lines - 1) * 15
+      return Math.max(CHECKBOX_SIZE_POINTS + 8, 26 + (lines - 1) * 15)
     }
     case 'rating-field': {
       const promptLines = estimateVisualLines(block.text, 72)
