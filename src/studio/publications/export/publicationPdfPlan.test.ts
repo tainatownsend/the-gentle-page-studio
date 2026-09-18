@@ -27,7 +27,7 @@ describe('createPublicationPdfPlan', () => {
     })
   })
 
-  it('projects interactive fields into stable identities and coordinates', () => {
+  it('projects interactive fields into stable identities and mobile-friendly coordinates', () => {
     const plan = createPublicationPdfPlan(
       createPublicationFixture({
         id: 'journal-1',
@@ -73,13 +73,13 @@ describe('createPublicationPdfPlan', () => {
       label: 'I completed this reflection.',
       rect: {
         x: 54,
-        width: 14,
-        height: 14,
+        width: 18,
+        height: 18,
       },
     })
   })
 
-  it('plans a rating scale as one stable radio group', () => {
+  it('plans a rating scale as one stable radio group with tappable controls', () => {
     const plan = createPublicationPdfPlan(
       createPublicationFixture({
         id: 'journal-rating',
@@ -120,7 +120,8 @@ describe('createPublicationPdfPlan', () => {
         '9',
         '10',
       ])
-      expect(ratingField.options.every((option) => option.rect.width === 12)).toBe(true)
+      expect(ratingField.options.every((option) => option.rect.width === 16)).toBe(true)
+      expect(ratingField.options.every((option) => option.rect.height === 16)).toBe(true)
     }
   })
 
