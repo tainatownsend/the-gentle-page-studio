@@ -14,6 +14,7 @@ import {
   PUBLICATION_MARGIN_POINTS,
   type PublicationPdfBlockPlacement,
   type PublicationPdfInteractiveField,
+  type PublicationPdfPagePlan,
 } from './publicationPdfPlan'
 
 const INK = rgb(47 / 255, 58 / 255, 54 / 255)
@@ -25,6 +26,8 @@ const SAGE = rgb(107 / 255, 127 / 255, 114 / 255)
 const SAGE_DEEP = rgb(64 / 255, 81 / 255, 72 / 255)
 const SAGE_SOFT = rgb(231 / 255, 238 / 255, 233 / 255)
 const CLAY = rgb(226 / 255, 211 / 255, 199 / 255)
+const CLAY_SOFT = rgb(244 / 255, 236 / 255, 231 / 255)
+const MIST = rgb(238 / 255, 243 / 255, 245 / 255)
 const SAND_SOFT = rgb(247 / 255, 244 / 255, 239 / 255)
 const FIELD = rgb(1, 1, 1)
 
@@ -131,6 +134,132 @@ function drawPageFoundation(page: PDFPage): void {
   })
 }
 
+function drawBotanicalSprig(
+  page: PDFPage,
+  originX: number,
+  originY: number,
+  directionX: 1 | -1,
+  directionY: 1 | -1,
+): void {
+  const endX = originX + directionX * 92
+  const endY = originY + directionY * 112
+
+  page.drawLine({
+    start: { x: originX, y: originY },
+    end: { x: endX, y: endY },
+    thickness: 1.25,
+    color: SAGE_DEEP,
+    opacity: 0.48,
+  })
+
+  const leafOffsets = [
+    { x: 20, y: 24, side: -1 },
+    { x: 38, y: 45, side: 1 },
+    { x: 55, y: 67, side: -1 },
+    { x: 72, y: 88, side: 1 },
+  ] as const
+
+  leafOffsets.forEach(({ x, y, side }, index) => {
+    const stemX = originX + directionX * x
+    const stemY = originY + directionY * y
+    page.drawEllipse({
+      x: stemX + directionX * side * 9,
+      y: stemY,
+      xScale: 11,
+      yScale: 5.5,
+      color: index % 2 === 0 ? SAGE_SOFT : SAGE,
+      opacity: index % 2 === 0 ? 0.9 : 0.48,
+    })
+  })
+}
+
+function getPlacementBounds(
+  placements: readonly PublicationPdfBlockPlacement[],
+): { x: number; y: number; width: number; height: number } | undefined {
+  if (placements.length === 0) return undefined
+
+  const left = Math.min(...placements.map((placement) => placement.rect.x))
+  const bottom = Math.min(...placements.map((placement) => placement.rect.y))
+  const right = Math.max(
+    ...placements.map((placement) => placement.rect.x + placement.rect.width),
+  )
+  const top = Math.max(
+    ...placements.map((placement) => placement.rect.y + placement.rect.height),
+  )
+
+  return {
+    x: left,
+    y: bottom,
+    width: right - left,
+    height: top - bottom,
+  }
+}
+
+function drawTemplateZones(page: PDFPage, pagePlan: PublicationPdfPagePlan): void {
+  if (pagePlan.pageTemplate === 'emergency-tool') {
+    const stepStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+
+    stepStarts.forEach((startIndex, stepIndex) => {
+      const nextStart = stepStarts[stepIndex + 1] ?? pagePlan.blocks.length
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+
+      const fill =
+        stepIndex === 0 ? SAND_SOFT : stepIndex === 1 ? SAGE_SOFT : CLAY_SOFT
+      page.drawRectangle({
+        x: PUBLICATION_MARGIN_POINTS - 4,
+        y: bounds.y - 4,
+        width: page.getWidth() - (PUBLICATION_MARGIN_POINTS - 4) * 2,
+        height: bounds.height + 8,
+        color: fill,
+        opacity: 0.62,
+        borderColor: RULE,
+        borderWidth: 0.6,
+      })
+    })
+    return
+  }
+
+  if (pagePlan.pageTemplate === 'daily-check-in') {
+    const inventoryIndexes = pagePlan.blocks
+      .map((block, index) => (block.type === 'checkbox-field' ? index : -1))
+      .filter((index) => index >= 0)
+
+    if (inventoryIndexes.length === 0) return
+
+    const firstInventory = inventoryIndexes[0]
+    const lastInventory = inventoryIndexes[inventoryIndexes.length - 1]
+    if (firstInventory === undefined || lastInventory === undefined) return
+
+    const previous = pagePlan.blocks[firstInventory - 1]
+    const startIndex =
+      previous?.type === 'heading' && previous.level === 3
+        ? firstInventory - 1
+        : firstInventory
+    const bounds = getPlacementBounds(
+      pagePlan.blockPlacements.slice(startIndex, lastInventory + 1),
+    )
+    if (!bounds) return
+
+    page.drawRectangle({
+      x: PUBLICATION_MARGIN_POINTS - 3,
+      y: bounds.y - 3,
+      width: page.getWidth() - (PUBLICATION_MARGIN_POINTS - 3) * 2,
+      height: bounds.height + 6,
+      color: SAGE_SOFT,
+      opacity: 0.48,
+      borderColor: RULE,
+      borderWidth: 0.55,
+    })
+  }
+}
+
 function drawContentPageDecoration(
   page: PDFPage,
   blocks: readonly PublicationBlock[],
@@ -184,13 +313,8 @@ function drawCover(
   const brandSize = 9
   const brandWidth = bodyFont.widthOfTextAtSize(brand, brandSize)
 
-  page.drawRectangle({
-    x: centerX - 42,
-    y: 724,
-    width: 84,
-    height: 2,
-    color: SAGE,
-  })
+  drawBotanicalSprig(page, 520, 720, 1, 1)
+  drawBotanicalSprig(page, 92, 72, -1, -1)
 
   page.drawText(brand, {
     x: centerX - brandWidth / 2,
@@ -347,6 +471,7 @@ function drawStaticBlock(
   bodyBoldFont: PDFFont,
   pageTemplate?: PublicationPageTemplate,
   templateStepNumber?: number,
+  templateStateIndex?: number,
 ): void {
   const top = placement.rect.y + placement.rect.height
 
@@ -493,12 +618,21 @@ function drawStaticBlock(
 
   if (block.type === 'checkbox-field') {
     if (pageTemplate === 'guided-framework') {
+      const stateFill =
+        templateStateIndex === 1
+          ? CLAY_SOFT
+          : templateStateIndex === 2
+            ? MIST
+            : templateStateIndex === 3
+              ? SAND_SOFT
+              : SAGE_SOFT
+
       page.drawRectangle({
         x: placement.rect.x,
         y: placement.rect.y,
         width: placement.rect.width,
         height: placement.rect.height,
-        color: PAPER,
+        color: stateFill,
         borderColor: RULE,
         borderWidth: 0.6,
       })
@@ -627,6 +761,7 @@ export async function generateFillablePublicationPdf(
     }
 
     drawContentPageDecoration(page, pagePlan.blocks, pagePlan.pageTemplate)
+    drawTemplateZones(page, pagePlan)
 
     pagePlan.blocks.forEach((block, index) => {
       const placement = pagePlan.blockPlacements[index]
@@ -643,6 +778,13 @@ export async function generateFillablePublicationPdf(
                     candidate.type === 'heading' && candidate.level === 3,
                 ).length
             : undefined
+        const templateStateIndex =
+          pagePlan.pageTemplate === 'guided-framework' &&
+          block.type === 'checkbox-field'
+            ? pagePlan.blocks
+                .slice(0, index + 1)
+                .filter((candidate) => candidate.type === 'checkbox-field').length
+            : undefined
 
         drawStaticBlock(
           page,
@@ -653,6 +795,7 @@ export async function generateFillablePublicationPdf(
           bodyBoldFont,
           pagePlan.pageTemplate,
           templateStepNumber,
+          templateStateIndex,
         )
       }
     })
