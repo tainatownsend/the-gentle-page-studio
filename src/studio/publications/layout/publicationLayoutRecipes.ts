@@ -35,9 +35,9 @@ const RECIPE_BY_ARCHETYPE: Record<PublicationPageArchetype, Omit<PublicationPage
     preferBalancedWhitespace: true,
   },
   worksheet: {
-    density: 'compact',
+    density: 'comfortable',
     preferWholePageTool: true,
-    preferBalancedWhitespace: false,
+    preferBalancedWhitespace: true,
   },
   content: {
     density: 'comfortable',
