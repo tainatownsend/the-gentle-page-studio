@@ -157,6 +157,34 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
   }
 }
 
+function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | undefined): number {
+  switch (pageTemplate) {
+    case 'emergency-tool':
+      return 0.4
+    case 'daily-check-in':
+      return 0.45
+    case 'guided-framework':
+      return 0.6
+    case 'weekly-reset':
+      return 0.65
+    case 'planner-tracker':
+    case 'matrix-framework':
+      return 0.75
+    default:
+      return 1
+  }
+}
+
+function estimatePublicationPaginationUnits(
+  block: PublicationBlock,
+  pageTemplate: PublicationPageTemplate | undefined,
+): number {
+  return Math.max(
+    1,
+    Math.ceil(estimatePublicationBlockUnits(block) * getTemplatePaginationScale(pageTemplate)),
+  )
+}
+
 function getFlexibleResponseUnits(block: PublicationBlock): number {
   if (block.type !== 'multiline-text-field') {
     return 0
@@ -181,6 +209,7 @@ function shouldKeepWithNext(block: PublicationBlock): boolean {
 function getCheckboxGroupUnits(
   blocks: readonly PublicationBlock[],
   startIndex: number,
+  pageTemplate?: PublicationPageTemplate,
 ): number | undefined {
   if (blocks[startIndex]?.type !== 'checkbox-field') {
     return undefined
@@ -190,7 +219,10 @@ function getCheckboxGroupUnits(
   let index = startIndex
 
   while (index < blocks.length && blocks[index]?.type === 'checkbox-field') {
-    total += estimatePublicationBlockUnits(blocks[index] as PublicationBlock)
+    total += estimatePublicationPaginationUnits(
+      blocks[index] as PublicationBlock,
+      pageTemplate,
+    )
     index += 1
   }
 
@@ -200,13 +232,18 @@ function getCheckboxGroupUnits(
 function getCompoundComponentUnits(
   blocks: readonly PublicationBlock[],
   startIndex: number,
+  pageTemplate?: PublicationPageTemplate,
 ): number | undefined {
   const component = getPublicationCompoundComponentAtIndex(blocks, startIndex)
   if (!component) return undefined
 
   return blocks
     .slice(component.startIndex, component.endIndex)
-    .reduce((total, componentBlock) => total + estimatePublicationBlockUnits(componentBlock), 0)
+    .reduce(
+      (total, componentBlock) =>
+        total + estimatePublicationPaginationUnits(componentBlock, pageTemplate),
+      0,
+    )
 }
 
 function crossesRepeatablePageBoundary(
@@ -235,11 +272,17 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
   const pages: PublicationBlock[][] = []
   let currentPage: PublicationBlock[] = []
   let currentUnits = 0
+  let currentPageTemplate: PublicationPageTemplate | undefined
 
   blocks.forEach((block, index) => {
-    const blockUnits = estimatePublicationBlockUnits(block)
+    const startingTemplate = block.layout?.pageTemplate
+    const effectiveTemplate = startingTemplate ?? currentPageTemplate
+    const blockUnits = estimatePublicationPaginationUnits(block, effectiveTemplate)
     const nextBlock = blocks[index + 1]
-    const nextBlockUnits = nextBlock ? estimatePublicationBlockUnits(nextBlock) : 0
+    const nextTemplate = nextBlock?.layout?.pageTemplate ?? effectiveTemplate
+    const nextBlockUnits = nextBlock
+      ? estimatePublicationPaginationUnits(nextBlock, nextTemplate)
+      : 0
     const pairFitsOnFreshPage =
       nextBlock !== undefined &&
       blockUnits + nextBlockUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
@@ -249,7 +292,11 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       pairFitsOnFreshPage &&
       currentUnits + blockUnits + nextBlockUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
-    const compoundComponentUnits = getCompoundComponentUnits(blocks, index)
+    const compoundComponentUnits = getCompoundComponentUnits(
+      blocks,
+      index,
+      effectiveTemplate,
+    )
     const currentPageIsMeaningfullyFilled =
       currentUnits >= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS - SPARSE_PAGE_REMAINING_UNITS
     const wouldStartLongCompoundComponent =
@@ -265,7 +312,11 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       compoundComponentUnits <= PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS &&
       currentUnits + compoundComponentUnits > PUBLICATION_CONTENT_PAGE_CAPACITY_UNITS
 
-    const checkboxGroupUnits = getCheckboxGroupUnits(blocks, index)
+    const checkboxGroupUnits = getCheckboxGroupUnits(
+      blocks,
+      index,
+      effectiveTemplate,
+    )
     const startsCheckboxGroup =
       block.type === 'checkbox-field' && blocks[index - 1]?.type !== 'checkbox-field'
     const headingAlreadyIntroducesCheckboxGroup =
@@ -282,7 +333,7 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
     const semanticBoundaryBreak =
       currentPage.length > 0 && crossesRepeatablePageBoundary(blocks, index)
     const templateBoundaryBreak =
-      currentPage.length > 0 && block.layout?.pageTemplate !== undefined
+      currentPage.length > 0 && startingTemplate !== undefined
     const forcedBreak = currentPage.length > 0 && block.layout?.pageBreakBefore === 'forced'
     const preferredBreak =
       currentPage.length > 0 &&
@@ -308,8 +359,12 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
       currentUnits = 0
     }
 
+    if (startingTemplate !== undefined) {
+      currentPageTemplate = startingTemplate
+    }
+
     currentPage.push(cloneBlock(block))
-    currentUnits += blockUnits
+    currentUnits += estimatePublicationPaginationUnits(block, currentPageTemplate)
   })
 
   pages.push(currentPage)
@@ -379,6 +434,28 @@ function isRepeatablePage(page: PublicationLayoutPage): boolean {
 
 function pageStartsRepeatableGroup(page: PublicationLayoutPage | undefined): boolean {
   return page?.blocks[0]?.semanticGroup?.kind === 'repeatable-page'
+}
+
+function resolvePageTemplate(
+  pageBlocks: readonly PublicationBlock[],
+  sourceBlocks: readonly PublicationBlock[],
+): PublicationPageTemplate | undefined {
+  const explicit = pageBlocks.find((block) => block.layout?.pageTemplate)?.layout
+    ?.pageTemplate
+  if (explicit) return explicit
+
+  const firstBlockId = pageBlocks[0]?.id
+  if (!firstBlockId) return undefined
+
+  const sourceIndex = sourceBlocks.findIndex((block) => block.id === firstBlockId)
+  if (sourceIndex < 0) return undefined
+
+  for (let index = sourceIndex - 1; index >= 0; index -= 1) {
+    const template = sourceBlocks[index]?.layout?.pageTemplate
+    if (template) return template
+  }
+
+  return undefined
 }
 
 function isIntentionalWhitespaceTemplate(page: PublicationLayoutPage): boolean {
@@ -452,8 +529,7 @@ export function createPublicationLayout(publication: Publication): PublicationLa
     },
     ...contentPages.map((blocks, index) => {
       const allocation = allocatePage(blocks)
-      const pageTemplate = blocks.find((block) => block.layout?.pageTemplate)?.layout
-        ?.pageTemplate
+      const pageTemplate = resolvePageTemplate(blocks, publication.content.blocks)
 
       return {
         id: `${publication.id}-content-page-${index + 1}`,
