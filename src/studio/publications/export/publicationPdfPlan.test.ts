@@ -225,4 +225,56 @@ describe('createPublicationPdfPlan', () => {
     })
   })
 
+
+  it('places guided framework states in a two-by-two PDF grid', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        content: {
+          blocks: [
+            {
+              id: 'states-heading',
+              type: 'heading',
+              level: 2,
+              text: 'The 4-State Self-Scan',
+              layout: { pageTemplate: 'guided-framework' },
+            },
+            { id: 'state-1', type: 'checkbox-field', text: 'Hyperarousal' },
+            { id: 'state-2', type: 'checkbox-field', text: 'Hypoarousal' },
+            { id: 'state-3', type: 'checkbox-field', text: 'Underaroused' },
+            { id: 'state-4', type: 'checkbox-field', text: 'Regulated Window' },
+            {
+              id: 'state-note',
+              type: 'multiline-text-field',
+              text: 'What is your body physically feeling right now?',
+              responseSize: 'medium',
+            },
+          ],
+        },
+      }),
+    )
+
+    const page = plan.pages.find(
+      (candidate) => candidate.pageTemplate === 'guided-framework',
+    )
+    const statePlacements =
+      page?.blockPlacements.filter((placement) => placement.type === 'checkbox-field') ?? []
+
+    expect(statePlacements).toHaveLength(4)
+    expect(new Set(statePlacements.map((placement) => placement.rect.x)).size).toBe(2)
+    expect(new Set(statePlacements.map((placement) => placement.rect.y)).size).toBe(2)
+    expect(
+      statePlacements.every(
+        (placement) => placement.rect.width < PUBLICATION_CONTENT_WIDTH_POINTS,
+      ),
+    ).toBe(true)
+    expect(
+      statePlacements.every(
+        (placement) =>
+          placement.rect.x >= PUBLICATION_MARGIN_POINTS &&
+          placement.rect.x + placement.rect.width <=
+            US_LETTER_WIDTH_POINTS - PUBLICATION_MARGIN_POINTS,
+      ),
+    ).toBe(true)
+  })
+
 })
