@@ -247,9 +247,14 @@ function drawTemplateZones(page: PDFPage, pagePlan: PublicationPdfPagePlan): voi
       )
       .filter((index) => index >= 0)
       .slice(0, 5)
+    const firstWritingFieldIndex = pagePlan.blocks.findIndex(
+      (block) => block.type === 'multiline-text-field',
+    )
 
     sectionStarts.forEach((startIndex, sectionIndex) => {
-      const nextStart = sectionStarts[sectionIndex + 1] ?? pagePlan.blocks.length
+      const nextStart =
+        sectionStarts[sectionIndex + 1] ??
+        (firstWritingFieldIndex >= 0 ? firstWritingFieldIndex : pagePlan.blocks.length)
       const bounds = getPlacementBounds(
         pagePlan.blockPlacements.slice(startIndex, nextStart),
       )
