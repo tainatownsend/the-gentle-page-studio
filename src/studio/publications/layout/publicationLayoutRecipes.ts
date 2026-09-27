@@ -81,6 +81,16 @@ const RECIPE_BY_TEMPLATE: Record<
     preferWholePageTool: true,
     preferBalancedWhitespace: true,
   },
+  'tool-overview': {
+    density: 'comfortable',
+    preferWholePageTool: true,
+    preferBalancedWhitespace: true,
+  },
+  'sensory-reset': {
+    density: 'comfortable',
+    preferWholePageTool: true,
+    preferBalancedWhitespace: true,
+  },
   'emergency-tool': {
     density: 'comfortable',
     preferWholePageTool: true,
