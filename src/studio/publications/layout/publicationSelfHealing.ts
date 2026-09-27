@@ -21,6 +21,10 @@ function hasForcedBoundary(blocks: readonly PublicationBlock[]): boolean {
   return blocks[0]?.layout?.pageBreakBefore === 'forced'
 }
 
+function hasTemplateBoundary(blocks: readonly PublicationBlock[]): boolean {
+  return blocks.some((block) => block.layout?.pageTemplate !== undefined)
+}
+
 function canMergeStrandedHeading(
   current: readonly PublicationBlock[],
   next: readonly PublicationBlock[],
@@ -37,6 +41,7 @@ function canMergeStrandedHeading(
   // break on the next page, however, represents a separate authored boundary and must stay.
   if (hasForcedBoundary(next)) return false
   if (hasRepeatableContent(current) || hasRepeatableContent(next)) return false
+  if (hasTemplateBoundary(current) || hasTemplateBoundary(next)) return false
   if (inferPublicationPageArchetype(current) === 'section-opener') return false
 
   return pageUnits([...current, ...next], options.estimateUnits) <= options.capacityUnits
