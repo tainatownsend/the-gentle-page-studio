@@ -16,9 +16,18 @@ import { Container } from '@/design-system/primitives/Container'
 import { Stack } from '@/design-system/primitives/Stack'
 
 import { downloadFillablePublicationPdf } from '../../export'
-import { createPublicationLayout, getPublicationPageLayoutRecipe } from '../../layout'
+import {
+  createPublicationLayout,
+  getPublicationPageLayoutRecipe,
+  type PublicationLayoutBlockAllocation,
+} from '../../layout'
 import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
-import type { Publication, PublicationBlock, PublicationTableCellControl } from '../../types'
+import type {
+  Publication,
+  PublicationBlock,
+  PublicationPageTemplate,
+  PublicationTableCellControl,
+} from '../../types'
 
 import styles from './PublicationPreviewPage.module.css'
 
@@ -223,6 +232,212 @@ function PublicationBlockPreview({
   }
 
   return <p className={styles.paragraph}>{block.text || 'Empty paragraph'}</p>
+}
+
+
+type PublicationTemplateContentProps = {
+  blocks: readonly PublicationBlock[]
+  allocations: readonly PublicationLayoutBlockAllocation[]
+  pageTemplate?: PublicationPageTemplate
+}
+
+function BotanicalCorner({
+  position,
+}: {
+  position: 'top-right' | 'bottom-left'
+}): ReactElement {
+  return (
+    <svg
+      className={`${styles.botanicalCorner} ${
+        position === 'top-right' ? styles.botanicalTopRight : styles.botanicalBottomLeft
+      }`}
+      viewBox="0 0 180 180"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path className={styles.botanicalStem} d="M18 162 C52 122 82 88 157 24" />
+      <path className={styles.botanicalLeaf} d="M50 128 C26 120 20 97 25 78 C48 83 61 99 50 128 Z" />
+      <path className={styles.botanicalLeafSoft} d="M78 101 C59 82 64 58 78 44 C96 58 102 78 78 101 Z" />
+      <path className={styles.botanicalLeaf} d="M105 76 C105 51 124 38 143 37 C141 59 129 74 105 76 Z" />
+      <path className={styles.botanicalLeafSoft} d="M128 52 C128 29 145 17 164 18 C161 39 151 50 128 52 Z" />
+      <path className={styles.botanicalLeaf} d="M68 112 C83 91 105 91 121 101 C104 117 87 123 68 112 Z" />
+    </svg>
+  )
+}
+
+function renderPublicationBlock(
+  block: PublicationBlock,
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const allocation = allocations.find((candidate) => candidate.blockId === block.id)
+
+  return (
+    <PublicationBlockPreview
+      key={block.id}
+      block={block}
+      allocatedUnits={allocation?.allocatedUnits}
+    />
+  )
+}
+
+function renderGuidedFrameworkContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const firstCheckbox = blocks.findIndex((block) => block.type === 'checkbox-field')
+  const lastCheckbox = blocks.findLastIndex((block) => block.type === 'checkbox-field')
+
+  if (firstCheckbox < 0 || lastCheckbox < firstCheckbox) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  const leading = blocks.slice(0, firstCheckbox)
+  const stateBlocks = blocks.slice(firstCheckbox, lastCheckbox + 1)
+  const trailing = blocks.slice(lastCheckbox + 1)
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.stateGrid} data-template-region="state-grid">
+        {stateBlocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
+function renderEmergencyToolContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const firstStep = blocks.findIndex(
+    (block) => block.type === 'heading' && block.level === 3,
+  )
+
+  if (firstStep < 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  const intro = blocks.slice(0, firstStep)
+  const steps: PublicationBlock[][] = []
+  let currentStep: PublicationBlock[] = []
+
+  for (const block of blocks.slice(firstStep)) {
+    if (block.type === 'heading' && block.level === 3 && currentStep.length > 0) {
+      steps.push(currentStep)
+      currentStep = []
+    }
+    currentStep.push(block)
+  }
+
+  if (currentStep.length > 0) steps.push(currentStep)
+
+  return (
+    <div className={styles.content}>
+      {intro.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.emergencySteps} data-template-region="emergency-steps">
+        {steps.map((step, index) => (
+          <section
+            key={step[0]?.id ?? `emergency-step-${index}`}
+            className={styles.emergencyStep}
+            data-template-step={index + 1}
+          >
+            {step.map((block) => renderPublicationBlock(block, allocations))}
+          </section>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function renderDailyCheckInContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const ratingBlocks = blocks.filter((block) => block.type === 'rating-field')
+  const firstCheckbox = blocks.findIndex((block) => block.type === 'checkbox-field')
+  const lastCheckbox = blocks.findLastIndex((block) => block.type === 'checkbox-field')
+  const ratingIds = new Set(ratingBlocks.map((block) => block.id))
+  const inventoryHeadingIndex =
+    firstCheckbox > 0 &&
+    blocks[firstCheckbox - 1]?.type === 'heading' &&
+    blocks[firstCheckbox - 1]?.level === 3
+      ? firstCheckbox - 1
+      : firstCheckbox
+  const inventoryIds = new Set(
+    firstCheckbox >= 0
+      ? blocks
+          .slice(Math.max(0, inventoryHeadingIndex), lastCheckbox + 1)
+          .map((block) => block.id)
+      : [],
+  )
+
+  const regularBlocks = blocks.filter(
+    (block) => !ratingIds.has(block.id) && !inventoryIds.has(block.id),
+  )
+  const firstResponseIndex = regularBlocks.findIndex(
+    (block) => block.type === 'multiline-text-field',
+  )
+  const headingAndDate =
+    firstResponseIndex >= 0
+      ? regularBlocks.slice(0, firstResponseIndex + 1)
+      : regularBlocks
+  const trailing =
+    firstResponseIndex >= 0 ? regularBlocks.slice(firstResponseIndex + 1) : []
+
+  return (
+    <div className={styles.content}>
+      {headingAndDate.map((block) => renderPublicationBlock(block, allocations))}
+
+      {ratingBlocks.length > 0 ? (
+        <div className={styles.dailyMetrics} data-template-region="daily-metrics">
+          {ratingBlocks.map((block) => renderPublicationBlock(block, allocations))}
+        </div>
+      ) : null}
+
+      {inventoryIds.size > 0 ? (
+        <section className={styles.dailyInventory} data-template-region="daily-inventory">
+          {blocks
+            .filter((block) => inventoryIds.has(block.id))
+            .map((block) => renderPublicationBlock(block, allocations))}
+        </section>
+      ) : null}
+
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
+function PublicationTemplateContent({
+  blocks,
+  allocations,
+  pageTemplate,
+}: PublicationTemplateContentProps): ReactElement {
+  if (pageTemplate === 'guided-framework') {
+    return renderGuidedFrameworkContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'emergency-tool') {
+    return renderEmergencyToolContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'daily-check-in') {
+    return renderDailyCheckInContent(blocks, allocations)
+  }
+
+  return (
+    <div className={styles.content}>
+      {blocks.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
 }
 
 export function PublicationPreviewPage({
@@ -457,6 +672,8 @@ export function PublicationPreviewPage({
                 >
                   {isCover ? (
                     <div className={styles.coverBody}>
+                      <BotanicalCorner position="top-right" />
+                      <BotanicalCorner position="bottom-left" />
                       <p className={styles.coverBrand}>The Gentle Page</p>
 
                       <div className={styles.coverTitleGroup}>
@@ -476,21 +693,11 @@ export function PublicationPreviewPage({
                   ) : (
                     <div className={styles.documentBody}>
                       {hasContent ? (
-                        <div className={styles.content}>
-                          {layoutPage.blocks.map((block) => {
-                            const allocation = layoutPage.allocations.find(
-                              (candidate) => candidate.blockId === block.id,
-                            )
-
-                            return (
-                              <PublicationBlockPreview
-                                key={block.id}
-                                block={block}
-                                allocatedUnits={allocation?.allocatedUnits}
-                              />
-                            )
-                          })}
-                        </div>
+                        <PublicationTemplateContent
+                          blocks={layoutPage.blocks}
+                          allocations={layoutPage.allocations}
+                          pageTemplate={layoutPage.pageTemplate}
+                        />
                       ) : (
                         <div className={styles.emptyState}>
                           <p className={styles.emptyTitle}>Nothing to preview yet</p>
