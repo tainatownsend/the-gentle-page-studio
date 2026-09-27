@@ -513,4 +513,117 @@ describe('createPublicationPdfPlan', () => {
     ).toBe(true)
   })
 
+
+  it('reserves a left schematic region and three right-side labels for Nervous System 101', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'nervous-system-journal',
+        content: {
+          blocks: [
+            {
+              id: 'nervous-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Nervous System 101',
+              layout: { pageTemplate: 'nervous-system-basics' },
+            },
+            { id: 'prefrontal', type: 'heading', level: 3, text: 'Prefrontal Cortex' },
+            { id: 'prefrontal-copy', type: 'paragraph', text: 'Planning and attention.' },
+            { id: 'limbic', type: 'heading', level: 3, text: 'Limbic System' },
+            { id: 'limbic-copy', type: 'paragraph', text: 'Emotion and threat detection.' },
+            { id: 'brainstem', type: 'heading', level: 3, text: 'Brainstem' },
+            { id: 'brainstem-copy', type: 'paragraph', text: 'Automatic survival responses.' },
+          ],
+        },
+      }),
+    )
+
+    const page = plan.pages.find(
+      (candidate) => candidate.pageTemplate === 'nervous-system-basics',
+    )
+    const labelPlacements =
+      page?.blockPlacements.filter((placement) =>
+        ['prefrontal', 'limbic', 'brainstem'].includes(placement.blockId),
+      ) ?? []
+
+    expect(labelPlacements).toHaveLength(3)
+    expect(
+      labelPlacements.every(
+        (placement) =>
+          placement.rect.x > PUBLICATION_MARGIN_POINTS + PUBLICATION_CONTENT_WIDTH_POINTS / 2,
+      ),
+    ).toBe(true)
+  })
+
+  it('keeps Deep Dive as two upper panels plus a full-width lower panel', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'deep-dive-journal',
+        content: {
+          blocks: [
+            {
+              id: 'deep-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Deep Dive: Sleep',
+              layout: { pageTemplate: 'deep-dive' },
+            },
+            { id: 'current', type: 'heading', level: 3, text: 'My Current Sleep' },
+            { id: 'current-field', type: 'multiline-text-field', text: 'What I notice', responseSize: 'medium' },
+            { id: 'helps', type: 'heading', level: 3, text: 'What Helps Me' },
+            { id: 'helps-field', type: 'multiline-text-field', text: 'Helpful supports', responseSize: 'medium' },
+            { id: 'friction', type: 'heading', level: 3, text: 'What Gets In The Way' },
+            { id: 'friction-field', type: 'multiline-text-field', text: 'Friction', responseSize: 'medium' },
+          ],
+        },
+      }),
+    )
+
+    const page = plan.pages.find((candidate) => candidate.pageTemplate === 'deep-dive')
+    const current = page?.blockPlacements.find((placement) => placement.blockId === 'current')
+    const helps = page?.blockPlacements.find((placement) => placement.blockId === 'helps')
+    const friction = page?.blockPlacements.find((placement) => placement.blockId === 'friction')
+
+    expect(current?.rect.x).not.toBe(helps?.rect.x)
+    expect(friction?.rect.width).toBeGreaterThan(current?.rect.width ?? 0)
+    expect(
+      plan.interactiveFields.filter((field) => field.kind === 'multiline-text'),
+    ).toHaveLength(3)
+  })
+
+  it('keeps Goal Planner action steps writable and fillable on one page', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'goal-planner-journal',
+        content: {
+          blocks: [
+            {
+              id: 'goal-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Goal Planner',
+              layout: { pageTemplate: 'goal-planner' },
+            },
+            { id: 'goal', type: 'multiline-text-field', text: 'My Goal', responseSize: 'medium' },
+            { id: 'why', type: 'multiline-text-field', text: 'Why It Matters', responseSize: 'medium' },
+            { id: 'action-heading', type: 'heading', level: 3, text: 'Action Steps' },
+            { id: 'action-1', type: 'checkbox-field', text: 'First small step' },
+            { id: 'action-2', type: 'checkbox-field', text: 'Second small step' },
+            { id: 'target', type: 'multiline-text-field', text: 'Target Date', responseSize: 'short' },
+          ],
+        },
+      }),
+    )
+
+    const pages = plan.pages.filter((candidate) => candidate.pageTemplate === 'goal-planner')
+
+    expect(pages).toHaveLength(1)
+    expect(
+      plan.interactiveFields.filter((field) => field.kind === 'multiline-text'),
+    ).toHaveLength(3)
+    expect(
+      plan.interactiveFields.filter((field) => field.kind === 'checkbox'),
+    ).toHaveLength(2)
+  })
+
 })

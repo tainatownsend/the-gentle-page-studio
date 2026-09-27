@@ -74,14 +74,53 @@ Future pages should look like extensions of these references, not new visual exp
 - Exact row / column alignment.
 - Decoration stays out of high-use zones.
 
+## Implementation status
+
+The structural implementation now covers the full 20-page architecture.
+
+Dedicated page families are available for:
+- navigation / front matter;
+- section opener / quote;
+- guided 4-State framework;
+- emergency tool;
+- daily check-in;
+- six-tool overview;
+- sensory reset;
+- prompt-writing pages;
+- Nervous System 101;
+- trigger scan;
+- regulation menu;
+- weekly reset;
+- weekly planner / tracker;
+- Deep Dive;
+- Goal Planner;
+- closing reminders.
+
+Preview and fillable-PDF geometry share the same semantic page-template contract. Structural illustrations that affect layout use native vector geometry so export does not depend on a missing raster asset.
+
 ## Production gates
 
-1. Reproduce canonical acceptance pages.
-2. Extend the approved system to all remaining pages.
-3. Run alignment, spacing, pagination, tablet, print/grayscale, typography, and content-fidelity QA.
-4. Generate printable PDF.
-5. Generate fillable / tablet-friendly PDF.
-6. Produce listing previews and product thumbnails.
+1. Reproduce canonical acceptance pages. **Implemented.**
+2. Extend the approved system to all remaining pages. **Implemented structurally.**
+3. Run automated alignment, pagination, compiler, preview, and fillable-PDF regression QA. **Required green before merge.**
+4. Run one human visual acceptance pass on the complete 20-page preview at desktop and tablet widths.
+5. Print one physical proof and check grayscale contrast, margins, writing-space comfort, and page breaks.
+6. Export one fillable PDF and validate every checkbox, rating control, and text field on tablet.
+7. Produce listing previews and product thumbnails only after the proof passes.
+
+## Human visual acceptance checklist
+
+The final review should answer only these questions:
+- Does every page clearly belong to Collection A — Calm & Classic?
+- Are any pages visually denser, more app-like, or more decorative than the approved North Star?
+- Are headings, running headers, page numbers, margins, and module edges mathematically aligned?
+- Does every writing area feel intentionally sized rather than leftover?
+- Do the 20 pages preserve the approved order without accidental overflow pages?
+- Are all interactive targets comfortable on tablet?
+- Does grayscale preserve hierarchy without relying on pastel color alone?
+- Does the printed proof avoid clipping, orphan headings, raw directives, markdown leakage, and table overflow?
+
+If all eight checks pass, visual acceptance is complete and the product can move to listing-preview production.
 
 ## Definition of done
 

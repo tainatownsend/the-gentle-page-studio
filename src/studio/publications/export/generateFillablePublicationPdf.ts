@@ -354,6 +354,154 @@ function drawTemplateZones(page: PDFPage, pagePlan: PublicationPdfPagePlan): voi
     return
   }
 
+  if (pagePlan.pageTemplate === 'nervous-system-basics') {
+    const sectionStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+      .slice(0, 3)
+
+    const schematicX = PUBLICATION_MARGIN_POINTS + 118
+    const schematicY = page.getHeight() / 2 - 16
+    page.drawEllipse({
+      x: schematicX,
+      y: schematicY,
+      xScale: 88,
+      yScale: 72,
+      color: CLAY_SOFT,
+      opacity: 0.56,
+      borderColor: SAGE_DEEP,
+      borderWidth: 1.1,
+    })
+    page.drawEllipse({
+      x: schematicX - 34,
+      y: schematicY + 18,
+      xScale: 42,
+      yScale: 34,
+      color: CLAY_SOFT,
+      opacity: 0.9,
+      borderColor: RULE,
+      borderWidth: 0.5,
+    })
+    page.drawEllipse({
+      x: schematicX + 34,
+      y: schematicY + 12,
+      xScale: 42,
+      yScale: 34,
+      color: MIST,
+      opacity: 0.82,
+      borderColor: RULE,
+      borderWidth: 0.5,
+    })
+    page.drawEllipse({
+      x: schematicX + 18,
+      y: schematicY - 38,
+      xScale: 34,
+      yScale: 24,
+      color: SAGE_SOFT,
+      opacity: 0.92,
+      borderColor: RULE,
+      borderWidth: 0.5,
+    })
+
+    sectionStarts.forEach((startIndex, sectionIndex) => {
+      const nextStart = sectionStarts[sectionIndex + 1] ?? pagePlan.blocks.length
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+      page.drawRectangle({
+        x: bounds.x - 8,
+        y: bounds.y - 8,
+        width: bounds.width + 16,
+        height: bounds.height + 16,
+        color: sectionIndex === 0 ? CLAY_SOFT : sectionIndex === 1 ? MIST : SAGE_SOFT,
+        opacity: 0.56,
+        borderColor: RULE,
+        borderWidth: 0.5,
+      })
+    })
+    return
+  }
+
+  if (pagePlan.pageTemplate === 'deep-dive') {
+    const sectionStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+
+    sectionStarts.forEach((startIndex, sectionIndex) => {
+      const nextStart = sectionStarts[sectionIndex + 1] ?? pagePlan.blocks.length
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+      page.drawRectangle({
+        x: bounds.x - 8,
+        y: bounds.y - 8,
+        width: bounds.width + 16,
+        height: bounds.height + 16,
+        color: sectionIndex === 0 ? SAGE_SOFT : sectionIndex === 1 ? CLAY_SOFT : SAND_SOFT,
+        opacity: 0.5,
+        borderColor: RULE,
+        borderWidth: 0.5,
+      })
+    })
+    return
+  }
+
+  if (pagePlan.pageTemplate === 'goal-planner') {
+    const checkboxPlacements = pagePlan.blockPlacements.filter(
+      (placement) => placement.type === 'checkbox-field',
+    )
+    const bounds = getPlacementBounds(checkboxPlacements)
+    if (bounds) {
+      page.drawRectangle({
+        x: bounds.x - 8,
+        y: bounds.y - 8,
+        width: bounds.width + 16,
+        height: bounds.height + 16,
+        color: SAGE_SOFT,
+        opacity: 0.38,
+        borderColor: RULE,
+        borderWidth: 0.5,
+      })
+    }
+    return
+  }
+
+  if (pagePlan.pageTemplate === 'closing') {
+    const sectionStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+      .slice(0, 6)
+
+    sectionStarts.forEach((startIndex, sectionIndex) => {
+      const nextStart = sectionStarts[sectionIndex + 1] ?? pagePlan.blocks.length
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+      const fill =
+        sectionIndex % 3 === 0 ? CLAY_SOFT : sectionIndex % 3 === 1 ? SAGE_SOFT : SAND_SOFT
+      page.drawRectangle({
+        x: bounds.x - 7,
+        y: bounds.y - 7,
+        width: bounds.width + 14,
+        height: bounds.height + 14,
+        color: fill,
+        opacity: 0.58,
+        borderColor: RULE,
+        borderWidth: 0.5,
+      })
+    })
+    return
+  }
+
   if (pagePlan.pageTemplate === 'emergency-tool') {
     const stepStarts = pagePlan.blocks
       .map((block, index) =>
