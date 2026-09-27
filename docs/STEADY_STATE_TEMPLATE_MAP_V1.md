@@ -21,14 +21,14 @@ The template value communicates page intent. It does not authorize manuscript re
 | 9 | Daily Regulation Tools Overview | tool-overview |
 | 10 | Sensory Reset | sensory-reset |
 | 11 | Thought Download | prompt-writing |
-| 12 | Nervous System Basics / 101 | guided-framework |
+| 12 | Nervous System Basics / 101 | nervous-system-basics |
 | 13 | Triggers & Early Signs | trigger-scan |
 | 14 | Regulation Menu | regulation-menu |
 | 15 | Weekly Reset | weekly-reset |
 | 16 | Weekly Plan | planner-tracker |
-| 17 | Deep Dive Example | guided-framework |
+| 17 | Deep Dive Example | deep-dive |
 | 18 | Reflection | prompt-writing |
-| 19 | Goal Planner | planner-tracker |
+| 19 | Goal Planner | goal-planner |
 | 20 | Closing Page / You've Got This | closing |
 
 ## Gate A canonical acceptance pages
