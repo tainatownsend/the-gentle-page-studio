@@ -8,8 +8,6 @@ import { createPublicationFixture } from './createPublicationFixture'
 
 const STEADY_STATE_GATE_A_MANUSCRIPT = `# The Steady State
 
-An ADHD Regulation Journal & Toolkit
-
 [[GP:PAGE_TEMPLATE type="guided-framework"]]
 
 ## Understanding Your Nervous System State
