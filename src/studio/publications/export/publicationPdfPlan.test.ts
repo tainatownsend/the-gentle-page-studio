@@ -277,4 +277,96 @@ describe('createPublicationPdfPlan', () => {
     ).toBe(true)
   })
 
+
+  it('places the six daily regulation tools in a three-by-two PDF grid', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        content: {
+          blocks: [
+            {
+              id: 'tools-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Daily Regulation Tools',
+              layout: { pageTemplate: 'tool-overview' },
+            },
+            { id: 'breathe', type: 'heading', level: 3, text: 'Breathe' },
+            { id: 'breathe-copy', type: 'paragraph', text: 'Reset your body in 2 minutes.' },
+            { id: 'move', type: 'heading', level: 3, text: 'Move' },
+            { id: 'move-copy', type: 'paragraph', text: 'Release tension gently.' },
+            { id: 'ground', type: 'heading', level: 3, text: 'Ground' },
+            { id: 'ground-copy', type: 'paragraph', text: 'Come back to the present.' },
+            { id: 'soothe', type: 'heading', level: 3, text: 'Soothe' },
+            { id: 'soothe-copy', type: 'paragraph', text: 'Calm your senses.' },
+            { id: 'refocus', type: 'heading', level: 3, text: 'Refocus' },
+            { id: 'refocus-copy', type: 'paragraph', text: 'Bring back attention.' },
+            { id: 'connect', type: 'heading', level: 3, text: 'Connect' },
+            { id: 'connect-copy', type: 'paragraph', text: 'Feel supported and less alone.' },
+          ],
+        },
+      }),
+    )
+
+    const page = plan.pages.find((candidate) => candidate.pageTemplate === 'tool-overview')
+    const headingPlacements =
+      page?.blocks
+        .map((block, index) => ({ block, placement: page.blockPlacements[index] }))
+        .filter(
+          ({ block, placement }) =>
+            block.type === 'heading' && block.level === 3 && placement,
+        )
+        .map(({ placement }) => placement) ?? []
+
+    expect(headingPlacements).toHaveLength(6)
+    expect(new Set(headingPlacements.map((placement) => placement?.rect.x)).size).toBe(3)
+    expect(new Set(headingPlacements.map((placement) => placement?.rect.y)).size).toBe(2)
+  })
+
+  it('keeps the sensory reset guide and writing field on one fillable PDF page', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'sensory-reset-journal',
+        content: {
+          blocks: [
+            {
+              id: 'sensory-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Sensory Reset',
+              layout: { pageTemplate: 'sensory-reset' },
+            },
+            { id: 'sight', type: 'heading', level: 3, text: 'Sight' },
+            { id: 'sight-copy', type: 'paragraph', text: 'Look at something calming.' },
+            { id: 'sound', type: 'heading', level: 3, text: 'Sound' },
+            { id: 'sound-copy', type: 'paragraph', text: 'Listen to a grounding sound.' },
+            { id: 'touch', type: 'heading', level: 3, text: 'Touch' },
+            { id: 'touch-copy', type: 'paragraph', text: 'Hold something soothing.' },
+            { id: 'smell', type: 'heading', level: 3, text: 'Smell' },
+            { id: 'smell-copy', type: 'paragraph', text: 'Use a calming scent.' },
+            { id: 'taste', type: 'heading', level: 3, text: 'Taste' },
+            { id: 'taste-copy', type: 'paragraph', text: 'Have a sip of water or tea.' },
+            {
+              id: 'sensory-notes',
+              type: 'multiline-text-field',
+              text: 'My go-to sensory tools',
+              responseSize: 'medium',
+            },
+          ],
+        },
+      }),
+    )
+
+    const sensoryPages = plan.pages.filter(
+      (candidate) => candidate.pageTemplate === 'sensory-reset',
+    )
+
+    expect(sensoryPages).toHaveLength(1)
+    expect(
+      plan.interactiveFields.find((field) => field.blockId === 'sensory-notes'),
+    ).toMatchObject({
+      pageNumber: sensoryPages[0]?.pageNumber,
+      kind: 'multiline-text',
+    })
+  })
+
 })
