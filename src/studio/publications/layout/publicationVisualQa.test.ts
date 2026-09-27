@@ -118,4 +118,25 @@ describe('auditPublicationVisualQuality', () => {
       result.issues.some((issue) => issue.code === 'fragmented-compound-component'),
     ).toBe(false)
   })
+
+  it('does not penalize intentional whitespace declared by a page template', () => {
+    const pages: PublicationVisualQaPage[] = [
+      {
+        kind: 'content',
+        pageNumber: 1,
+        pageTemplate: 'closing',
+        blocks: [{ id: 'closing-heading', type: 'heading', level: 2, text: 'You can return here.' }],
+        remainingUnits: 36,
+      },
+      {
+        kind: 'content',
+        pageNumber: 2,
+        blocks: [{ id: 'appendix', type: 'paragraph', text: 'Appendix content.' }],
+        remainingUnits: 8,
+      },
+    ]
+
+    expect(auditPublicationVisualQuality(pages)).toEqual({ score: 100, issues: [] })
+  })
+
 })
