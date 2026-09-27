@@ -742,6 +742,111 @@
 
 
 
+
+/* Gate B front matter */
+
+.navigationRows {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.navigationRow {
+  display: grid;
+  grid-template-columns: 2.3rem minmax(0, 1fr);
+  gap: 0.82rem;
+  align-items: start;
+  padding: 0.72rem 0;
+  border-bottom: 1px solid var(--publication-rule);
+}
+
+.navigationRow:last-child {
+  border-bottom: 0;
+}
+
+.navigationIndex {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: var(--publication-sage-deep);
+  background: color-mix(in srgb, var(--publication-clay-soft) 70%, white);
+  border-radius: 50%;
+}
+
+.navigationRow:nth-child(3n + 2) .navigationIndex {
+  background: color-mix(in srgb, var(--publication-sage-soft) 70%, white);
+}
+
+.navigationRow:nth-child(3n) .navigationIndex {
+  background: color-mix(in srgb, var(--publication-mist) 76%, white);
+}
+
+.navigationRowBody {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.navigationRowBody .heading3 {
+  font-size: 0.86rem;
+  color: var(--publication-ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.navigationRowBody .paragraph {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--publication-muted-ink);
+}
+
+.documentPage[data-page-template='section-opener']::before,
+.documentPage[data-page-template='section-opener']::after {
+  position: absolute;
+  z-index: 0;
+  content: '';
+  pointer-events: none;
+}
+
+.documentPage[data-page-template='section-opener']::before {
+  top: 12%;
+  right: -3.5rem;
+  width: 11rem;
+  height: 11rem;
+  background: color-mix(in srgb, var(--publication-clay-soft) 70%, transparent);
+  border-radius: 48% 52% 62% 38% / 42% 62% 38% 58%;
+  transform: rotate(14deg);
+}
+
+.documentPage[data-page-template='section-opener']::after {
+  bottom: -4rem;
+  left: -3rem;
+  width: 12rem;
+  height: 8rem;
+  background: color-mix(in srgb, var(--publication-sage-soft) 72%, transparent);
+  border-radius: 58% 42% 46% 54% / 60% 52% 48% 40%;
+  transform: rotate(-10deg);
+}
+
+.documentPage[data-page-template='section-opener'] .documentBody,
+.documentPage[data-page-template='section-opener'] .runningHeader,
+.documentPage[data-page-template='section-opener'] .pageNumber {
+  position: relative;
+  z-index: 1;
+}
+
+.documentPage[data-page-template='prompt-writing'] .content > .paragraph:last-child {
+  max-width: 40rem;
+  padding: 0.72rem 0.9rem;
+  margin-inline: auto;
+  color: var(--publication-sage-deep);
+  text-align: center;
+  background: color-mix(in srgb, var(--publication-clay-soft) 54%, white);
+  border-radius: 0.62rem;
+}
+
 /* Gate B page families */
 
 .toolOverviewGrid {
