@@ -99,4 +99,23 @@ describe('healPublicationPages', () => {
       ),
     ).toHaveLength(2)
   })
+
+  it('does not merge a template page into an adjacent page during self-healing', () => {
+    const templateHeading: PublicationBlock = {
+      id: 'heading-6',
+      type: 'heading',
+      level: 2,
+      text: 'Daily Check-In',
+      layout: { pageTemplate: 'daily-check-in' },
+    }
+
+    const healed = healPublicationPages(
+      [[templateHeading], [{ id: 'paragraph-8', type: 'paragraph', text: 'Date & Time' }]],
+      { capacityUnits: 48, estimateUnits },
+    )
+
+    expect(healed).toHaveLength(2)
+    expect(healed[0]?.[0]?.layout?.pageTemplate).toBe('daily-check-in')
+  })
+
 })
