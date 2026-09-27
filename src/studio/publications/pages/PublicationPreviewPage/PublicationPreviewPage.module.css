@@ -152,30 +152,46 @@
   text-align: center;
 }
 
-.coverBody::before,
-.coverBody::after {
+.botanicalCorner {
   position: absolute;
   z-index: -1;
-  content: '';
+  width: 10.5rem;
+  height: 10.5rem;
+  overflow: visible;
   pointer-events: none;
 }
 
-.coverBody::before {
-  top: -7.2%;
-  left: -11%;
-  width: 54%;
-  height: 0.62rem;
-  background: var(--publication-sage);
-  border-radius: 999px;
+.botanicalTopRight {
+  top: -7%;
+  right: -8%;
 }
 
-.coverBody::after {
-  right: -16%;
-  bottom: 4%;
-  width: 9rem;
-  height: 9rem;
-  background: var(--publication-sand-soft);
-  border-radius: 50%;
+.botanicalBottomLeft {
+  bottom: -7%;
+  left: -8%;
+  transform: rotate(180deg);
+}
+
+.botanicalStem {
+  fill: none;
+  stroke: var(--publication-sage-deep);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+
+.botanicalLeaf {
+  fill: color-mix(in srgb, var(--publication-sage) 76%, white);
+  stroke: var(--publication-sage-deep);
+  stroke-width: 1.2;
+  opacity: 0.84;
+}
+
+.botanicalLeafSoft {
+  fill: color-mix(in srgb, var(--publication-sage-soft) 82%, white);
+  stroke: var(--publication-sage);
+  stroke-width: 1.1;
+  opacity: 0.9;
 }
 
 .coverBrand,
@@ -692,6 +708,137 @@
   font-weight: 650;
   color: var(--publication-sage-deep);
   background: color-mix(in srgb, var(--publication-sage-soft) 52%, var(--publication-paper));
+}
+
+
+/* Gate A canonical compositions */
+
+.stateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.stateGrid .checkboxField {
+  display: grid;
+  min-height: 7.1rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--publication-rule);
+  border-left-width: 0.26rem;
+  border-radius: 0.7rem;
+}
+
+.stateGrid .checkboxField:nth-child(1) {
+  background: color-mix(in srgb, var(--publication-clay-soft) 72%, white);
+  border-left-color: var(--publication-clay);
+}
+
+.stateGrid .checkboxField:nth-child(2) {
+  background: color-mix(in srgb, var(--publication-mist) 72%, white);
+  border-left-color: #8aa8b5;
+}
+
+.stateGrid .checkboxField:nth-child(3) {
+  background: color-mix(in srgb, var(--publication-sand-soft) 78%, white);
+  border-left-color: var(--publication-sand);
+}
+
+.stateGrid .checkboxField:nth-child(4) {
+  background: color-mix(in srgb, var(--publication-sage-soft) 78%, white);
+  border-left-color: var(--publication-sage);
+}
+
+.stateGrid .fieldLabel {
+  font-size: 0.85rem;
+  line-height: 1.48;
+  color: var(--publication-ink);
+}
+
+.stateGrid .checkboxMark {
+  margin-top: 0.05rem;
+}
+
+.emergencySteps {
+  display: grid;
+  gap: 0.78rem;
+}
+
+.emergencyStep {
+  display: grid;
+  gap: 0.48rem;
+  padding: 0.82rem 0.92rem;
+  background: color-mix(in srgb, var(--publication-sand-soft) 38%, white);
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.72rem;
+}
+
+.emergencyStep:nth-child(2) {
+  background: color-mix(in srgb, var(--publication-sage-soft) 42%, white);
+}
+
+.emergencyStep:nth-child(3) {
+  background: color-mix(in srgb, var(--publication-clay-soft) 42%, white);
+}
+
+.emergencyStep .heading3 {
+  padding-top: 0;
+}
+
+.emergencyStep .checkboxField {
+  padding: 0.18rem 0 0.18rem 2.5rem;
+}
+
+.emergencyStep .multilineField {
+  margin-top: 0.25rem;
+  background: white;
+}
+
+.dailyMetrics {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.dailyMetrics .ratingField {
+  padding: 0.85rem 0.95rem 0.92rem;
+}
+
+.dailyInventory {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.8rem 0.95rem;
+  background: color-mix(in srgb, var(--publication-sage-soft) 34%, white);
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.72rem;
+}
+
+.dailyInventory .heading3 {
+  margin-bottom: 0.25rem;
+}
+
+.dailyInventory .checkboxField {
+  padding-block: 0.28rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--publication-rule) 66%, transparent);
+}
+
+.dailyInventory .checkboxField:last-child {
+  border-bottom: 0;
+}
+
+.documentPage[data-page-template='daily-check-in'] .content > .multilineField:first-of-type {
+  padding: 0.7rem 0.9rem;
+}
+
+.documentPage[data-page-template='daily-check-in'] .content > .multilineField:first-of-type .responseArea {
+  min-height: 3rem;
+}
+
+@media (max-width: 36rem) {
+  .stateGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 48rem) {
