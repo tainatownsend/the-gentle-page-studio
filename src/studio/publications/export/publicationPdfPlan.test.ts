@@ -369,4 +369,148 @@ describe('createPublicationPdfPlan', () => {
     })
   })
 
+
+  it('places trigger scan groups in two PDF columns with a full-width response field', () => {
+    const triggerBlocks = [
+      'Stress',
+      'Sensory overload',
+      'Lack of sleep',
+      'Hunger',
+      'Transitions',
+      'Perfectionism',
+      'Rejection sensitivity',
+      'Too many tasks',
+      'Social situations',
+      'Other',
+    ].map((text, index) => ({
+      id: `trigger-${index + 1}`,
+      type: 'checkbox-field' as const,
+      text,
+    }))
+    const signBlocks = [
+      'Racing thoughts',
+      'Tension in body',
+      'Irritability',
+      'Brain fog',
+      'Difficulty focusing',
+      'Shutting down',
+      'Restlessness',
+      'Emotional sensitivity',
+      'Task-hopping',
+      'Other',
+    ].map((text, index) => ({
+      id: `sign-${index + 1}`,
+      type: 'checkbox-field' as const,
+      text,
+    }))
+
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'trigger-scan-journal',
+        content: {
+          blocks: [
+            {
+              id: 'trigger-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Triggers & Early Signs',
+              layout: { pageTemplate: 'trigger-scan' },
+            },
+            { id: 'common-heading', type: 'heading', level: 3, text: 'Common Triggers' },
+            ...triggerBlocks,
+            { id: 'signs-heading', type: 'heading', level: 3, text: 'My Early Signs' },
+            ...signBlocks,
+            {
+              id: 'trigger-response',
+              type: 'multiline-text-field',
+              text: 'What I can do when I notice these signs',
+              responseSize: 'medium',
+            },
+          ],
+        },
+      }),
+    )
+
+    const page = plan.pages.find((candidate) => candidate.pageTemplate === 'trigger-scan')
+    const checkboxPlacements =
+      page?.blockPlacements.filter((placement) => placement.type === 'checkbox-field') ?? []
+    const responsePlacement = page?.blockPlacements.find(
+      (placement) => placement.blockId === 'trigger-response',
+    )
+
+    expect(page).toBeDefined()
+    expect(checkboxPlacements).toHaveLength(20)
+    expect(new Set(checkboxPlacements.map((placement) => placement.rect.x)).size).toBe(2)
+    expect(responsePlacement?.rect.x).toBe(PUBLICATION_MARGIN_POINTS)
+    expect(responsePlacement?.rect.width).toBe(PUBLICATION_CONTENT_WIDTH_POINTS)
+    expect(
+      plan.interactiveFields.filter((field) => field.kind === 'checkbox'),
+    ).toHaveLength(20)
+  })
+
+  it('keeps five regulation menu writing rows on one fillable PDF page', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        id: 'regulation-menu-journal',
+        content: {
+          blocks: [
+            {
+              id: 'menu-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Regulation Menu',
+              layout: { pageTemplate: 'regulation-menu' },
+            },
+            {
+              id: 'quick',
+              type: 'multiline-text-field',
+              text: 'Quick Reset · 1–5 minutes',
+              responseSize: 'short',
+            },
+            {
+              id: 'move',
+              type: 'multiline-text-field',
+              text: 'Move Your Body · 5–15 minutes',
+              responseSize: 'short',
+            },
+            {
+              id: 'soothe',
+              type: 'multiline-text-field',
+              text: 'Soothe Your Senses · 5–15 minutes',
+              responseSize: 'short',
+            },
+            {
+              id: 'calm',
+              type: 'multiline-text-field',
+              text: 'Calm Your Mind · 5–15 minutes',
+              responseSize: 'short',
+            },
+            {
+              id: 'reconnect',
+              type: 'multiline-text-field',
+              text: 'Reconnect · Anytime',
+              responseSize: 'short',
+            },
+          ],
+        },
+      }),
+    )
+
+    const pages = plan.pages.filter((candidate) => candidate.pageTemplate === 'regulation-menu')
+
+    expect(pages).toHaveLength(1)
+    expect(
+      plan.interactiveFields.filter((field) => field.kind === 'multiline-text'),
+    ).toHaveLength(5)
+    expect(
+      pages[0]?.blockPlacements
+        .filter((placement) => placement.type === 'multiline-text-field')
+        .every(
+          (placement) =>
+            placement.rect.x === PUBLICATION_MARGIN_POINTS &&
+            placement.rect.width === PUBLICATION_CONTENT_WIDTH_POINTS,
+        ),
+    ).toBe(true)
+  })
+
 })
