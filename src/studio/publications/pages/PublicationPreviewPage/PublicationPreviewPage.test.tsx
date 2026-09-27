@@ -380,4 +380,54 @@ describe('PublicationPreviewPage', () => {
     expect(document.querySelectorAll('[data-template-region="daily-inventory"] [data-publication-block="checkbox"]')).toHaveLength(2)
   })
 
+
+  it('renders consistent editorial running headers on content pages only', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          content: {
+            blocks: [
+              {
+                id: 'guided-heading',
+                type: 'heading',
+                level: 2,
+                text: 'The 4-State Self-Scan',
+                layout: { pageTemplate: 'guided-framework' },
+              },
+              { id: 'guided-body', type: 'paragraph', text: 'Notice before you fix.' },
+              {
+                id: 'closing-heading',
+                type: 'heading',
+                level: 2,
+                text: 'You’ve Got This',
+                layout: { pageTemplate: 'closing' },
+              },
+              { id: 'closing-body', type: 'paragraph', text: 'Return when you need to.' },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    const cover = document.querySelector('[aria-label="Publication cover"]')
+    const firstPage = document.querySelector('[aria-label="Publication content page 1"]')
+    const secondPage = document.querySelector('[aria-label="Publication content page 2"]')
+
+    expect(cover?.querySelector('[data-publication-running-header]')).toBeNull()
+    expect(
+      within(firstPage as HTMLElement).getByText('The Gentle Page', {
+        selector: '[data-publication-running-header] span',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(firstPage as HTMLElement).getByText('Understanding'),
+    ).toBeInTheDocument()
+    expect(
+      within(secondPage as HTMLElement).getByText('Closing'),
+    ).toBeInTheDocument()
+  })
+
 })
