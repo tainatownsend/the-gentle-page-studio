@@ -160,11 +160,11 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
 function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | undefined): number {
   switch (pageTemplate) {
     case 'emergency-tool':
-      return 0.4
+      return 0.35
     case 'daily-check-in':
-      return 0.45
+      return 0.4
     case 'guided-framework':
-      return 0.6
+      return 0.55
     case 'weekly-reset':
       return 0.65
     case 'planner-tracker':
