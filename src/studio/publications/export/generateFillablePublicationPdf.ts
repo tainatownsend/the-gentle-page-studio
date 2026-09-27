@@ -197,6 +197,94 @@ function getPlacementBounds(
 }
 
 function drawTemplateZones(page: PDFPage, pagePlan: PublicationPdfPagePlan): void {
+  if (pagePlan.pageTemplate === 'tool-overview') {
+    const sectionStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+
+    sectionStarts.forEach((startIndex, sectionIndex) => {
+      const nextStart = sectionStarts[sectionIndex + 1] ?? pagePlan.blocks.length
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+
+      const fill =
+        sectionIndex % 3 === 0
+          ? CLAY_SOFT
+          : sectionIndex % 3 === 1
+            ? SAGE_SOFT
+            : MIST
+      page.drawRectangle({
+        x: bounds.x - 10,
+        y: bounds.y - 10,
+        width: bounds.width + 20,
+        height: bounds.height + 20,
+        color: fill,
+        opacity: 0.72,
+        borderColor: RULE,
+        borderWidth: 0.55,
+      })
+
+      page.drawCircle({
+        x: bounds.x - 1,
+        y: bounds.y + bounds.height - 7,
+        size: 8,
+        color: PAPER,
+        borderColor: SAGE,
+        borderWidth: 0.7,
+      })
+    })
+    return
+  }
+
+  if (pagePlan.pageTemplate === 'sensory-reset') {
+    const sectionStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+      .slice(0, 5)
+    const firstWritingFieldIndex = pagePlan.blocks.findIndex(
+      (block) => block.type === 'multiline-text-field',
+    )
+
+    sectionStarts.forEach((startIndex, sectionIndex) => {
+      const nextStart =
+        sectionStarts[sectionIndex + 1] ??
+        (firstWritingFieldIndex >= 0 ? firstWritingFieldIndex : pagePlan.blocks.length)
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+
+      const markerY = bounds.y + bounds.height - 9
+      page.drawCircle({
+        x: PUBLICATION_MARGIN_POINTS + 14,
+        y: markerY,
+        size: 10,
+        color:
+          sectionIndex % 2 === 0
+            ? SAGE_SOFT
+            : sectionIndex % 3 === 1
+              ? CLAY_SOFT
+              : MIST,
+        borderColor: RULE,
+        borderWidth: 0.45,
+      })
+
+      page.drawLine({
+        start: { x: PUBLICATION_MARGIN_POINTS, y: bounds.y - 4 },
+        end: { x: page.getWidth() - PUBLICATION_MARGIN_POINTS, y: bounds.y - 4 },
+        thickness: 0.45,
+        color: RULE,
+      })
+    })
+    return
+  }
+
   if (pagePlan.pageTemplate === 'emergency-tool') {
     const stepStarts = pagePlan.blocks
       .map((block, index) =>
@@ -614,15 +702,28 @@ function drawStaticBlock(
   }
 
   if (block.type === 'paragraph') {
+    const paragraphSize =
+      pageTemplate === 'tool-overview'
+        ? 9.2
+        : pageTemplate === 'sensory-reset'
+          ? 9.8
+          : 11
+    const paragraphLineHeight =
+      pageTemplate === 'tool-overview'
+        ? 12
+        : pageTemplate === 'sensory-reset'
+          ? 13
+          : 15
+
     drawWrappedText(
       page,
       block.text || 'Empty paragraph',
       bodyFont,
-      11,
+      paragraphSize,
       placement.rect.x,
       top,
       placement.rect.width,
-      15,
+      paragraphLineHeight,
       placement.rect.height,
     )
     return

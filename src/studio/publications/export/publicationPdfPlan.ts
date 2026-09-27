@@ -349,6 +349,211 @@ function createGuidedFrameworkPlacements(
   )
 }
 
+function getLevelThreeSectionRanges(
+  blocks: readonly PublicationBlock[],
+): Array<{ start: number; end: number }> {
+  const starts = blocks
+    .map((block, index) =>
+      block.type === 'heading' && block.level === 3 ? index : -1,
+    )
+    .filter((index) => index >= 0)
+
+  return starts.map((start, index) => ({
+    start,
+    end: starts[index + 1] ?? blocks.length,
+  }))
+}
+
+function createToolOverviewPlacements(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): PublicationPdfBlockPlacement[] | undefined {
+  const sections = getLevelThreeSectionRanges(blocks)
+  if (sections.length !== 6) return undefined
+
+  const allocationByBlockId = new Map(
+    allocations.map((allocation) => [allocation.blockId, allocation]),
+  )
+  const placements: Array<PublicationPdfBlockPlacement | undefined> = Array.from({
+    length: blocks.length,
+  })
+  const firstSectionStart = sections[0]?.start
+  if (firstSectionStart === undefined) return undefined
+
+  const topEdge = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+  const leadingGap = 10
+  let top = topEdge
+
+  for (let index = 0; index < firstSectionStart; index += 1) {
+    const block = blocks[index]
+    if (!block) continue
+    const height = Math.min(
+      44,
+      Math.max(18, estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))),
+    )
+    placements[index] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS,
+        y: top - height,
+        width: PUBLICATION_CONTENT_WIDTH_POINTS,
+        height,
+      },
+    }
+    top -= height + leadingGap
+  }
+
+  const columnGap = 12
+  const rowGap = 14
+  const cardWidth = (PUBLICATION_CONTENT_WIDTH_POINTS - columnGap * 2) / 3
+  const cardHeight = 170
+  const gridTop = top - 4
+
+  sections.forEach((section, sectionIndex) => {
+    const row = Math.floor(sectionIndex / 3)
+    const column = sectionIndex % 3
+    const cardX = PUBLICATION_MARGIN_POINTS + column * (cardWidth + columnGap)
+    const cardTop = gridTop - row * (cardHeight + rowGap)
+    let blockTop = cardTop - 14
+
+    for (let index = section.start; index < section.end; index += 1) {
+      const block = blocks[index]
+      if (!block) continue
+      const isHeading = block.type === 'heading'
+      const desired = estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))
+      const height = isHeading ? Math.min(28, Math.max(18, desired)) : Math.min(74, Math.max(28, desired))
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: cardX + 12,
+          y: blockTop - height,
+          width: cardWidth - 24,
+          height,
+        },
+      }
+      blockTop -= height + 8
+    }
+  })
+
+  return placements.filter(
+    (placement): placement is PublicationPdfBlockPlacement => placement !== undefined,
+  )
+}
+
+function createSensoryResetPlacements(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): PublicationPdfBlockPlacement[] | undefined {
+  const sections = getLevelThreeSectionRanges(blocks)
+  if (sections.length < 5) return undefined
+
+  const firstSectionStart = sections[0]?.start
+  if (firstSectionStart === undefined) return undefined
+
+  const allocationByBlockId = new Map(
+    allocations.map((allocation) => [allocation.blockId, allocation]),
+  )
+  const placements: Array<PublicationPdfBlockPlacement | undefined> = Array.from({
+    length: blocks.length,
+  })
+  const topEdge = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+  const bottomEdge = topEdge - PUBLICATION_CONTENT_HEIGHT_POINTS
+  let top = topEdge
+
+  for (let index = 0; index < firstSectionStart; index += 1) {
+    const block = blocks[index]
+    if (!block) continue
+    const height = Math.min(
+      42,
+      Math.max(18, estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))),
+    )
+    placements[index] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS,
+        y: top - height,
+        width: PUBLICATION_CONTENT_WIDTH_POINTS,
+        height,
+      },
+    }
+    top -= height + 10
+  }
+
+  const interactiveStart = blocks.findIndex(
+    (block, index) => index >= firstSectionStart && block.type === 'multiline-text-field',
+  )
+  const sensoryEnd = interactiveStart >= 0 ? interactiveStart : blocks.length
+  const sensorySections = sections
+    .filter((section) => section.start < sensoryEnd)
+    .slice(0, 5)
+  const itemHeight = 60
+  const itemGap = 7
+
+  sensorySections.forEach((section) => {
+    let blockTop = top
+    for (let index = section.start; index < Math.min(section.end, sensoryEnd); index += 1) {
+      const block = blocks[index]
+      if (!block) continue
+      const isHeading = block.type === 'heading'
+      const height = isHeading ? 20 : 28
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: PUBLICATION_MARGIN_POINTS + 42,
+          y: blockTop - height,
+          width: PUBLICATION_CONTENT_WIDTH_POINTS - 42,
+          height,
+        },
+      }
+      blockTop -= height + 3
+    }
+    top -= itemHeight + itemGap
+  })
+
+  if (interactiveStart >= 0) {
+    const trailingIndexes = Array.from(
+      { length: blocks.length - interactiveStart },
+      (_, offset) => interactiveStart + offset,
+    )
+    const remainingHeight = Math.max(
+      80,
+      top - bottomEdge - 6 * Math.max(0, trailingIndexes.length - 1),
+    )
+    const desired = trailingIndexes.map((index) => {
+      const block = blocks[index]
+      if (!block) return 0
+      return estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))
+    })
+    const desiredHeight = desired.reduce((total, height) => total + height, 0)
+    const scale = desiredHeight > remainingHeight ? remainingHeight / desiredHeight : 1
+
+    trailingIndexes.forEach((index, offset) => {
+      const block = blocks[index]
+      if (!block) return
+      const height = Math.max(24, (desired[offset] ?? 24) * scale)
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: PUBLICATION_MARGIN_POINTS,
+          y: top - height,
+          width: PUBLICATION_CONTENT_WIDTH_POINTS,
+          height,
+        },
+      }
+      top -= height + 6
+    })
+  }
+
+  return placements.filter(
+    (placement): placement is PublicationPdfBlockPlacement => placement !== undefined,
+  )
+}
+
 function createBlockPlacements(
   blocks: readonly PublicationBlock[],
   allocations: readonly PublicationLayoutBlockAllocation[],
@@ -359,6 +564,16 @@ function createBlockPlacements(
   if (pageTemplate === 'guided-framework') {
     const guidedFrameworkPlacements = createGuidedFrameworkPlacements(blocks, allocations)
     if (guidedFrameworkPlacements) return guidedFrameworkPlacements
+  }
+
+  if (pageTemplate === 'tool-overview') {
+    const toolOverviewPlacements = createToolOverviewPlacements(blocks, allocations)
+    if (toolOverviewPlacements) return toolOverviewPlacements
+  }
+
+  if (pageTemplate === 'sensory-reset') {
+    const sensoryResetPlacements = createSensoryResetPlacements(blocks, allocations)
+    if (sensoryResetPlacements) return sensoryResetPlacements
   }
 
   const allocationByBlockId = new Map(
