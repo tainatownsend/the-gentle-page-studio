@@ -8,5 +8,7 @@ describe('GENTLE_PAGE_AI_AUTHORING_PROMPT', () => {
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('Do not put a page break before every heading')
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('Use - [ ] Option for every selectable checklist')
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('Place the response directive immediately after the prompt')
+    expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('[[GP:PAGE_TEMPLATE type="daily-check-in"]]')
+    expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('Do not invent new template names')
   })
 })
