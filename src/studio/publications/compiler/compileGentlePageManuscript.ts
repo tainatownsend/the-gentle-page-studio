@@ -60,6 +60,8 @@ const PUBLICATION_PAGE_TEMPLATES: readonly PublicationPageTemplate[] = [
   'guided-framework',
   'tool-overview',
   'sensory-reset',
+  'trigger-scan',
+  'regulation-menu',
   'emergency-tool',
   'weekly-reset',
   'planner-tracker',
