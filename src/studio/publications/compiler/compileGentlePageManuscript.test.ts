@@ -273,4 +273,70 @@ Reflection content.`)
       }),
     ])
   })
+
+  it('attaches an explicit page template to the next publication block', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="emergency-tool"]]
+
+## Emergency Unfreeze Protocol
+
+Start small.`)
+
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'heading',
+        text: 'Emergency Unfreeze Protocol',
+        layout: expect.objectContaining({
+          keepWithNext: true,
+          pageTemplate: 'emergency-tool',
+        }),
+      }),
+    )
+    expect(result.diagnostics).toEqual([])
+  })
+
+  it('carries page template intent from a prompt heading into its response field', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="prompt-writing"]]
+
+### What do I need right now?
+[[GP:RESPONSE size="long"]]`)
+
+    expect(result.content.blocks).toEqual([
+      expect.objectContaining({
+        type: 'multiline-text-field',
+        text: 'What do I need right now?',
+        responseSize: 'long',
+        layout: expect.objectContaining({
+          pageTemplate: 'prompt-writing',
+        }),
+      }),
+    ])
+  })
+
+  it('reports unsupported page templates without leaking them into reader-facing content', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="mystery-layout"]]
+
+## Reflection`)
+
+    expect(result.content.blocks).toHaveLength(1)
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'heading',
+        text: 'Reflection',
+      }),
+    )
+    expect(JSON.stringify(result.content)).not.toContain('mystery-layout')
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'invalid-page-template',
+        level: 'suggestion',
+      }),
+    ])
+  })
+
 })
