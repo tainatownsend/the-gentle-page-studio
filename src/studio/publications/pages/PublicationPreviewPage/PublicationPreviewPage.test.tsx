@@ -624,4 +624,98 @@ describe('PublicationPreviewPage', () => {
     ).toBeInTheDocument()
   })
 
+
+  it('renders Weekly Reset and Weekly Plan with balanced support regions', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          content: {
+            blocks: [
+              {
+                id: 'weekly-reset-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Weekly Reset',
+                layout: { pageTemplate: 'weekly-reset' },
+              },
+              {
+                id: 'went-well',
+                type: 'multiline-text-field',
+                text: 'What went well?',
+                responseSize: 'medium',
+              },
+              {
+                id: 'challenging',
+                type: 'multiline-text-field',
+                text: 'What was challenging?',
+                responseSize: 'medium',
+              },
+              {
+                id: 'learned',
+                type: 'multiline-text-field',
+                text: 'What I learned',
+                responseSize: 'medium',
+              },
+              { id: 'feel-1', type: 'checkbox-field', text: 'Calmer' },
+              { id: 'feel-2', type: 'checkbox-field', text: 'More focused' },
+              { id: 'feel-3', type: 'checkbox-field', text: 'More present' },
+              {
+                id: 'focus-areas',
+                type: 'multiline-text-field',
+                text: 'My top 3 focus areas',
+                responseSize: 'medium',
+              },
+              {
+                id: 'weekly-plan-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Weekly Plan',
+                layout: { pageTemplate: 'planner-tracker' },
+              },
+              {
+                id: 'weekly-grid',
+                type: 'table',
+                text: '',
+                columns: ['Focus', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                rows: [
+                  ['Top Priority', '', '', '', '', '', '', ''],
+                  ['Work / Study', '', '', '', '', '', '', ''],
+                  ['Personal', '', '', '', '', '', '', ''],
+                  ['Self-Care', '', '', '', '', '', '', ''],
+                  ['Family', '', '', '', '', '', '', ''],
+                  ['Other', '', '', '', '', '', '', ''],
+                ],
+              },
+              { id: 'habit-1', type: 'checkbox-field', text: 'Quality sleep' },
+              { id: 'habit-2', type: 'checkbox-field', text: 'Move my body' },
+              { id: 'habit-3', type: 'checkbox-field', text: 'Hydration' },
+              {
+                id: 'weekly-notes',
+                type: 'multiline-text-field',
+                text: 'Notes',
+                responseSize: 'medium',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="weekly-reset-grid"] [data-weekly-reset-panel]',
+      ),
+    ).toHaveLength(2)
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="planner-support-grid"] [data-planner-support]',
+      ),
+    ).toHaveLength(2)
+    expect(screen.getByText('Weekly Plan')).toBeInTheDocument()
+    expect(screen.getByText('Quality sleep')).toBeInTheDocument()
+  })
+
 })
