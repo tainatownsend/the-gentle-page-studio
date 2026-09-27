@@ -744,6 +744,90 @@
 
 
 
+
+/* Gate C planning pages */
+
+.weeklyResetGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 0.82rem;
+  align-items: stretch;
+}
+
+.weeklyResetPanel {
+  display: grid;
+  gap: 0.58rem;
+  align-content: start;
+  padding: 0.78rem;
+  background: color-mix(in srgb, var(--publication-paper) 92%, var(--publication-sage-soft));
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.72rem;
+}
+
+.weeklyResetPanel[data-weekly-reset-panel='focus'] {
+  background: color-mix(in srgb, var(--publication-clay-soft) 42%, white);
+}
+
+.weeklyResetPanel .multilineField {
+  gap: 0.48rem;
+  padding: 0.66rem 0.72rem;
+}
+
+.weeklyResetPanel .responseArea {
+  min-height: 5rem;
+}
+
+.weeklyResetPanel .checkboxField {
+  padding-block: 0.22rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--publication-rule) 64%, transparent);
+}
+
+.weeklyResetPanel .checkboxField:last-of-type {
+  border-bottom: 0;
+}
+
+.plannerSupportGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 0.78rem;
+}
+
+.plannerSupportPanel {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  min-height: 10rem;
+  padding: 0.72rem 0.78rem;
+  background: color-mix(in srgb, var(--publication-sage-soft) 34%, white);
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.7rem;
+}
+
+.plannerSupportPanel[data-planner-support='notes'] {
+  background: color-mix(in srgb, var(--publication-sand-soft) 48%, white);
+}
+
+.plannerSupportPanel .checkboxField {
+  padding-block: 0.2rem;
+}
+
+.plannerSupportPanel .multilineField {
+  height: 100%;
+  min-height: 8.4rem;
+  padding: 0.66rem 0.72rem;
+}
+
+.plannerSupportPanel .responseArea {
+  min-height: 6rem;
+}
+
+@media (max-width: 42rem) {
+  .weeklyResetGrid,
+  .plannerSupportGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Gate C page families */
 
 .triggerColumns {
