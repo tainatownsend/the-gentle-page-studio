@@ -521,6 +521,179 @@
   border-top: 1px solid var(--publication-rule);
 }
 
+
+/*
+ * Approved Gentle Page Asset Library families.
+ * Template intent changes composition, never the manuscript text.
+ */
+.documentPage[data-page-template='navigation'] .content {
+  gap: 1.65rem;
+}
+
+.documentPage[data-page-template='navigation'] .heading2 {
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--publication-rule);
+}
+
+.documentPage[data-page-template='section-opener'] .documentBody,
+.documentPage[data-page-template='closing'] .documentBody {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+}
+
+.documentPage[data-page-template='section-opener'] .content,
+.documentPage[data-page-template='closing'] .content {
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.documentPage[data-page-template='closing'] .content {
+  text-align: center;
+}
+
+.documentPage[data-page-template='closing'] .paragraph {
+  max-width: 46ch;
+  margin-inline: auto;
+  color: var(--publication-muted-ink);
+}
+
+.documentPage[data-page-template='prompt-writing'] .multilineField {
+  min-height: 25rem;
+  grid-template-rows: auto 1fr;
+  padding: 1.1rem;
+}
+
+.documentPage[data-page-template='prompt-writing'] .responseArea {
+  min-height: 100%;
+}
+
+.documentPage[data-page-template='guided-framework'] .content {
+  gap: 1rem;
+}
+
+.documentPage[data-page-template='guided-framework'] .checkboxField {
+  gap: 0.85rem;
+  padding: 0.85rem 0.95rem;
+  background: var(--publication-paper);
+  border: 1px solid var(--publication-rule);
+  border-left: 0.26rem solid var(--publication-sage);
+  border-radius: 0.65rem;
+}
+
+.documentPage[data-page-template='guided-framework'] .checkboxMark {
+  width: 1.18rem;
+  height: 1.18rem;
+  flex-basis: 1.18rem;
+}
+
+.documentPage[data-page-template='emergency-tool'] .content {
+  gap: 1rem;
+  counter-reset: emergency-step;
+}
+
+.documentPage[data-page-template='emergency-tool'] .heading3 {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  padding-top: 0.5rem;
+  color: var(--publication-ink);
+  text-transform: none;
+  letter-spacing: 0;
+  counter-increment: emergency-step;
+}
+
+.documentPage[data-page-template='emergency-tool'] .heading3::before {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 750;
+  color: var(--publication-paper);
+  content: counter(emergency-step);
+  background: var(--publication-sage);
+  border-radius: 50%;
+}
+
+.documentPage[data-page-template='emergency-tool'] .checkboxField {
+  padding-left: 2.5rem;
+}
+
+.documentPage[data-page-template='emergency-tool'] .multilineField {
+  margin-top: 0.25rem;
+  border-color: color-mix(in srgb, var(--publication-sage) 42%, var(--publication-rule));
+}
+
+.documentPage[data-page-template='daily-check-in'] .content {
+  gap: 1rem;
+}
+
+.documentPage[data-page-template='daily-check-in'] .ratingField {
+  padding: 0.9rem 1rem 1rem;
+  background: var(--publication-paper);
+  border-color: var(--publication-rule);
+  border-radius: 0.7rem;
+}
+
+.documentPage[data-page-template='daily-check-in'] .ratingScale {
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.documentPage[data-page-template='daily-check-in'] .ratingMark {
+  width: 1.18rem;
+  height: 1.18rem;
+}
+
+.documentPage[data-page-template='daily-check-in'] .checkboxField {
+  padding-block: 0.42rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--publication-rule) 72%, transparent);
+}
+
+.documentPage[data-page-template='weekly-reset'] .content {
+  gap: 1rem;
+}
+
+.documentPage[data-page-template='weekly-reset'] .multilineField {
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 0.7rem;
+}
+
+.documentPage[data-page-template='weekly-reset'] .checkboxField {
+  padding-block: 0.38rem;
+}
+
+.documentPage[data-page-template='planner-tracker'] .tableScroll,
+.documentPage[data-page-template='matrix-framework'] .tableScroll {
+  border-radius: 0.55rem;
+}
+
+.documentPage[data-page-template='planner-tracker'] .publicationTable,
+.documentPage[data-page-template='matrix-framework'] .publicationTable {
+  font-size: 0.8rem;
+}
+
+.documentPage[data-page-template='planner-tracker'] .publicationTable td {
+  height: 3.05rem;
+}
+
+.documentPage[data-page-template='matrix-framework'] .publicationTable td {
+  height: 3.65rem;
+}
+
+.documentPage[data-page-template='matrix-framework'] .publicationTable th {
+  text-align: center;
+}
+
+.documentPage[data-page-template='matrix-framework'] .publicationTable td:first-child {
+  font-weight: 650;
+  color: var(--publication-sage-deep);
+  background: color-mix(in srgb, var(--publication-sage-soft) 52%, var(--publication-paper));
+}
+
 @media (min-width: 48rem) {
   .page {
     padding-block: var(--space-2xl, 48px);
