@@ -205,6 +205,7 @@ function estimatePdfBlockHeight(
 function createBlockPlacements(
   blocks: readonly PublicationBlock[],
   allocations: readonly PublicationLayoutBlockAllocation[],
+  pageTemplate?: PublicationPageTemplate,
 ): PublicationPdfBlockPlacement[] {
   if (blocks.length === 0) return []
 
@@ -214,14 +215,33 @@ function createBlockPlacements(
   const desiredHeights = blocks.map((block) =>
     estimatePdfBlockHeight(block, allocationByBlockId.get(block.id)),
   )
-  const totalGapHeight = PUBLICATION_PDF_BLOCK_GAP_POINTS * Math.max(0, blocks.length - 1)
+  const blockGap =
+    pageTemplate === 'emergency-tool' ||
+    pageTemplate === 'daily-check-in' ||
+    pageTemplate === 'planner-tracker' ||
+    pageTemplate === 'matrix-framework'
+      ? 12
+      : PUBLICATION_PDF_BLOCK_GAP_POINTS
+  const totalGapHeight = blockGap * Math.max(0, blocks.length - 1)
   const availableBlockHeight = Math.max(1, PUBLICATION_CONTENT_HEIGHT_POINTS - totalGapHeight)
   const desiredBlockHeight = desiredHeights.reduce((total, height) => total + height, 0)
   const scale = desiredBlockHeight > availableBlockHeight
     ? availableBlockHeight / desiredBlockHeight
     : 1
 
-  let top = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+  const placedBlockHeight = desiredHeights.reduce(
+    (total, height) => total + Math.max(12, height * scale),
+    0,
+  )
+  const placedGroupHeight = placedBlockHeight + totalGapHeight
+  const contentBottom =
+    US_LETTER_HEIGHT_POINTS -
+    PUBLICATION_MARGIN_POINTS -
+    PUBLICATION_CONTENT_HEIGHT_POINTS
+  let top =
+    pageTemplate === 'section-opener' || pageTemplate === 'closing'
+      ? contentBottom + (PUBLICATION_CONTENT_HEIGHT_POINTS + placedGroupHeight) / 2
+      : US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
 
   return blocks.map((block, index) => {
     const height = Math.max(12, (desiredHeights[index] ?? 12) * scale)
@@ -232,7 +252,7 @@ function createBlockPlacements(
       height,
     }
 
-    top -= height + PUBLICATION_PDF_BLOCK_GAP_POINTS
+    top -= height + blockGap
 
     return {
       blockId: block.id,
@@ -395,7 +415,11 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
   const interactiveFields: PublicationPdfInteractiveField[] = []
 
   const pages = layout.pages.map((page) => {
-    const blockPlacements = createBlockPlacements(page.blocks, page.allocations)
+    const blockPlacements = createBlockPlacements(
+      page.blocks,
+      page.allocations,
+      page.pageTemplate,
+    )
     const pageNumber = page.pageNumber
 
     if (page.kind === 'content' && pageNumber !== undefined) {
