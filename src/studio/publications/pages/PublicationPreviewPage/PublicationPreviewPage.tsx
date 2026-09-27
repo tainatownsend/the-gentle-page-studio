@@ -370,10 +370,9 @@ function renderDailyCheckInContent(
   const firstCheckbox = blocks.findIndex((block) => block.type === 'checkbox-field')
   const lastCheckbox = blocks.map((block) => block.type).lastIndexOf('checkbox-field')
   const ratingIds = new Set(ratingBlocks.map((block) => block.id))
+  const possibleInventoryHeading = firstCheckbox > 0 ? blocks[firstCheckbox - 1] : undefined
   const inventoryHeadingIndex =
-    firstCheckbox > 0 &&
-    blocks[firstCheckbox - 1]?.type === 'heading' &&
-    blocks[firstCheckbox - 1]?.level === 3
+    possibleInventoryHeading?.type === 'heading' && possibleInventoryHeading.level === 3
       ? firstCheckbox - 1
       : firstCheckbox
   const inventoryIds = new Set(
