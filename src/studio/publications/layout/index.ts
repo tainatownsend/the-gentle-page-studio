@@ -27,3 +27,5 @@ export {
   recomposePublicationPages,
   type PublicationRecompositionOptions,
 } from './publicationRecomposition'
+
+export { getPublicationPageTemplateLabel } from './publicationPageChrome'
