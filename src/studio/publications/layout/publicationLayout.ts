@@ -171,6 +171,10 @@ function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | unde
       return 0.5
     case 'sensory-reset':
       return 0.4
+    case 'trigger-scan':
+      return 0.3
+    case 'regulation-menu':
+      return 0.42
     case 'weekly-reset':
       return 0.65
     case 'planner-tracker':
