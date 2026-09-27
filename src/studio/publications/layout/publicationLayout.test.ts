@@ -374,4 +374,47 @@ describe('createPublicationLayout', () => {
     expect(contentPage?.pageTemplate).toBe('daily-check-in')
   })
 
+
+  it('starts an explicit page template on a fresh page', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'intro',
+            type: 'paragraph',
+            text: 'A short introduction before the reusable tool.',
+          },
+          {
+            id: 'emergency-heading',
+            type: 'heading',
+            level: 2,
+            text: 'Emergency Unfreeze Protocol',
+            layout: {
+              pageTemplate: 'emergency-tool',
+            },
+          },
+          {
+            id: 'emergency-body',
+            type: 'paragraph',
+            text: 'Begin with the smallest useful interruption.',
+          },
+        ],
+      },
+    })
+
+    const contentPages = createPublicationLayout(publication).pages.filter(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPages).toHaveLength(2)
+    expect(contentPages[0]?.blocks.map((block) => block.id)).toEqual(['intro'])
+    expect(contentPages[1]).toMatchObject({
+      pageTemplate: 'emergency-tool',
+    })
+    expect(contentPages[1]?.blocks.map((block) => block.id)).toEqual([
+      'emergency-heading',
+      'emergency-body',
+    ])
+  })
+
 })
