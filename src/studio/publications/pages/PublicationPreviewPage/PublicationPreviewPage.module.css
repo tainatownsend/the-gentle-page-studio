@@ -743,6 +743,131 @@
 
 
 
+
+/* Gate C page families */
+
+.triggerColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.82rem;
+}
+
+.triggerPanel {
+  display: grid;
+  gap: 0.18rem;
+  align-content: start;
+  padding: 0.82rem 0.88rem;
+  background: color-mix(in srgb, var(--publication-clay-soft) 46%, white);
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.72rem;
+}
+
+.triggerPanel:nth-child(2) {
+  background: color-mix(in srgb, var(--publication-sage-soft) 48%, white);
+}
+
+.triggerPanel .heading3 {
+  margin-bottom: 0.28rem;
+  font-size: 0.8rem;
+  color: var(--publication-ink);
+}
+
+.triggerPanel .checkboxField {
+  gap: 0.54rem;
+  padding-block: 0.22rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--publication-rule) 62%, transparent);
+}
+
+.triggerPanel .checkboxField:last-child {
+  border-bottom: 0;
+}
+
+.triggerPanel .checkboxMark {
+  width: 0.96rem;
+  height: 0.96rem;
+  flex-basis: 0.96rem;
+  margin-top: 0.1rem;
+}
+
+.triggerPanel .fieldLabel {
+  font-size: 0.72rem;
+  line-height: 1.36;
+}
+
+.documentPage[data-page-template='trigger-scan'] .multilineField {
+  margin-top: 0.16rem;
+  background: color-mix(in srgb, var(--publication-sand-soft) 42%, white);
+}
+
+.regulationMenuRows {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.regulationMenuRow {
+  display: grid;
+  grid-template-columns: 2.15rem minmax(0, 1fr);
+  gap: 0.72rem;
+  align-items: start;
+  padding: 0.66rem 0.76rem;
+  background: color-mix(in srgb, var(--publication-clay-soft) 52%, white);
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.68rem;
+}
+
+.regulationMenuRow:nth-child(2) {
+  background: color-mix(in srgb, var(--publication-sand-soft) 72%, white);
+}
+
+.regulationMenuRow:nth-child(3) {
+  background: color-mix(in srgb, var(--publication-sage-soft) 58%, white);
+}
+
+.regulationMenuRow:nth-child(4) {
+  background: color-mix(in srgb, var(--publication-mist) 72%, white);
+}
+
+.regulationMenuRow:nth-child(5) {
+  background: color-mix(in srgb, var(--publication-clay-soft) 38%, white);
+}
+
+.regulationMenuMarker {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: var(--publication-sage-deep);
+  background: var(--publication-paper);
+  border: 1px solid color-mix(in srgb, var(--publication-sage) 38%, var(--publication-rule));
+  border-radius: 50%;
+}
+
+.regulationMenuField .multilineField {
+  gap: 0.48rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.regulationMenuField .fieldLabel {
+  font-size: 0.78rem;
+  color: var(--publication-ink);
+}
+
+.regulationMenuField .responseArea {
+  min-height: 3.15rem;
+  background-color: color-mix(in srgb, var(--publication-paper) 88%, transparent);
+}
+
+@media (max-width: 42rem) {
+  .triggerColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Gate B front matter */
 
 .navigationRows {
