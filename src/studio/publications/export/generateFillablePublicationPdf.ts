@@ -285,6 +285,75 @@ function drawTemplateZones(page: PDFPage, pagePlan: PublicationPdfPagePlan): voi
     return
   }
 
+  if (pagePlan.pageTemplate === 'trigger-scan') {
+    const sectionStarts = pagePlan.blocks
+      .map((block, index) =>
+        block.type === 'heading' && block.level === 3 ? index : -1,
+      )
+      .filter((index) => index >= 0)
+      .slice(0, 2)
+    const firstWritingFieldIndex = pagePlan.blocks.findIndex(
+      (block) => block.type === 'multiline-text-field',
+    )
+
+    sectionStarts.forEach((startIndex, sectionIndex) => {
+      const nextStart =
+        sectionStarts[sectionIndex + 1] ??
+        (firstWritingFieldIndex >= 0 ? firstWritingFieldIndex : pagePlan.blocks.length)
+      const bounds = getPlacementBounds(
+        pagePlan.blockPlacements.slice(startIndex, nextStart),
+      )
+      if (!bounds) return
+
+      page.drawRectangle({
+        x: bounds.x - 9,
+        y: bounds.y - 9,
+        width: bounds.width + 18,
+        height: bounds.height + 18,
+        color: sectionIndex === 0 ? CLAY_SOFT : SAGE_SOFT,
+        opacity: 0.58,
+        borderColor: RULE,
+        borderWidth: 0.55,
+      })
+    })
+    return
+  }
+
+  if (pagePlan.pageTemplate === 'regulation-menu') {
+    pagePlan.blocks.forEach((block, index) => {
+      if (block.type !== 'multiline-text-field') return
+
+      const placement = pagePlan.blockPlacements[index]
+      if (!placement) return
+
+      const fieldIndex = pagePlan.blocks
+        .slice(0, index + 1)
+        .filter((candidate) => candidate.type === 'multiline-text-field').length
+      const fill =
+        fieldIndex === 1
+          ? CLAY_SOFT
+          : fieldIndex === 2
+            ? SAND_SOFT
+            : fieldIndex === 3
+              ? SAGE_SOFT
+              : fieldIndex === 4
+                ? MIST
+                : CLAY_SOFT
+
+      page.drawRectangle({
+        x: placement.rect.x - 4,
+        y: placement.rect.y - 4,
+        width: placement.rect.width + 8,
+        height: placement.rect.height + 8,
+        color: fill,
+        opacity: 0.68,
+        borderColor: RULE,
+        borderWidth: 0.55,
+      })
+    })
+    return
+  }
+
   if (pagePlan.pageTemplate === 'emergency-tool') {
     const stepStarts = pagePlan.blocks
       .map((block, index) =>
@@ -597,6 +666,7 @@ function drawStaticBlock(
   pageTemplate?: PublicationPageTemplate,
   templateStepNumber?: number,
   templateStateIndex?: number,
+  templateFieldIndex?: number,
 ): void {
   const top = placement.rect.y + placement.rect.height
 
@@ -730,12 +800,25 @@ function drawStaticBlock(
   }
 
   if (block.type === 'multiline-text-field') {
+    const multilineFill =
+      pageTemplate === 'regulation-menu'
+        ? templateFieldIndex === 1
+          ? CLAY_SOFT
+          : templateFieldIndex === 2
+            ? SAND_SOFT
+            : templateFieldIndex === 3
+              ? SAGE_SOFT
+              : templateFieldIndex === 4
+                ? MIST
+                : CLAY_SOFT
+        : PAPER
+
     page.drawRectangle({
       x: placement.rect.x,
       y: placement.rect.y,
       width: placement.rect.width,
       height: placement.rect.height,
-      color: PAPER,
+      color: multilineFill,
       borderColor: RULE,
       borderWidth: 0.5,
     })
@@ -924,6 +1007,13 @@ export async function generateFillablePublicationPdf(
                 .slice(0, index + 1)
                 .filter((candidate) => candidate.type === 'checkbox-field').length
             : undefined
+        const templateFieldIndex =
+          pagePlan.pageTemplate === 'regulation-menu' &&
+          block.type === 'multiline-text-field'
+            ? pagePlan.blocks
+                .slice(0, index + 1)
+                .filter((candidate) => candidate.type === 'multiline-text-field').length
+            : undefined
 
         drawStaticBlock(
           page,
@@ -935,6 +1025,7 @@ export async function generateFillablePublicationPdf(
           pagePlan.pageTemplate,
           templateStepNumber,
           templateStateIndex,
+          templateFieldIndex,
         )
       }
     })
