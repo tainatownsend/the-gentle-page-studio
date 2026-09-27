@@ -577,6 +577,93 @@ function renderNavigationContent(
   )
 }
 
+
+function renderTriggerScanContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections, trailing } = splitHeadingSections(blocks)
+
+  if (sections.length === 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.triggerColumns} data-template-region="trigger-columns">
+        {sections.slice(0, 2).map((section, index) => (
+          <section
+            key={section[0]?.id ?? `trigger-column-${index}`}
+            className={styles.triggerPanel}
+            data-trigger-column={index + 1}
+          >
+            {section.map((block) => renderPublicationBlock(block, allocations))}
+          </section>
+        ))}
+      </div>
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
+function renderRegulationMenuContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const firstFieldIndex = blocks.findIndex(
+    (block) => block.type === 'multiline-text-field',
+  )
+
+  if (firstFieldIndex < 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  let lastFieldIndex = firstFieldIndex
+  for (let index = firstFieldIndex; index < blocks.length; index += 1) {
+    if (blocks[index]?.type === 'multiline-text-field') {
+      lastFieldIndex = index
+    }
+  }
+
+  const leading = blocks.slice(0, firstFieldIndex)
+  const fields = blocks
+    .slice(firstFieldIndex, lastFieldIndex + 1)
+    .filter((block) => block.type === 'multiline-text-field')
+  const trailing = blocks.slice(lastFieldIndex + 1)
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.regulationMenuRows} data-template-region="regulation-menu-rows">
+        {fields.map((block, index) => (
+          <section
+            key={block.id}
+            className={styles.regulationMenuRow}
+            data-regulation-menu-row={index + 1}
+          >
+            <span className={styles.regulationMenuMarker} aria-hidden="true">
+              {index + 1}
+            </span>
+            <div className={styles.regulationMenuField}>
+              {renderPublicationBlock(block, allocations)}
+            </div>
+          </section>
+        ))}
+      </div>
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
 function PublicationTemplateContent({
   blocks,
   allocations,
@@ -596,6 +683,14 @@ function PublicationTemplateContent({
 
   if (pageTemplate === 'sensory-reset') {
     return renderSensoryResetContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'trigger-scan') {
+    return renderTriggerScanContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'regulation-menu') {
+    return renderRegulationMenuContent(blocks, allocations)
   }
 
   if (pageTemplate === 'emergency-tool') {
