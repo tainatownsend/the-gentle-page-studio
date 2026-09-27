@@ -316,14 +316,14 @@ function drawStaticBlock(
         x: placement.rect.x,
         y: placement.rect.y + 2,
         width: placement.rect.width,
-        height: Math.max(placement.rect.height - 4, 18),
-        color: SAGE_SOFT,
+        height: 0.7,
+        color: RULE,
       })
       page.drawRectangle({
         x: placement.rect.x,
-        y: placement.rect.y + 2,
-        width: 5,
-        height: Math.max(placement.rect.height - 4, 18),
+        y: placement.rect.y + 1.4,
+        width: 38,
+        height: 2,
         color: SAGE,
       })
       drawWrappedText(
@@ -331,12 +331,12 @@ function drawStaticBlock(
         block.text || 'Untitled heading',
         displayFont,
         20,
-        placement.rect.x + 14,
+        placement.rect.x,
         top - 3,
-        placement.rect.width - 24,
+        placement.rect.width,
         24,
         Math.max(placement.rect.height - 8, 20),
-        SAGE_DEEP,
+        INK,
       )
       return
     }
