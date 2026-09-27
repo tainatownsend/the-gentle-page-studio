@@ -397,4 +397,38 @@ Look at something calming.`)
     expect(result.diagnostics).toEqual([])
   })
 
+
+  it('accepts the Gate C trigger scan and regulation menu templates', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="trigger-scan"]]
+
+## Triggers & Early Signs
+
+### Common Triggers
+
+- [ ] Stress
+
+[[GP:PAGE_TEMPLATE type="regulation-menu"]]
+
+## Regulation Menu
+
+### Quick Reset
+
+[[GP:RESPONSE size="short"]]`)
+
+    expect(
+      result.content.blocks.find(
+        (block) => block.type === 'heading' && block.text === 'Triggers & Early Signs',
+      )?.layout?.pageTemplate,
+    ).toBe('trigger-scan')
+    expect(
+      result.content.blocks.find(
+        (block) =>
+          block.type === 'heading' && block.text === 'Regulation Menu',
+      )?.layout?.pageTemplate,
+    ).toBe('regulation-menu')
+    expect(result.diagnostics).toEqual([])
+  })
+
 })
