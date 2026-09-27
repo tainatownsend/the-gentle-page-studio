@@ -19,6 +19,7 @@ import { downloadFillablePublicationPdf } from '../../export'
 import {
   createPublicationLayout,
   getPublicationPageLayoutRecipe,
+  getPublicationPageTemplateLabel,
   type PublicationLayoutBlockAllocation,
 } from '../../layout'
 import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
@@ -673,6 +674,15 @@ export function PublicationPreviewPage({
                   data-page-density={pageRecipe?.density}
                   data-page-template={layoutPage.pageTemplate}
                 >
+                  {!isCover ? (
+                    <header className={styles.runningHeader} data-publication-running-header>
+                      <span className={styles.runningBrand}>The Gentle Page</span>
+                      <span className={styles.runningSection}>
+                        {getPublicationPageTemplateLabel(layoutPage.pageTemplate)}
+                      </span>
+                    </header>
+                  ) : null}
+
                   {isCover ? (
                     <div className={styles.coverBody}>
                       <BotanicalCorner position="top-right" />
