@@ -26,6 +26,7 @@ export type {
   PublicationInteractiveBlock,
   PublicationMultilineTextFieldBlock,
   PublicationPageBreakIntent,
+  PublicationPageTemplate,
   PublicationParagraphBlock,
   PublicationRatingFieldBlock,
   PublicationResponseSizeIntent,
