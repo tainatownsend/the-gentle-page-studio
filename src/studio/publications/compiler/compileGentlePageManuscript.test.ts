@@ -364,4 +364,37 @@ Start small.`)
     expect(result.diagnostics).toEqual([])
   })
 
+
+  it('accepts the Gate B tool overview and sensory reset templates', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="tool-overview"]]
+
+## Daily Regulation Tools
+
+### Breathe
+
+Reset your body gently.
+
+[[GP:PAGE_TEMPLATE type="sensory-reset"]]
+
+## Sensory Reset
+
+### Sight
+
+Look at something calming.`)
+
+    expect(
+      result.content.blocks.find(
+        (block) => block.type === 'heading' && block.text === 'Daily Regulation Tools',
+      )?.layout?.pageTemplate,
+    ).toBe('tool-overview')
+    expect(
+      result.content.blocks.find(
+        (block) => block.type === 'heading' && block.text === 'Sensory Reset',
+      )?.layout?.pageTemplate,
+    ).toBe('sensory-reset')
+    expect(result.diagnostics).toEqual([])
+  })
+
 })

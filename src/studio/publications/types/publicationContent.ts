@@ -10,6 +10,8 @@ export type PublicationPageTemplate =
   | 'prompt-writing'
   | 'daily-check-in'
   | 'guided-framework'
+  | 'tool-overview'
+  | 'sensory-reset'
   | 'emergency-tool'
   | 'weekly-reset'
   | 'planner-tracker'

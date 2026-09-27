@@ -420,6 +420,124 @@ function renderDailyCheckInContent(
   )
 }
 
+
+function splitHeadingSections(
+  blocks: readonly PublicationBlock[],
+): {
+  leading: PublicationBlock[]
+  sections: PublicationBlock[][]
+  trailing: PublicationBlock[]
+} {
+  const firstSectionIndex = blocks.findIndex(
+    (block) => block.type === 'heading' && block.level === 3,
+  )
+
+  if (firstSectionIndex < 0) {
+    return { leading: [...blocks], sections: [], trailing: [] }
+  }
+
+  const leading = [...blocks.slice(0, firstSectionIndex)]
+  const sections: PublicationBlock[][] = []
+  let current: PublicationBlock[] = []
+  let trailing: PublicationBlock[] = []
+
+  for (const block of blocks.slice(firstSectionIndex)) {
+    if (block.type === 'multiline-text-field' && current.length > 0) {
+      if (current.length > 0) sections.push(current)
+      current = []
+      trailing = [...blocks.slice(blocks.indexOf(block))]
+      break
+    }
+
+    if (block.type === 'heading' && block.level === 3 && current.length > 0) {
+      sections.push(current)
+      current = []
+    }
+
+    current.push(block)
+  }
+
+  if (current.length > 0) sections.push(current)
+
+  return { leading, sections, trailing }
+}
+
+function renderToolOverviewContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections, trailing } = splitHeadingSections(blocks)
+
+  if (sections.length < 2) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.toolOverviewGrid} data-template-region="tool-overview-grid">
+        {sections.map((section, index) => (
+          <section
+            key={section[0]?.id ?? `tool-overview-${index}`}
+            className={styles.toolOverviewCard}
+            data-tool-overview-card={index + 1}
+          >
+            <span className={styles.toolOverviewAccent} aria-hidden="true">
+              {index + 1}
+            </span>
+            <div className={styles.toolOverviewCardBody}>
+              {section.map((block) => renderPublicationBlock(block, allocations))}
+            </div>
+          </section>
+        ))}
+      </div>
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
+function renderSensoryResetContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections, trailing } = splitHeadingSections(blocks)
+
+  if (sections.length === 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.sensoryResetList} data-template-region="sensory-reset-list">
+        {sections.map((section, index) => (
+          <section
+            key={section[0]?.id ?? `sensory-reset-${index}`}
+            className={styles.sensoryResetItem}
+            data-sensory-reset-item={index + 1}
+          >
+            <span className={styles.sensoryResetMarker} aria-hidden="true">
+              {index + 1}
+            </span>
+            <div className={styles.sensoryResetItemBody}>
+              {section.map((block) => renderPublicationBlock(block, allocations))}
+            </div>
+          </section>
+        ))}
+      </div>
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
 function PublicationTemplateContent({
   blocks,
   allocations,
@@ -427,6 +545,14 @@ function PublicationTemplateContent({
 }: PublicationTemplateContentProps): ReactElement {
   if (pageTemplate === 'guided-framework') {
     return renderGuidedFrameworkContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'tool-overview') {
+    return renderToolOverviewContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'sensory-reset') {
+    return renderSensoryResetContent(blocks, allocations)
   }
 
   if (pageTemplate === 'emergency-tool') {

@@ -430,4 +430,75 @@ describe('PublicationPreviewPage', () => {
     ).toBeInTheDocument()
   })
 
+
+  it('renders the approved Gate B daily tools and sensory-reset structures', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          content: {
+            blocks: [
+              {
+                id: 'tools-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Daily Regulation Tools',
+                layout: { pageTemplate: 'tool-overview' },
+              },
+              { id: 'breathe', type: 'heading', level: 3, text: 'Breathe' },
+              { id: 'breathe-copy', type: 'paragraph', text: 'Reset your body in 2 minutes.' },
+              { id: 'move', type: 'heading', level: 3, text: 'Move' },
+              { id: 'move-copy', type: 'paragraph', text: 'Release tension gently.' },
+              { id: 'ground', type: 'heading', level: 3, text: 'Ground' },
+              { id: 'ground-copy', type: 'paragraph', text: 'Come back to the present.' },
+              { id: 'soothe', type: 'heading', level: 3, text: 'Soothe' },
+              { id: 'soothe-copy', type: 'paragraph', text: 'Calm your senses.' },
+              { id: 'refocus', type: 'heading', level: 3, text: 'Refocus' },
+              { id: 'refocus-copy', type: 'paragraph', text: 'Bring back attention.' },
+              { id: 'connect', type: 'heading', level: 3, text: 'Connect' },
+              { id: 'connect-copy', type: 'paragraph', text: 'Feel supported and less alone.' },
+              {
+                id: 'sensory-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Sensory Reset',
+                layout: { pageTemplate: 'sensory-reset' },
+              },
+              { id: 'sight', type: 'heading', level: 3, text: 'Sight' },
+              { id: 'sight-copy', type: 'paragraph', text: 'Look at something calming.' },
+              { id: 'sound', type: 'heading', level: 3, text: 'Sound' },
+              { id: 'sound-copy', type: 'paragraph', text: 'Listen to a grounding sound.' },
+              { id: 'touch', type: 'heading', level: 3, text: 'Touch' },
+              { id: 'touch-copy', type: 'paragraph', text: 'Hold something soothing.' },
+              { id: 'smell', type: 'heading', level: 3, text: 'Smell' },
+              { id: 'smell-copy', type: 'paragraph', text: 'Use a calming scent.' },
+              { id: 'taste', type: 'heading', level: 3, text: 'Taste' },
+              { id: 'taste-copy', type: 'paragraph', text: 'Have a sip of water or tea.' },
+              {
+                id: 'sensory-notes',
+                type: 'multiline-text-field',
+                text: 'My go-to sensory tools',
+                responseSize: 'medium',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="tool-overview-grid"] [data-tool-overview-card]',
+      ),
+    ).toHaveLength(6)
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="sensory-reset-list"] [data-sensory-reset-item]',
+      ),
+    ).toHaveLength(5)
+    expect(screen.getByText('My go-to sensory tools')).toBeInTheDocument()
+  })
+
 })

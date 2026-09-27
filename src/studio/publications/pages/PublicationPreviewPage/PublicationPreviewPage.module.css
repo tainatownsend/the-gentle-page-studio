@@ -741,6 +741,141 @@
 }
 
 
+
+/* Gate B page families */
+
+.toolOverviewGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.toolOverviewCard {
+  display: grid;
+  min-height: 8.2rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.62rem;
+  align-content: start;
+  padding: 0.82rem;
+  background: color-mix(in srgb, var(--publication-clay-soft) 54%, white);
+  border: 1px solid var(--publication-rule);
+  border-radius: 0.74rem;
+}
+
+.toolOverviewCard:nth-child(2),
+.toolOverviewCard:nth-child(5) {
+  background: color-mix(in srgb, var(--publication-sage-soft) 58%, white);
+}
+
+.toolOverviewCard:nth-child(3),
+.toolOverviewCard:nth-child(6) {
+  background: color-mix(in srgb, var(--publication-mist) 68%, white);
+}
+
+.toolOverviewAccent {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  font-size: 0.68rem;
+  font-weight: 750;
+  color: var(--publication-sage-deep);
+  background: var(--publication-paper);
+  border: 1px solid color-mix(in srgb, var(--publication-sage) 44%, var(--publication-rule));
+  border-radius: 50%;
+}
+
+.toolOverviewCardBody {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.toolOverviewCardBody .heading3 {
+  font-size: 0.82rem;
+  color: var(--publication-ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.toolOverviewCardBody .paragraph {
+  font-size: 0.76rem;
+  line-height: 1.48;
+  color: var(--publication-muted-ink);
+}
+
+.sensoryResetList {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.sensoryResetItem {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.62rem 0.72rem;
+  border-bottom: 1px solid var(--publication-rule);
+}
+
+.sensoryResetItem:last-child {
+  border-bottom: 0;
+}
+
+.sensoryResetMarker {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: var(--publication-sage-deep);
+  background: color-mix(in srgb, var(--publication-sage-soft) 64%, white);
+  border-radius: 50%;
+}
+
+.sensoryResetItem:nth-child(2) .sensoryResetMarker {
+  background: color-mix(in srgb, var(--publication-clay-soft) 72%, white);
+}
+
+.sensoryResetItem:nth-child(3) .sensoryResetMarker {
+  background: color-mix(in srgb, var(--publication-mist) 78%, white);
+}
+
+.sensoryResetItem:nth-child(4) .sensoryResetMarker {
+  background: color-mix(in srgb, var(--publication-sand-soft) 82%, white);
+}
+
+.sensoryResetItemBody {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.sensoryResetItemBody .heading3 {
+  font-size: 0.82rem;
+  color: var(--publication-ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sensoryResetItemBody .paragraph {
+  font-size: 0.78rem;
+  line-height: 1.48;
+  color: var(--publication-muted-ink);
+}
+
+.documentPage[data-page-template='sensory-reset'] .multilineField {
+  margin-top: 0.2rem;
+  background: color-mix(in srgb, var(--publication-sage-soft) 22%, white);
+}
+
+@media (max-width: 42rem) {
+  .toolOverviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Gate A canonical compositions */
 
 .stateGrid {

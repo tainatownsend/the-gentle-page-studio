@@ -5,6 +5,8 @@ import { getPublicationPageTemplateLabel } from './publicationPageChrome'
 describe('getPublicationPageTemplateLabel', () => {
   it('maps semantic page templates to stable editorial running-header labels', () => {
     expect(getPublicationPageTemplateLabel('guided-framework')).toBe('Understanding')
+    expect(getPublicationPageTemplateLabel('tool-overview')).toBe('Daily Tools')
+    expect(getPublicationPageTemplateLabel('sensory-reset')).toBe('Sensory Reset')
     expect(getPublicationPageTemplateLabel('emergency-tool')).toBe('Emergency Tool')
     expect(getPublicationPageTemplateLabel('daily-check-in')).toBe('Daily Check-In')
     expect(getPublicationPageTemplateLabel('planner-tracker')).toBe('Planning')

@@ -18,8 +18,8 @@ The template value communicates page intent. It does not authorize manuscript re
 | 6 | The 4-State Self-Scan | guided-framework |
 | 7 | Emergency Unfreeze Protocol | emergency-tool |
 | 8 | Daily Check-In | daily-check-in |
-| 9 | Daily Regulation Tools Overview | navigation |
-| 10 | Sensory Reset | guided-framework |
+| 9 | Daily Regulation Tools Overview | tool-overview |
+| 10 | Sensory Reset | sensory-reset |
 | 11 | Thought Download | prompt-writing |
 | 12 | Nervous System Basics / 101 | guided-framework |
 | 13 | Triggers & Early Signs | guided-framework |
