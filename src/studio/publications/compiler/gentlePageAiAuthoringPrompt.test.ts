@@ -10,6 +10,8 @@ describe('GENTLE_PAGE_AI_AUTHORING_PROMPT', () => {
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('Place the response directive immediately after the prompt')
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('[[GP:PAGE_TEMPLATE type="daily-check-in"]]')
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('[[GP:PAGE_TEMPLATE type="guided-framework"]]')
+    expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('[[GP:PAGE_TEMPLATE type="tool-overview"]]')
+    expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('[[GP:PAGE_TEMPLATE type="sensory-reset"]]')
     expect(GENTLE_PAGE_AI_AUTHORING_PROMPT).toContain('Do not invent new template names')
   })
 })
