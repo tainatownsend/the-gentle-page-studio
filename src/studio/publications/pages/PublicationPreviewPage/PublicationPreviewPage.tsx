@@ -664,6 +664,87 @@ function renderRegulationMenuContent(
   )
 }
 
+
+function renderWeeklyResetContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const firstInteractive = blocks.findIndex(
+    (block) =>
+      block.type === 'multiline-text-field' ||
+      block.type === 'checkbox-field' ||
+      block.type === 'rating-field',
+  )
+  const firstCheckbox = blocks.findIndex((block) => block.type === 'checkbox-field')
+  const lastCheckbox = blocks.map((block) => block.type).lastIndexOf('checkbox-field')
+
+  if (firstInteractive < 0 || firstCheckbox < 0 || lastCheckbox < firstCheckbox) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  const leading = blocks.slice(0, firstInteractive)
+  const left = blocks.slice(firstInteractive, firstCheckbox)
+  const right = blocks.slice(firstCheckbox)
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.weeklyResetGrid} data-template-region="weekly-reset-grid">
+        <section className={styles.weeklyResetPanel} data-weekly-reset-panel="reflection">
+          {left.map((block) => renderPublicationBlock(block, allocations))}
+        </section>
+        <section className={styles.weeklyResetPanel} data-weekly-reset-panel="focus">
+          {right.map((block) => renderPublicationBlock(block, allocations))}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function renderPlannerTrackerContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const tableIndex = blocks.findIndex((block) => block.type === 'table')
+
+  if (tableIndex < 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  const leading = blocks.slice(0, tableIndex)
+  const table = blocks[tableIndex]
+  const trailing = blocks.slice(tableIndex + 1)
+  const supportCheckboxes = trailing.filter((block) => block.type === 'checkbox-field')
+  const supportFields = trailing.filter(
+    (block) => block.type === 'multiline-text-field' || block.type === 'paragraph',
+  )
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      {table ? renderPublicationBlock(table, allocations) : null}
+      {trailing.length > 0 ? (
+        <div className={styles.plannerSupportGrid} data-template-region="planner-support-grid">
+          <section className={styles.plannerSupportPanel} data-planner-support="habits">
+            {supportCheckboxes.map((block) => renderPublicationBlock(block, allocations))}
+          </section>
+          <section className={styles.plannerSupportPanel} data-planner-support="notes">
+            {supportFields.map((block) => renderPublicationBlock(block, allocations))}
+          </section>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function PublicationTemplateContent({
   blocks,
   allocations,
@@ -699,6 +780,14 @@ function PublicationTemplateContent({
 
   if (pageTemplate === 'daily-check-in') {
     return renderDailyCheckInContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'weekly-reset') {
+    return renderWeeklyResetContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'planner-tracker') {
+    return renderPlannerTrackerContent(blocks, allocations)
   }
 
   return (
