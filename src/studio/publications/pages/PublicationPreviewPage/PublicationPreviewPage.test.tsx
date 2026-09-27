@@ -781,6 +781,10 @@ describe('PublicationPreviewPage', () => {
               { id: 'reminder-3-copy', type: 'paragraph', text: 'You can begin again.' },
               { id: 'reminder-4', type: 'heading', level: 3, text: 'Keep what works' },
               { id: 'reminder-4-copy', type: 'paragraph', text: 'Make the tools yours.' },
+              { id: 'reminder-5', type: 'heading', level: 3, text: 'Rest is useful' },
+              { id: 'reminder-5-copy', type: 'paragraph', text: 'Recovery supports progress.' },
+              { id: 'reminder-6', type: 'heading', level: 3, text: 'You can return' },
+              { id: 'reminder-6-copy', type: 'paragraph', text: 'The page will still be here.' },
             ],
           },
         })}
@@ -804,7 +808,7 @@ describe('PublicationPreviewPage', () => {
       document.querySelectorAll(
         '[data-template-region="closing-reminders"] [data-closing-reminder]',
       ),
-    ).toHaveLength(4)
+    ).toHaveLength(6)
   })
 
 })
