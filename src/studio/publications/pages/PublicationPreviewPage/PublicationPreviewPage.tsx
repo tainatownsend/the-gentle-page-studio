@@ -545,7 +545,7 @@ function renderNavigationContent(
 ): ReactElement {
   const { leading, sections, trailing } = splitHeadingSections(blocks)
 
-  if (sections.length < 2) {
+  if (sections.length === 0) {
     return (
       <div className={styles.content}>
         {blocks.map((block) => renderPublicationBlock(block, allocations))}
