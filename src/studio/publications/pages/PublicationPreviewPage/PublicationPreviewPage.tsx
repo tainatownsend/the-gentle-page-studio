@@ -538,11 +538,54 @@ function renderSensoryResetContent(
   )
 }
 
+
+function renderNavigationContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections, trailing } = splitHeadingSections(blocks)
+
+  if (sections.length === 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.navigationRows} data-template-region="navigation-rows">
+        {sections.map((section, index) => (
+          <section
+            key={section[0]?.id ?? `navigation-row-${index}`}
+            className={styles.navigationRow}
+            data-navigation-row={index + 1}
+          >
+            <span className={styles.navigationIndex} aria-hidden="true">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <div className={styles.navigationRowBody}>
+              {section.map((block) => renderPublicationBlock(block, allocations))}
+            </div>
+          </section>
+        ))}
+      </div>
+      {trailing.map((block) => renderPublicationBlock(block, allocations))}
+    </div>
+  )
+}
+
 function PublicationTemplateContent({
   blocks,
   allocations,
   pageTemplate,
 }: PublicationTemplateContentProps): ReactElement {
+  if (pageTemplate === 'navigation') {
+    return renderNavigationContent(blocks, allocations)
+  }
+
   if (pageTemplate === 'guided-framework') {
     return renderGuidedFrameworkContent(blocks, allocations)
   }

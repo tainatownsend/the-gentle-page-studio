@@ -501,4 +501,59 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getByText('My go-to sensory tools')).toBeInTheDocument()
   })
 
+
+  it('renders Gate B front matter with numbered navigation rows and dedicated opener pages', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          content: {
+            blocks: [
+              {
+                id: 'how-heading',
+                type: 'heading',
+                level: 2,
+                text: 'How to Use This Journal',
+                layout: { pageTemplate: 'navigation' },
+              },
+              { id: 'step-1', type: 'heading', level: 3, text: 'Start where you are' },
+              { id: 'step-1-copy', type: 'paragraph', text: 'No right or wrong order.' },
+              { id: 'step-2', type: 'heading', level: 3, text: 'Use what feels helpful' },
+              { id: 'step-2-copy', type: 'paragraph', text: 'Try, adapt, make it yours.' },
+              { id: 'step-3', type: 'heading', level: 3, text: 'Be kind to your process' },
+              { id: 'step-3-copy', type: 'paragraph', text: 'Progress over perfection.' },
+              { id: 'step-4', type: 'heading', level: 3, text: 'Return when you need' },
+              { id: 'step-4-copy', type: 'paragraph', text: 'This is a safe space for you.' },
+              {
+                id: 'welcome-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Let’s Begin',
+                layout: { pageTemplate: 'section-opener' },
+              },
+              {
+                id: 'welcome-copy',
+                type: 'paragraph',
+                text: 'A kinder approach to progress.',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="navigation-rows"] [data-navigation-row]',
+      ),
+    ).toHaveLength(4)
+    expect(screen.getByText('Start where you are')).toBeInTheDocument()
+    expect(screen.getByText('Return when you need')).toBeInTheDocument()
+    expect(
+      document.querySelector('[data-page-template="section-opener"]'),
+    ).not.toBeNull()
+  })
+
 })
