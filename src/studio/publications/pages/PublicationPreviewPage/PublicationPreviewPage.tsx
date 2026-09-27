@@ -289,7 +289,7 @@ function renderGuidedFrameworkContent(
   allocations: readonly PublicationLayoutBlockAllocation[],
 ): ReactElement {
   const firstCheckbox = blocks.findIndex((block) => block.type === 'checkbox-field')
-  const lastCheckbox = blocks.findLastIndex((block) => block.type === 'checkbox-field')
+  const lastCheckbox = blocks.map((block) => block.type).lastIndexOf('checkbox-field')
 
   if (firstCheckbox < 0 || lastCheckbox < firstCheckbox) {
     return (
@@ -368,7 +368,7 @@ function renderDailyCheckInContent(
 ): ReactElement {
   const ratingBlocks = blocks.filter((block) => block.type === 'rating-field')
   const firstCheckbox = blocks.findIndex((block) => block.type === 'checkbox-field')
-  const lastCheckbox = blocks.findLastIndex((block) => block.type === 'checkbox-field')
+  const lastCheckbox = blocks.map((block) => block.type).lastIndexOf('checkbox-field')
   const ratingIds = new Set(ratingBlocks.map((block) => block.id))
   const inventoryHeadingIndex =
     firstCheckbox > 0 &&
