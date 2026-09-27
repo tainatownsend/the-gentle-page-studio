@@ -281,6 +281,8 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
 
     const semanticBoundaryBreak =
       currentPage.length > 0 && crossesRepeatablePageBoundary(blocks, index)
+    const templateBoundaryBreak =
+      currentPage.length > 0 && block.layout?.pageTemplate !== undefined
     const forcedBreak = currentPage.length > 0 && block.layout?.pageBreakBefore === 'forced'
     const preferredBreak =
       currentPage.length > 0 &&
@@ -292,6 +294,7 @@ function paginateBlocks(blocks: readonly PublicationBlock[]): PublicationBlock[]
 
     if (
       semanticBoundaryBreak ||
+      templateBoundaryBreak ||
       forcedBreak ||
       preferredBreak ||
       wouldStartLongCompoundComponent ||
