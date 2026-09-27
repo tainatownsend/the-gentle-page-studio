@@ -745,6 +745,268 @@ function renderPlannerTrackerContent(
   )
 }
 
+
+function groupLevelThreeSections(
+  blocks: readonly PublicationBlock[],
+): { leading: PublicationBlock[]; sections: PublicationBlock[][] } {
+  const firstSectionIndex = blocks.findIndex(
+    (block) => block.type === 'heading' && block.level === 3,
+  )
+
+  if (firstSectionIndex < 0) {
+    return { leading: [...blocks], sections: [] }
+  }
+
+  const leading = [...blocks.slice(0, firstSectionIndex)]
+  const sections: PublicationBlock[][] = []
+  let current: PublicationBlock[] = []
+
+  for (const block of blocks.slice(firstSectionIndex)) {
+    if (block.type === 'heading' && block.level === 3 && current.length > 0) {
+      sections.push(current)
+      current = []
+    }
+
+    current.push(block)
+  }
+
+  if (current.length > 0) sections.push(current)
+
+  return { leading, sections }
+}
+
+function NervousSystemSchematic(): ReactElement {
+  return (
+    <div className={styles.nervousSystemSchematic} aria-hidden="true">
+      <svg viewBox="0 0 240 190" className={styles.brainSchematic} focusable="false">
+        <path
+          className={styles.brainOutline}
+          d="M69 151 C39 141 27 115 34 89 C18 64 31 35 57 29 C73 7 106 8 122 25 C144 12 175 24 180 48 C205 59 211 88 196 108 C198 136 174 156 149 157 C128 177 91 174 69 151 Z"
+        />
+        <path
+          className={styles.brainRegionFront}
+          d="M48 89 C38 64 51 40 74 34 C88 24 105 27 116 38 C107 60 105 82 111 102 C88 111 66 107 48 89 Z"
+        />
+        <path
+          className={styles.brainRegionMiddle}
+          d="M116 38 C137 24 166 35 176 55 C190 68 190 90 178 105 C159 111 138 111 111 102 C105 82 107 60 116 38 Z"
+        />
+        <path
+          className={styles.brainRegionStem}
+          d="M111 102 C139 111 159 111 178 105 C174 127 155 141 137 142 L126 169 L105 169 L111 132 C101 124 103 112 111 102 Z"
+        />
+      </svg>
+      <span className={styles.schematicCaption}>Illustration slot</span>
+    </div>
+  )
+}
+
+function renderNervousSystemBasicsContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections } = groupLevelThreeSections(blocks)
+
+  if (sections.length < 3) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.nervousSystemBasics} data-template-region="nervous-system-basics">
+        <NervousSystemSchematic />
+        <div className={styles.nervousSystemLabels}>
+          {sections.slice(0, 3).map((section, index) => (
+            <section
+              key={section[0]?.id ?? 'nervous-system-region-' + index}
+              className={styles.nervousSystemLabel}
+              data-nervous-system-region={index + 1}
+            >
+              {section.map((block) => renderPublicationBlock(block, allocations))}
+            </section>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function renderDeepDiveContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections } = groupLevelThreeSections(blocks)
+
+  if (sections.length < 3) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.deepDiveGrid} data-template-region="deep-dive-grid">
+        <section className={styles.deepDivePanel} data-deep-dive-panel="current">
+          {sections[0]?.map((block) => renderPublicationBlock(block, allocations))}
+        </section>
+        <section className={styles.deepDivePanel} data-deep-dive-panel="helps">
+          {sections[1]?.map((block) => renderPublicationBlock(block, allocations))}
+        </section>
+        <section
+          className={[styles.deepDivePanel, styles.deepDivePanelWide].join(' ')}
+          data-deep-dive-panel="friction"
+        >
+          {sections
+            .slice(2)
+            .flat()
+            .map((block) => renderPublicationBlock(block, allocations))}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function renderGoalPlannerContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const leading: PublicationBlock[] = []
+  const primaryFields: PublicationBlock[] = []
+  const actionBlocks: PublicationBlock[] = []
+  const footerBlocks: PublicationBlock[] = []
+  let phase: 'leading' | 'primary' | 'actions' | 'footer' = 'leading'
+
+  for (const block of blocks) {
+    if (
+      block.type === 'heading' &&
+      block.level === 3 &&
+      /action steps?/i.test(block.text)
+    ) {
+      phase = 'actions'
+      actionBlocks.push(block)
+      continue
+    }
+
+    if (
+      block.type === 'heading' &&
+      block.level === 3 &&
+      /target date/i.test(block.text)
+    ) {
+      phase = 'footer'
+      footerBlocks.push(block)
+      continue
+    }
+
+    if (phase === 'leading') {
+      if (block.type === 'multiline-text-field') {
+        phase = 'primary'
+        primaryFields.push(block)
+      } else {
+        leading.push(block)
+      }
+      continue
+    }
+
+    if (phase === 'primary') {
+      if (block.type === 'checkbox-field') {
+        phase = 'actions'
+        actionBlocks.push(block)
+      } else {
+        primaryFields.push(block)
+      }
+      continue
+    }
+
+    if (phase === 'actions') {
+      if (
+        block.type === 'multiline-text-field' &&
+        /target date/i.test(block.text)
+      ) {
+        phase = 'footer'
+        footerBlocks.push(block)
+      } else {
+        actionBlocks.push(block)
+      }
+      continue
+    }
+
+    footerBlocks.push(block)
+  }
+
+  if (primaryFields.length === 0 || actionBlocks.length === 0) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.goalPlannerFields} data-template-region="goal-primary-fields">
+        {primaryFields.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+      <section className={styles.goalActionSteps} data-template-region="goal-action-steps">
+        {actionBlocks.map((block) => renderPublicationBlock(block, allocations))}
+      </section>
+      {footerBlocks.length > 0 ? (
+        <footer className={styles.goalPlannerFooter} data-template-region="goal-footer">
+          {footerBlocks.map((block) => renderPublicationBlock(block, allocations))}
+        </footer>
+      ) : null}
+    </div>
+  )
+}
+
+function renderClosingContent(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): ReactElement {
+  const { leading, sections } = groupLevelThreeSections(blocks)
+
+  if (sections.length < 4) {
+    return (
+      <div className={styles.content}>
+        {blocks.map((block) => renderPublicationBlock(block, allocations))}
+      </div>
+    )
+  }
+
+  const reminderSymbols = ['♡', '⌁', '☼', '⌒', '❧', '☆']
+
+  return (
+    <div className={styles.content}>
+      {leading.map((block) => renderPublicationBlock(block, allocations))}
+      <div className={styles.closingReminderGrid} data-template-region="closing-reminders">
+        {sections.slice(0, 6).map((section, index) => (
+          <section
+            key={section[0]?.id ?? 'closing-reminder-' + index}
+            className={styles.closingReminder}
+            data-closing-reminder={index + 1}
+          >
+            <span className={styles.closingReminderIcon} aria-hidden="true">
+              {reminderSymbols[index] ?? '♡'}
+            </span>
+            {section.map((block) => renderPublicationBlock(block, allocations))}
+          </section>
+        ))}
+      </div>
+      <div className={styles.closingLandscapeSlot} data-template-region="closing-landscape">
+        <span>A calmer you creates a kinder everything.</span>
+      </div>
+    </div>
+  )
+}
+
 function PublicationTemplateContent({
   blocks,
   allocations,
@@ -774,6 +1036,18 @@ function PublicationTemplateContent({
     return renderRegulationMenuContent(blocks, allocations)
   }
 
+  if (pageTemplate === 'nervous-system-basics') {
+    return renderNervousSystemBasicsContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'deep-dive') {
+    return renderDeepDiveContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'goal-planner') {
+    return renderGoalPlannerContent(blocks, allocations)
+  }
+
   if (pageTemplate === 'emergency-tool') {
     return renderEmergencyToolContent(blocks, allocations)
   }
@@ -788,6 +1062,10 @@ function PublicationTemplateContent({
 
   if (pageTemplate === 'planner-tracker') {
     return renderPlannerTrackerContent(blocks, allocations)
+  }
+
+  if (pageTemplate === 'closing') {
+    return renderClosingContent(blocks, allocations)
   }
 
   return (
