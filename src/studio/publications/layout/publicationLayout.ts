@@ -159,6 +159,8 @@ export function estimatePublicationBlockUnits(block: PublicationBlock): number {
 
 function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | undefined): number {
   switch (pageTemplate) {
+    case 'navigation':
+      return 0.55
     case 'emergency-tool':
       return 0.35
     case 'daily-check-in':
