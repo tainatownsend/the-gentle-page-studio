@@ -202,12 +202,164 @@ function estimatePdfBlockHeight(
   }
 }
 
+function createGuidedFrameworkPlacements(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): PublicationPdfBlockPlacement[] | undefined {
+  const checkboxIndexes = blocks
+    .map((block, index) => (block.type === 'checkbox-field' ? index : -1))
+    .filter((index) => index >= 0)
+
+  const firstCheckboxIndex = checkboxIndexes[0]
+  const lastCheckboxIndex = checkboxIndexes[3]
+
+  if (
+    checkboxIndexes.length !== 4 ||
+    firstCheckboxIndex === undefined ||
+    lastCheckboxIndex === undefined ||
+    lastCheckboxIndex - firstCheckboxIndex !== 3
+  ) {
+    return undefined
+  }
+
+  const allocationByBlockId = new Map(
+    allocations.map((allocation) => [allocation.blockId, allocation]),
+  )
+  const placements: Array<PublicationPdfBlockPlacement | undefined> = Array.from({
+    length: blocks.length,
+  })
+  const topEdge = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+  const bottomEdge =
+    topEdge - PUBLICATION_CONTENT_HEIGHT_POINTS
+  const verticalGap = 10
+  let top = topEdge
+
+  const placeFullWidthRange = (
+    startIndex: number,
+    endIndex: number,
+    maximumHeight: number,
+  ) => {
+    if (endIndex <= startIndex) return
+
+    const indexes = Array.from(
+      { length: endIndex - startIndex },
+      (_, offset) => startIndex + offset,
+    )
+    const desired = indexes.map((index) => {
+      const block = blocks[index]
+      if (!block) return 0
+      return estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))
+    })
+    const gapHeight = verticalGap * Math.max(0, indexes.length - 1)
+    const desiredHeight = desired.reduce((total, height) => total + height, 0)
+    const scale =
+      desiredHeight > Math.max(1, maximumHeight - gapHeight)
+        ? Math.max(1, maximumHeight - gapHeight) / desiredHeight
+        : 1
+
+    indexes.forEach((index, offset) => {
+      const block = blocks[index]
+      if (!block) return
+
+      const height = Math.max(12, (desired[offset] ?? 12) * scale)
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: PUBLICATION_MARGIN_POINTS,
+          y: top - height,
+          width: PUBLICATION_CONTENT_WIDTH_POINTS,
+          height,
+        },
+      }
+      top -= height + verticalGap
+    })
+  }
+
+  placeFullWidthRange(0, firstCheckboxIndex, 190)
+
+  const stateGap = 12
+  const stateWidth = (PUBLICATION_CONTENT_WIDTH_POINTS - stateGap) / 2
+  const stateHeight = 112
+  const stateGridTop = top - 2
+
+  checkboxIndexes.forEach((blockIndex, stateIndex) => {
+    const block = blocks[blockIndex]
+    if (!block) return
+
+    const row = Math.floor(stateIndex / 2)
+    const column = stateIndex % 2
+    placements[blockIndex] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS + column * (stateWidth + stateGap),
+        y: stateGridTop - row * (stateHeight + stateGap) - stateHeight,
+        width: stateWidth,
+        height: stateHeight,
+      },
+    }
+  })
+
+  top = stateGridTop - stateHeight * 2 - stateGap - 14
+  const trailingStart = lastCheckboxIndex + 1
+  const trailingCount = Math.max(0, blocks.length - trailingStart)
+  const availableTrailingHeight = Math.max(
+    1,
+    top - bottomEdge - verticalGap * Math.max(0, trailingCount - 1),
+  )
+
+  if (trailingCount > 0) {
+    const trailingIndexes = Array.from(
+      { length: trailingCount },
+      (_, offset) => trailingStart + offset,
+    )
+    const desired = trailingIndexes.map((index) => {
+      const block = blocks[index]
+      if (!block) return 0
+      return estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))
+    })
+    const desiredHeight = desired.reduce((total, height) => total + height, 0)
+    const scale =
+      desiredHeight > availableTrailingHeight
+        ? availableTrailingHeight / desiredHeight
+        : 1
+
+    trailingIndexes.forEach((index, offset) => {
+      const block = blocks[index]
+      if (!block) return
+
+      const height = Math.max(18, (desired[offset] ?? 18) * scale)
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: PUBLICATION_MARGIN_POINTS,
+          y: top - height,
+          width: PUBLICATION_CONTENT_WIDTH_POINTS,
+          height,
+        },
+      }
+      top -= height + verticalGap
+    })
+  }
+
+  return placements.filter(
+    (placement): placement is PublicationPdfBlockPlacement => placement !== undefined,
+  )
+}
+
 function createBlockPlacements(
   blocks: readonly PublicationBlock[],
   allocations: readonly PublicationLayoutBlockAllocation[],
   pageTemplate?: PublicationPageTemplate,
 ): PublicationPdfBlockPlacement[] {
   if (blocks.length === 0) return []
+
+  if (pageTemplate === 'guided-framework') {
+    const guidedFrameworkPlacements = createGuidedFrameworkPlacements(blocks, allocations)
+    if (guidedFrameworkPlacements) return guidedFrameworkPlacements
+  }
 
   const allocationByBlockId = new Map(
     allocations.map((allocation) => [allocation.blockId, allocation]),
