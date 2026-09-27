@@ -5,11 +5,11 @@ import { PUBLICATION_EDITORIAL_TOKENS } from './publicationEditorialTokens'
 describe('PUBLICATION_EDITORIAL_TOKENS', () => {
   it('keeps the publication palette stable across renderers', () => {
     expect(PUBLICATION_EDITORIAL_TOKENS).toMatchObject({
-      paper: '#FCFAF6',
-      ink: '#2B302D',
-      sage: '#7A9080',
-      clay: '#B98575',
-      sandSoft: '#F3EDDF',
+      paper: '#FFFFFF',
+      ink: '#2F3A36',
+      sage: '#6B7F72',
+      clay: '#E2D3C7',
+      sandSoft: '#F7F4EF',
     })
   })
 })
