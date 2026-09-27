@@ -8,6 +8,8 @@ const LABEL_BY_TEMPLATE: Record<PublicationPageTemplate, string> = {
   'guided-framework': 'Understanding',
   'tool-overview': 'Daily Tools',
   'sensory-reset': 'Sensory Reset',
+  'trigger-scan': 'Triggers & Early Signs',
+  'regulation-menu': 'Regulation Menu',
   'emergency-tool': 'Emergency Tool',
   'weekly-reset': 'Weekly Reset',
   'planner-tracker': 'Planning',
