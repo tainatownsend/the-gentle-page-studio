@@ -157,7 +157,7 @@ function PublicationBlockPreview({
 
   if (block.type === 'checkbox-field') {
     return (
-      <div className={styles.checkboxField}>
+      <div className={styles.checkboxField} data-publication-block="checkbox">
         <span className={styles.checkboxMark} aria-hidden="true" />
         <p className={styles.fieldLabel}>{block.text || 'Checkbox'}</p>
       </div>
@@ -171,7 +171,11 @@ function PublicationBlockPreview({
     )
 
     return (
-      <section className={styles.ratingField} aria-label={block.text || 'Rating field'}>
+      <section
+        className={styles.ratingField}
+        aria-label={block.text || 'Rating field'}
+        data-publication-block="rating"
+      >
         <p className={styles.fieldLabel}>{block.text || 'Rating'}</p>
         <div className={styles.ratingScale} aria-hidden="true">
           {values.map((value) => (
