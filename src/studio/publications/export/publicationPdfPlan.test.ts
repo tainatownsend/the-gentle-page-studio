@@ -195,4 +195,34 @@ describe('createPublicationPdfPlan', () => {
     ])
     expect(plan.interactiveFields.map((field) => field.pageNumber)).toEqual([1, 1, 2, 2])
   })
+
+  it('carries page template intent into the PDF plan', () => {
+    const plan = createPublicationPdfPlan(
+      createPublicationFixture({
+        content: {
+          blocks: [
+            {
+              id: 'emergency-heading',
+              type: 'heading',
+              level: 2,
+              text: 'Emergency Unfreeze Protocol',
+              layout: {
+                pageTemplate: 'emergency-tool',
+              },
+            },
+            {
+              id: 'emergency-body',
+              type: 'paragraph',
+              text: 'Start with one small reset.',
+            },
+          ],
+        },
+      }),
+    )
+
+    expect(plan.pages.find((page) => page.kind === 'content')).toMatchObject({
+      pageTemplate: 'emergency-tool',
+    })
+  })
+
 })
