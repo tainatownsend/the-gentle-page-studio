@@ -556,4 +556,72 @@ describe('PublicationPreviewPage', () => {
     ).not.toBeNull()
   })
 
+
+  it('renders Gate C triggers as two scans and regulation menu as five action rows', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          content: {
+            blocks: [
+              {
+                id: 'triggers-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Triggers & Early Signs',
+                layout: { pageTemplate: 'trigger-scan' },
+              },
+              { id: 'common-heading', type: 'heading', level: 3, text: 'Common Triggers' },
+              { id: 'trigger-1', type: 'checkbox-field', text: 'Stress' },
+              { id: 'trigger-2', type: 'checkbox-field', text: 'Sensory overload' },
+              { id: 'trigger-3', type: 'checkbox-field', text: 'Lack of sleep' },
+              { id: 'trigger-4', type: 'checkbox-field', text: 'Hunger' },
+              { id: 'trigger-5', type: 'checkbox-field', text: 'Transitions' },
+              { id: 'signs-heading', type: 'heading', level: 3, text: 'My Early Signs' },
+              { id: 'trigger-6', type: 'checkbox-field', text: 'Racing thoughts' },
+              { id: 'trigger-7', type: 'checkbox-field', text: 'Tension in body' },
+              { id: 'trigger-8', type: 'checkbox-field', text: 'Irritability' },
+              { id: 'trigger-9', type: 'checkbox-field', text: 'Brain fog' },
+              { id: 'trigger-10', type: 'checkbox-field', text: 'Difficulty focusing' },
+              {
+                id: 'trigger-response',
+                type: 'multiline-text-field',
+                text: 'What I can do when I notice these signs',
+                responseSize: 'medium',
+              },
+              {
+                id: 'menu-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Regulation Menu',
+                layout: { pageTemplate: 'regulation-menu' },
+              },
+              { id: 'quick', type: 'multiline-text-field', text: 'Quick Reset · 1–5 minutes', responseSize: 'short' },
+              { id: 'move', type: 'multiline-text-field', text: 'Move Your Body · 5–15 minutes', responseSize: 'short' },
+              { id: 'soothe', type: 'multiline-text-field', text: 'Soothe Your Senses · 5–15 minutes', responseSize: 'short' },
+              { id: 'calm', type: 'multiline-text-field', text: 'Calm Your Mind · 5–15 minutes', responseSize: 'short' },
+              { id: 'reconnect', type: 'multiline-text-field', text: 'Reconnect · Anytime', responseSize: 'short' },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="trigger-columns"] [data-trigger-column]',
+      ),
+    ).toHaveLength(2)
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="regulation-menu-rows"] [data-regulation-menu-row]',
+      ),
+    ).toHaveLength(5)
+    expect(
+      screen.getByText('What I can do when I notice these signs'),
+    ).toBeInTheDocument()
+  })
+
 })

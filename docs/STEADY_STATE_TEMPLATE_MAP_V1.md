@@ -22,8 +22,8 @@ The template value communicates page intent. It does not authorize manuscript re
 | 10 | Sensory Reset | sensory-reset |
 | 11 | Thought Download | prompt-writing |
 | 12 | Nervous System Basics / 101 | guided-framework |
-| 13 | Triggers & Early Signs | guided-framework |
-| 14 | Regulation Menu | matrix-framework |
+| 13 | Triggers & Early Signs | trigger-scan |
+| 14 | Regulation Menu | regulation-menu |
 | 15 | Weekly Reset | weekly-reset |
 | 16 | Weekly Plan | planner-tracker |
 | 17 | Deep Dive Example | guided-framework |

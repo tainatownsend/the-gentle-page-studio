@@ -70,6 +70,8 @@ When the semantic page family is clear, you may declare one approved Gentle Page
 [[GP:PAGE_TEMPLATE type="guided-framework"]]
 [[GP:PAGE_TEMPLATE type="tool-overview"]]
 [[GP:PAGE_TEMPLATE type="sensory-reset"]]
+[[GP:PAGE_TEMPLATE type="trigger-scan"]]
+[[GP:PAGE_TEMPLATE type="regulation-menu"]]
 [[GP:PAGE_TEMPLATE type="emergency-tool"]]
 [[GP:PAGE_TEMPLATE type="weekly-reset"]]
 [[GP:PAGE_TEMPLATE type="planner-tracker"]]
