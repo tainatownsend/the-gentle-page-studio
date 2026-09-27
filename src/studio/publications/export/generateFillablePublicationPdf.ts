@@ -313,8 +313,8 @@ function drawCover(
   const brandSize = 9
   const brandWidth = bodyFont.widthOfTextAtSize(brand, brandSize)
 
-  drawBotanicalSprig(page, 520, 720, 1, 1)
-  drawBotanicalSprig(page, 92, 72, -1, -1)
+  drawBotanicalSprig(page, 596, 774, -1, -1)
+  drawBotanicalSprig(page, 16, 18, 1, 1)
 
   page.drawText(brand, {
     x: centerX - brandWidth / 2,
