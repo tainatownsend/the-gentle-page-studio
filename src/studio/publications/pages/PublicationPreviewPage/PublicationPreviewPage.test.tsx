@@ -264,4 +264,38 @@ describe('PublicationPreviewPage', () => {
     expect(onBack).toHaveBeenCalledTimes(1)
     expect(onEdit).toHaveBeenCalledWith()
   })
+
+  it('exposes explicit page template intent for template-specific rendering', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          content: {
+            blocks: [
+              {
+                id: 'weekly-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Weekly Reset',
+                layout: {
+                  pageTemplate: 'weekly-reset',
+                },
+              },
+              {
+                id: 'weekly-body',
+                type: 'paragraph',
+                text: 'Reflect and realign.',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(
+      document.querySelector('[aria-label="Publication content page 1"]'),
+    ).toHaveAttribute('data-page-template', 'weekly-reset')
+  })
+
 })

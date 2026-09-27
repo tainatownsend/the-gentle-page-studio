@@ -344,4 +344,34 @@ describe('createPublicationLayout', () => {
     expect(first?.allocatedUnits).toBe(second?.allocatedUnits)
     expect(first?.allocatedUnits).toBeGreaterThan(first?.baselineUnits ?? 0)
   })
+
+  it('carries explicit page template intent onto the derived content page', () => {
+    const publication = createPublicationFixture({
+      content: {
+        blocks: [
+          {
+            id: 'daily-heading',
+            type: 'heading',
+            level: 2,
+            text: 'Daily Check-In',
+            layout: {
+              pageTemplate: 'daily-check-in',
+            },
+          },
+          {
+            id: 'daily-body',
+            type: 'paragraph',
+            text: 'Notice what is present.',
+          },
+        ],
+      },
+    })
+
+    const contentPage = createPublicationLayout(publication).pages.find(
+      (page) => page.kind === 'content',
+    )
+
+    expect(contentPage?.pageTemplate).toBe('daily-check-in')
+  })
+
 })

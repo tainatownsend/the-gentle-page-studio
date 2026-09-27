@@ -59,6 +59,22 @@ page content
 
 Do not manually add page breaks around a repeatable page. Gentle Page Studio will isolate it as a semantic page unit.
 
+PAGE TEMPLATE INTENT
+
+When the semantic page family is clear, you may declare one approved Gentle Page template before the page/tool content:
+
+[[GP:PAGE_TEMPLATE type="navigation"]]
+[[GP:PAGE_TEMPLATE type="section-opener"]]
+[[GP:PAGE_TEMPLATE type="prompt-writing"]]
+[[GP:PAGE_TEMPLATE type="daily-check-in"]]
+[[GP:PAGE_TEMPLATE type="emergency-tool"]]
+[[GP:PAGE_TEMPLATE type="weekly-reset"]]
+[[GP:PAGE_TEMPLATE type="planner-tracker"]]
+[[GP:PAGE_TEMPLATE type="matrix-framework"]]
+[[GP:PAGE_TEMPLATE type="closing"]]
+
+This is semantic intent, not manual page design. Do not invent new template names. The Studio still controls typography, spacing, page geometry and final composition.
+
 PAGE INTENT
 
 Use:

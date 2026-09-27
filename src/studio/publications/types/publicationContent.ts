@@ -4,9 +4,21 @@ export type PublicationHeadingLevel = 1 | 2 | 3
 
 export type PublicationPageBreakIntent = 'preferred' | 'forced'
 
+export type PublicationPageTemplate =
+  | 'navigation'
+  | 'section-opener'
+  | 'prompt-writing'
+  | 'daily-check-in'
+  | 'emergency-tool'
+  | 'weekly-reset'
+  | 'planner-tracker'
+  | 'matrix-framework'
+  | 'closing'
+
 export type PublicationBlockLayoutIntent = {
   pageBreakBefore?: PublicationPageBreakIntent
   keepWithNext?: boolean
+  pageTemplate?: PublicationPageTemplate
 }
 
 export type PublicationSemanticGroup = {

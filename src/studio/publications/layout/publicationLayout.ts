@@ -2,6 +2,7 @@ import type {
   Publication,
   PublicationBlock,
   PublicationDocumentSettings,
+  PublicationPageTemplate,
   PublicationTableBlock,
 } from '../types'
 import { getPublicationCompoundComponentAtIndex } from './publicationCompoundComponents'
@@ -26,6 +27,7 @@ export type PublicationLayoutPage = {
   sequence: number
   kind: PublicationLayoutPageKind
   pageNumber?: number
+  pageTemplate?: PublicationPageTemplate
   blocks: PublicationBlock[]
   allocations: PublicationLayoutBlockAllocation[]
   usedUnits: number
@@ -437,12 +439,15 @@ export function createPublicationLayout(publication: Publication): PublicationLa
     },
     ...contentPages.map((blocks, index) => {
       const allocation = allocatePage(blocks)
+      const pageTemplate = blocks.find((block) => block.layout?.pageTemplate)?.layout
+        ?.pageTemplate
 
       return {
         id: `${publication.id}-content-page-${index + 1}`,
         sequence: index + 2,
         kind: 'content' as const,
         pageNumber: index + 1,
+        pageTemplate,
         blocks,
         ...allocation,
       }

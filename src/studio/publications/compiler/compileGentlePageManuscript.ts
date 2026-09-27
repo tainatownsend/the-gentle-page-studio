@@ -3,6 +3,7 @@ import type {
   PublicationContent,
   PublicationHeadingLevel,
   PublicationPageBreakIntent,
+  PublicationPageTemplate,
   PublicationResponseSizeIntent,
   PublicationSemanticGroup,
 } from '../types'
@@ -51,9 +52,28 @@ function normalizeResponseSize(value: string | undefined): PublicationResponseSi
   }
 }
 
+const PUBLICATION_PAGE_TEMPLATES: readonly PublicationPageTemplate[] = [
+  'navigation',
+  'section-opener',
+  'prompt-writing',
+  'daily-check-in',
+  'emergency-tool',
+  'weekly-reset',
+  'planner-tracker',
+  'matrix-framework',
+  'closing',
+]
+
 function parsePageBreakIntent(line: string): PublicationPageBreakIntent {
   const typeMatch = line.match(/type\s*=\s*["']?(preferred|forced)["']?/i)
   return typeMatch?.[1]?.toLowerCase() === 'forced' ? 'forced' : 'preferred'
+}
+
+function parsePageTemplate(line: string): PublicationPageTemplate | undefined {
+  const typeMatch = line.match(/type\s*=\s*["']?([^"'\]\s]+)["']?/i)
+  const value = typeMatch?.[1]?.toLowerCase() as PublicationPageTemplate | undefined
+
+  return value && PUBLICATION_PAGE_TEMPLATES.includes(value) ? value : undefined
 }
 
 function parseNumericAttribute(line: string, name: string): number | undefined {
@@ -72,8 +92,9 @@ function parseTextAttribute(line: string, name: string): string | undefined {
 function withPendingLayout(
   block: PublicationBlock,
   pendingPageBreak: PublicationPageBreakIntent | undefined,
+  pendingPageTemplate: PublicationPageTemplate | undefined,
 ): PublicationBlock {
-  if (!pendingPageBreak) {
+  if (!pendingPageBreak && !pendingPageTemplate) {
     return block
   }
 
@@ -81,7 +102,8 @@ function withPendingLayout(
     ...block,
     layout: {
       ...block.layout,
-      pageBreakBefore: pendingPageBreak,
+      ...(pendingPageBreak ? { pageBreakBefore: pendingPageBreak } : {}),
+      ...(pendingPageTemplate ? { pageTemplate: pendingPageTemplate } : {}),
     },
   }
 }
@@ -183,6 +205,7 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
   let detectedProtocol = false
   let authorNote = false
   let pendingPageBreak: PublicationPageBreakIntent | undefined
+  let pendingPageTemplate: PublicationPageTemplate | undefined
   let paragraphLines: string[] = []
   let activeSemanticGroup: PublicationSemanticGroup | undefined
   let activeSemanticGroupHasContent = false
@@ -193,8 +216,18 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
     return value
   }
 
+  function consumePendingPageTemplate(): PublicationPageTemplate | undefined {
+    const value = pendingPageTemplate
+    pendingPageTemplate = undefined
+    return value
+  }
+
   function pushBlock(block: PublicationBlock) {
-    const withLayout = withPendingLayout(block, consumePendingPageBreak())
+    const withLayout = withPendingLayout(
+      block,
+      consumePendingPageBreak(),
+      consumePendingPageTemplate(),
+    )
     const groupedBlock = activeSemanticGroup
       ? {
           ...withLayout,
@@ -309,6 +342,25 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       continue
     }
 
+    if (/^\[\[GP:PAGE_TEMPLATE(?:\s+[^\]]+)?\]\]$/i.test(line)) {
+      flushParagraph()
+      const pageTemplate = parsePageTemplate(line)
+
+      if (pageTemplate) {
+        pendingPageTemplate = pageTemplate
+      } else {
+        diagnostics.push({
+          level: 'suggestion',
+          code: 'invalid-page-template',
+          line: lineNumber,
+          message: 'An unsupported page template was ignored. Use one of the documented Gentle Page page-template values.',
+        })
+      }
+
+      index += 1
+      continue
+    }
+
     const responseMatch = line.match(
       /^\[\[GP:RESPONSE(?:\s+size\s*=\s*["']?([^"'\]\s]+)["']?)?\]\]$/i,
     )
@@ -317,24 +369,34 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       const previousBlock = blocks[blocks.length - 1]
       let prompt = 'Response'
       let inheritedPageBreak: PublicationPageBreakIntent | undefined
+      let inheritedPageTemplate: PublicationPageTemplate | undefined
 
       if (isPromptLikeBlock(previousBlock)) {
         const removed = blocks.pop()
         if (removed) {
           prompt = removed.text
           inheritedPageBreak = removed.layout?.pageBreakBefore
+          inheritedPageTemplate = removed.layout?.pageTemplate
         }
       }
 
       const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
+      const pageTemplate = pendingPageTemplate ?? inheritedPageTemplate
       pendingPageBreak = undefined
+      pendingPageTemplate = undefined
 
       pushBlock({
         id: createBlockId(),
         type: 'multiline-text-field',
         text: prompt,
         responseSize: normalizeResponseSize(responseMatch[1]),
-        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
+        layout:
+          pageBreakBefore || pageTemplate
+            ? {
+                ...(pageBreakBefore ? { pageBreakBefore } : {}),
+                ...(pageTemplate ? { pageTemplate } : {}),
+              }
+            : undefined,
       })
       index += 1
       continue
@@ -345,12 +407,14 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       const previousBlock = blocks[blocks.length - 1]
       let prompt = 'Rating'
       let inheritedPageBreak: PublicationPageBreakIntent | undefined
+      let inheritedPageTemplate: PublicationPageTemplate | undefined
 
       if (isPromptLikeBlock(previousBlock)) {
         const removed = blocks.pop()
         if (removed) {
           prompt = removed.text
           inheritedPageBreak = removed.layout?.pageBreakBefore
+          inheritedPageTemplate = removed.layout?.pageTemplate
         }
       }
 
@@ -370,7 +434,9 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       }
 
       const pageBreakBefore = pendingPageBreak ?? inheritedPageBreak
+      const pageTemplate = pendingPageTemplate ?? inheritedPageTemplate
       pendingPageBreak = undefined
+      pendingPageTemplate = undefined
 
       pushBlock({
         id: createBlockId(),
@@ -378,7 +444,13 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
         text: prompt,
         min,
         max,
-        layout: pageBreakBefore ? { pageBreakBefore } : undefined,
+        layout:
+          pageBreakBefore || pageTemplate
+            ? {
+                ...(pageBreakBefore ? { pageBreakBefore } : {}),
+                ...(pageTemplate ? { pageTemplate } : {}),
+              }
+            : undefined,
       })
       index += 1
       continue
@@ -513,6 +585,14 @@ export function compileGentlePageManuscript(manuscript: string): GentlePageCompi
       level: 'info',
       code: 'trailing-page-break',
       message: 'A trailing page-break directive had no following content and was ignored.',
+    })
+  }
+
+  if (pendingPageTemplate) {
+    diagnostics.push({
+      level: 'info',
+      code: 'trailing-page-template',
+      message: 'A trailing page-template directive had no following content and was ignored.',
     })
   }
 

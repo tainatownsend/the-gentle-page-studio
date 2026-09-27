@@ -121,6 +121,42 @@ A repeatable page is semantic intent, not absolute geometry. Response fields may
 
 If a repeatable group is too large to fit on one page, the compiler preserves all content and surfaces a non-blocking layout review suggestion instead of clipping or dropping content.
 
+
+## Page-template intent
+
+Use a page-template directive when the semantic role of the following page is known and should map to an approved Gentle Page Asset Library family.
+
+```text
+[[GP:PAGE_TEMPLATE type="daily-check-in"]]
+```
+
+Supported values:
+
+- `navigation`
+- `section-opener`
+- `prompt-writing`
+- `daily-check-in`
+- `emergency-tool`
+- `weekly-reset`
+- `planner-tracker`
+- `matrix-framework`
+- `closing`
+
+The directive applies to the next publication block and is carried into the derived page plan. It communicates **semantic template intent**, not pixel geometry. The Studio still owns typography, spacing, dimensions, pagination, and final composition.
+
+Example:
+
+```md
+[[GP:PAGE_TEMPLATE type="emergency-tool"]]
+
+## Emergency Unfreeze Protocol
+
+### Step 1
+...
+```
+
+Use an approved template family when it clearly fits. Do not invent new page-template names inside a manuscript.
+
 ## Page-break intent
 
 Preferred break:

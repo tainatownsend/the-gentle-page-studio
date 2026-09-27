@@ -453,6 +453,7 @@ export function PublicationPreviewPage({
                   data-layout-remaining-units={layoutPage.remainingUnits}
                   data-page-archetype={pageRecipe?.archetype}
                   data-page-density={pageRecipe?.density}
+                  data-page-template={layoutPage.pageTemplate}
                 >
                   {isCover ? (
                     <div className={styles.coverBody}>

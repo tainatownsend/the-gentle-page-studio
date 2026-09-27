@@ -36,4 +36,32 @@ describe('getPublicationPageLayoutRecipe', () => {
       preferBalancedWhitespace: true,
     })
   })
+
+  it('uses an explicit page template instead of relying only on inferred content shape', () => {
+    const blocks: PublicationBlock[] = [
+      {
+        id: 'heading',
+        type: 'heading',
+        level: 2,
+        text: 'Daily Check-In',
+        layout: {
+          pageTemplate: 'daily-check-in',
+        },
+      },
+      {
+        id: 'intro',
+        type: 'paragraph',
+        text: 'A small pause for a brighter day.',
+      },
+    ]
+
+    expect(getPublicationPageLayoutRecipe(blocks)).toMatchObject({
+      archetype: 'content',
+      pageTemplate: 'daily-check-in',
+      density: 'comfortable',
+      preferWholePageTool: true,
+      preferBalancedWhitespace: true,
+    })
+  })
+
 })
