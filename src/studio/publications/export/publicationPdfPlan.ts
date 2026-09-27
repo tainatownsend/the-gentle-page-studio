@@ -554,6 +554,231 @@ function createSensoryResetPlacements(
   )
 }
 
+function createTriggerScanPlacements(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): PublicationPdfBlockPlacement[] | undefined {
+  const sections = getLevelThreeSectionRanges(blocks)
+  if (sections.length < 2) return undefined
+
+  const firstSection = sections[0]
+  const secondSection = sections[1]
+  if (!firstSection || !secondSection) return undefined
+
+  const responseStart = blocks.findIndex(
+    (block, index) =>
+      index >= secondSection.start && block.type === 'multiline-text-field',
+  )
+  const secondEnd = responseStart >= 0 ? responseStart : blocks.length
+  const allocationByBlockId = new Map(
+    allocations.map((allocation) => [allocation.blockId, allocation]),
+  )
+  const placements: Array<PublicationPdfBlockPlacement | undefined> = Array.from({
+    length: blocks.length,
+  })
+  const topEdge = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+  const bottomEdge = topEdge - PUBLICATION_CONTENT_HEIGHT_POINTS
+  let top = topEdge
+
+  for (let index = 0; index < firstSection.start; index += 1) {
+    const block = blocks[index]
+    if (!block) continue
+    const height = Math.min(
+      42,
+      Math.max(18, estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))),
+    )
+    placements[index] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS,
+        y: top - height,
+        width: PUBLICATION_CONTENT_WIDTH_POINTS,
+        height,
+      },
+    }
+    top -= height + 8
+  }
+
+  const panelGap = 14
+  const panelWidth = (PUBLICATION_CONTENT_WIDTH_POINTS - panelGap) / 2
+  const panelHeight = 330
+  const panelTop = top - 2
+  const ranges = [
+    { start: firstSection.start, end: secondSection.start },
+    { start: secondSection.start, end: secondEnd },
+  ]
+
+  ranges.forEach((range, panelIndex) => {
+    const panelX = PUBLICATION_MARGIN_POINTS + panelIndex * (panelWidth + panelGap)
+    let blockTop = panelTop - 12
+
+    for (let index = range.start; index < range.end; index += 1) {
+      const block = blocks[index]
+      if (!block) continue
+      const height =
+        block.type === 'heading'
+          ? 24
+          : block.type === 'checkbox-field'
+            ? 24
+            : Math.min(
+                34,
+                Math.max(18, estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))),
+              )
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: panelX + 12,
+          y: blockTop - height,
+          width: panelWidth - 24,
+          height,
+        },
+      }
+      blockTop -= height + 3
+    }
+  })
+
+  top = panelTop - panelHeight - 14
+
+  if (responseStart >= 0) {
+    const trailingIndexes = Array.from(
+      { length: blocks.length - responseStart },
+      (_, offset) => responseStart + offset,
+    )
+    const remainingHeight = Math.max(
+      90,
+      top - bottomEdge - 6 * Math.max(0, trailingIndexes.length - 1),
+    )
+    const desired = trailingIndexes.map((index) => {
+      const block = blocks[index]
+      if (!block) return 0
+      return estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))
+    })
+    const desiredHeight = desired.reduce((total, height) => total + height, 0)
+    const scale = desiredHeight > remainingHeight ? remainingHeight / desiredHeight : 1
+
+    trailingIndexes.forEach((index, offset) => {
+      const block = blocks[index]
+      if (!block) return
+      const height = Math.max(32, (desired[offset] ?? 32) * scale)
+      placements[index] = {
+        blockId: block.id,
+        type: block.type,
+        rect: {
+          x: PUBLICATION_MARGIN_POINTS,
+          y: top - height,
+          width: PUBLICATION_CONTENT_WIDTH_POINTS,
+          height,
+        },
+      }
+      top -= height + 6
+    })
+  }
+
+  return placements.filter(
+    (placement): placement is PublicationPdfBlockPlacement => placement !== undefined,
+  )
+}
+
+function createRegulationMenuPlacements(
+  blocks: readonly PublicationBlock[],
+  allocations: readonly PublicationLayoutBlockAllocation[],
+): PublicationPdfBlockPlacement[] | undefined {
+  const fieldIndexes = blocks
+    .map((block, index) => (block.type === 'multiline-text-field' ? index : -1))
+    .filter((index) => index >= 0)
+
+  if (fieldIndexes.length !== 5) return undefined
+
+  const firstFieldIndex = fieldIndexes[0]
+  const lastFieldIndex = fieldIndexes[fieldIndexes.length - 1]
+  if (firstFieldIndex === undefined || lastFieldIndex === undefined) return undefined
+
+  const allocationByBlockId = new Map(
+    allocations.map((allocation) => [allocation.blockId, allocation]),
+  )
+  const placements: Array<PublicationPdfBlockPlacement | undefined> = Array.from({
+    length: blocks.length,
+  })
+  const topEdge = US_LETTER_HEIGHT_POINTS - PUBLICATION_MARGIN_POINTS
+  const bottomEdge = topEdge - PUBLICATION_CONTENT_HEIGHT_POINTS
+  let top = topEdge
+
+  for (let index = 0; index < firstFieldIndex; index += 1) {
+    const block = blocks[index]
+    if (!block) continue
+    const height = Math.min(
+      44,
+      Math.max(18, estimatePdfBlockHeight(block, allocationByBlockId.get(block.id))),
+    )
+    placements[index] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS,
+        y: top - height,
+        width: PUBLICATION_CONTENT_WIDTH_POINTS,
+        height,
+      },
+    }
+    top -= height + 8
+  }
+
+  const rowGap = 8
+  const trailingCount = Math.max(0, blocks.length - lastFieldIndex - 1)
+  const trailingReserve = trailingCount > 0 ? 70 : 0
+  const availableRowsHeight = Math.max(
+    1,
+    top - bottomEdge - trailingReserve - rowGap * (fieldIndexes.length - 1),
+  )
+  const rowHeight = Math.min(98, availableRowsHeight / fieldIndexes.length)
+
+  fieldIndexes.forEach((index) => {
+    const block = blocks[index]
+    if (!block) return
+
+    placements[index] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS,
+        y: top - rowHeight,
+        width: PUBLICATION_CONTENT_WIDTH_POINTS,
+        height: rowHeight,
+      },
+    }
+    top -= rowHeight + rowGap
+  })
+
+  for (let index = lastFieldIndex + 1; index < blocks.length; index += 1) {
+    const block = blocks[index]
+    if (!block) continue
+    const height = Math.max(
+      18,
+      Math.min(
+        Math.max(18, top - bottomEdge),
+        estimatePdfBlockHeight(block, allocationByBlockId.get(block.id)),
+      ),
+    )
+    placements[index] = {
+      blockId: block.id,
+      type: block.type,
+      rect: {
+        x: PUBLICATION_MARGIN_POINTS,
+        y: top - height,
+        width: PUBLICATION_CONTENT_WIDTH_POINTS,
+        height,
+      },
+    }
+    top -= height + 6
+  }
+
+  return placements.filter(
+    (placement): placement is PublicationPdfBlockPlacement => placement !== undefined,
+  )
+}
+
 function createBlockPlacements(
   blocks: readonly PublicationBlock[],
   allocations: readonly PublicationLayoutBlockAllocation[],
@@ -574,6 +799,16 @@ function createBlockPlacements(
   if (pageTemplate === 'sensory-reset') {
     const sensoryResetPlacements = createSensoryResetPlacements(blocks, allocations)
     if (sensoryResetPlacements) return sensoryResetPlacements
+  }
+
+  if (pageTemplate === 'trigger-scan') {
+    const triggerScanPlacements = createTriggerScanPlacements(blocks, allocations)
+    if (triggerScanPlacements) return triggerScanPlacements
+  }
+
+  if (pageTemplate === 'regulation-menu') {
+    const regulationMenuPlacements = createRegulationMenuPlacements(blocks, allocations)
+    if (regulationMenuPlacements) return regulationMenuPlacements
   }
 
   const allocationByBlockId = new Map(
