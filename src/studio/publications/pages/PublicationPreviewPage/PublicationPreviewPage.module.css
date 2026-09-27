@@ -125,6 +125,7 @@
 }
 
 .documentPage {
+  position: relative;
   box-sizing: border-box;
   display: flex;
   width: min(100%, 51rem);
@@ -139,6 +140,35 @@
   border: 1px solid var(--publication-rule);
   box-shadow: var(--shadow-md, 0 10px 30px rgb(20 35 28 / 12%));
   scroll-margin-top: var(--space-xl, 32px);
+}
+
+.runningHeader {
+  position: absolute;
+  top: 4.55%;
+  right: 8.8235%;
+  left: 8.8235%;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.48rem;
+  font-size: 0.62rem;
+  line-height: 1.2;
+  color: var(--publication-muted-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  border-bottom: 1px solid var(--publication-rule);
+}
+
+.runningBrand {
+  font-weight: 750;
+  letter-spacing: 0.2em;
+}
+
+.runningSection {
+  font-weight: 700;
+  color: var(--publication-sage-deep);
+  text-align: right;
 }
 
 .coverBody {
