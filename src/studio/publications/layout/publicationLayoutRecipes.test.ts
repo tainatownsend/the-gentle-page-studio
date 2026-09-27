@@ -14,10 +14,11 @@ describe('getPublicationPageLayoutRecipe', () => {
       archetype: 'section-opener',
       density: 'spacious',
       preferWholePageTool: true,
+      preferBalancedWhitespace: true,
     })
   })
 
-  it('uses compact composition for worksheet tables', () => {
+  it('uses comfortable balanced composition for worksheet tables', () => {
     const blocks: PublicationBlock[] = [
       {
         id: 'table',
@@ -30,8 +31,9 @@ describe('getPublicationPageLayoutRecipe', () => {
 
     expect(getPublicationPageLayoutRecipe(blocks)).toMatchObject({
       archetype: 'worksheet',
-      density: 'compact',
+      density: 'comfortable',
       preferWholePageTool: true,
+      preferBalancedWhitespace: true,
     })
   })
 })

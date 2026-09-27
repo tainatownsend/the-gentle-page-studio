@@ -16,17 +16,17 @@ import {
   type PublicationPdfInteractiveField,
 } from './publicationPdfPlan'
 
-const INK = rgb(43 / 255, 48 / 255, 45 / 255)
-const MUTED_INK = rgb(107 / 255, 116 / 255, 110 / 255)
-const RULE = rgb(215 / 255, 221 / 255, 217 / 255)
-const PAPER = rgb(252 / 255, 250 / 255, 246 / 255)
-const PAPER_STRONG = rgb(1, 253 / 255, 249 / 255)
-const SAGE = rgb(122 / 255, 144 / 255, 128 / 255)
-const SAGE_DEEP = rgb(83 / 255, 104 / 255, 91 / 255)
-const SAGE_SOFT = rgb(232 / 255, 238 / 255, 233 / 255)
-const CLAY = rgb(185 / 255, 133 / 255, 117 / 255)
-const SAND_SOFT = rgb(243 / 255, 237 / 255, 223 / 255)
-const FIELD = rgb(250 / 255, 247 / 255, 241 / 255)
+const INK = rgb(47 / 255, 58 / 255, 54 / 255)
+const MUTED_INK = rgb(104 / 255, 115 / 255, 109 / 255)
+const RULE = rgb(217 / 255, 222 / 255, 217 / 255)
+const PAPER = rgb(1, 1, 1)
+const PAPER_STRONG = rgb(1, 1, 1)
+const SAGE = rgb(107 / 255, 127 / 255, 114 / 255)
+const SAGE_DEEP = rgb(64 / 255, 81 / 255, 72 / 255)
+const SAGE_SOFT = rgb(231 / 255, 238 / 255, 233 / 255)
+const CLAY = rgb(226 / 255, 211 / 255, 199 / 255)
+const SAND_SOFT = rgb(247 / 255, 244 / 255, 239 / 255)
+const FIELD = rgb(1, 1, 1)
 
 function toWinAnsiSafeText(value: string): string {
   return value
@@ -132,27 +132,14 @@ function drawPageFoundation(page: PDFPage): void {
 }
 
 function drawContentPageDecoration(page: PDFPage, blocks: readonly PublicationBlock[]): void {
-  const hasTable = blocks.some((block) => block.type === 'table')
-  const hasResponse = blocks.some((block) => block.type === 'multiline-text-field')
+  if (!blocks.some((block) => block.type === 'table')) return
 
-  if (hasTable) {
-    page.drawRectangle({
-      x: 0,
-      y: page.getHeight() - 4,
-      width: page.getWidth(),
-      height: 4,
-      color: SAGE_SOFT,
-    })
-    return
-  }
-
-  page.drawEllipse({
-    x: page.getWidth() - 42,
-    y: page.getHeight() - 66,
-    xScale: 58,
-    yScale: 58,
-    color: hasResponse ? SAND_SOFT : SAGE_SOFT,
-    opacity: 0.72,
+  page.drawRectangle({
+    x: PUBLICATION_MARGIN_POINTS,
+    y: page.getHeight() - 48,
+    width: page.getWidth() - PUBLICATION_MARGIN_POINTS * 2,
+    height: 1,
+    color: SAGE_SOFT,
   })
 }
 
@@ -168,37 +155,11 @@ function drawCover(
   const brandWidth = bodyFont.widthOfTextAtSize(brand, brandSize)
 
   page.drawRectangle({
-    x: PUBLICATION_MARGIN_POINTS,
+    x: centerX - 42,
     y: 724,
-    width: 112,
-    height: 5,
+    width: 84,
+    height: 2,
     color: SAGE,
-  })
-
-  page.drawEllipse({
-    x: 548,
-    y: 135,
-    xScale: 67,
-    yScale: 67,
-    color: SAND_SOFT,
-    opacity: 0.78,
-  })
-
-  page.drawEllipse({
-    x: 566,
-    y: 724,
-    xScale: 58,
-    yScale: 58,
-    color: SAGE_SOFT,
-    opacity: 0.72,
-  })
-
-  page.drawRectangle({
-    x: centerX - brandWidth / 2 - 12,
-    y: 692,
-    width: brandWidth + 24,
-    height: 26,
-    color: SAGE_SOFT,
   })
 
   page.drawText(brand, {
@@ -355,14 +316,14 @@ function drawStaticBlock(
         x: placement.rect.x,
         y: placement.rect.y + 2,
         width: placement.rect.width,
-        height: Math.max(placement.rect.height - 4, 18),
-        color: SAGE_SOFT,
+        height: 0.7,
+        color: RULE,
       })
       page.drawRectangle({
         x: placement.rect.x,
-        y: placement.rect.y + 2,
-        width: 5,
-        height: Math.max(placement.rect.height - 4, 18),
+        y: placement.rect.y + 1.4,
+        width: 38,
+        height: 2,
         color: SAGE,
       })
       drawWrappedText(
@@ -370,12 +331,12 @@ function drawStaticBlock(
         block.text || 'Untitled heading',
         displayFont,
         20,
-        placement.rect.x + 14,
+        placement.rect.x,
         top - 3,
-        placement.rect.width - 24,
+        placement.rect.width,
         24,
         Math.max(placement.rect.height - 8, 20),
-        SAGE_DEEP,
+        INK,
       )
       return
     }
@@ -438,7 +399,7 @@ function drawStaticBlock(
       y: placement.rect.y,
       width: placement.rect.width,
       height: placement.rect.height,
-      color: SAND_SOFT,
+      color: PAPER,
       borderColor: RULE,
       borderWidth: 0.5,
     })

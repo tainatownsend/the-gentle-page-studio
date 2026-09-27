@@ -56,6 +56,8 @@ describe('PublicationPreviewPage', () => {
     expect(cover).toHaveAttribute('data-page-size', 'us-letter')
     expect(cover).toHaveAttribute('data-orientation', 'portrait')
     expect(contentPage).toHaveAttribute('data-page-kind', 'content')
+    expect(contentPage).toHaveAttribute('data-page-archetype', 'section-opener')
+    expect(contentPage).toHaveAttribute('data-page-density', 'spacious')
 
     expect(document.getElementById('publication-preview-title')).toHaveTextContent(
       'Gentle Focus Journal',

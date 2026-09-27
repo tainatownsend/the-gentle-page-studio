@@ -16,7 +16,7 @@ import { Container } from '@/design-system/primitives/Container'
 import { Stack } from '@/design-system/primitives/Stack'
 
 import { downloadFillablePublicationPdf } from '../../export'
-import { createPublicationLayout } from '../../layout'
+import { createPublicationLayout, getPublicationPageLayoutRecipe } from '../../layout'
 import documentTheme from '../../styles/PublicationDocumentTheme.module.css'
 import type { Publication, PublicationBlock, PublicationTableCellControl } from '../../types'
 
@@ -429,6 +429,9 @@ export function PublicationPreviewPage({
             {layout.pages.map((layoutPage) => {
               const isCover = layoutPage.kind === 'cover'
               const hasContent = layoutPage.blocks.length > 0
+              const pageRecipe = isCover
+                ? undefined
+                : getPublicationPageLayoutRecipe(layoutPage.blocks)
 
               return (
                 <article
@@ -448,6 +451,8 @@ export function PublicationPreviewPage({
                   data-page-size={layout.settings.pageSize}
                   data-orientation={layout.settings.orientation}
                   data-layout-remaining-units={layoutPage.remainingUnits}
+                  data-page-archetype={pageRecipe?.archetype}
+                  data-page-density={pageRecipe?.density}
                 >
                   {isCover ? (
                     <div className={styles.coverBody}>
