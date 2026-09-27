@@ -141,6 +141,9 @@ Supported values:
 - `sensory-reset`
 - `trigger-scan`
 - `regulation-menu`
+- `nervous-system-basics`
+- `deep-dive`
+- `goal-planner`
 - `emergency-tool`
 - `weekly-reset`
 - `planner-tracker`
