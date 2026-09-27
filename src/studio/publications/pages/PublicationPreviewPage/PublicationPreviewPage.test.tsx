@@ -374,10 +374,10 @@ describe('PublicationPreviewPage', () => {
       />,
     )
 
-    expect(document.querySelectorAll('[data-template-region="state-grid"] .checkboxField')).toHaveLength(4)
+    expect(document.querySelectorAll('[data-template-region="state-grid"] [data-publication-block="checkbox"]')).toHaveLength(4)
     expect(document.querySelectorAll('[data-template-region="emergency-steps"] [data-template-step]')).toHaveLength(3)
-    expect(document.querySelectorAll('[data-template-region="daily-metrics"] [aria-label]')).toHaveLength(2)
-    expect(document.querySelectorAll('[data-template-region="daily-inventory"] .checkboxField')).toHaveLength(2)
+    expect(document.querySelectorAll('[data-template-region="daily-metrics"] [data-publication-block="rating"]')).toHaveLength(2)
+    expect(document.querySelectorAll('[data-template-region="daily-inventory"] [data-publication-block="checkbox"]')).toHaveLength(2)
   })
 
 })
