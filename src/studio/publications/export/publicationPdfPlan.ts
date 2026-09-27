@@ -2,7 +2,12 @@ import {
   createPublicationLayout,
   type PublicationLayoutBlockAllocation,
 } from '../layout'
-import type { Publication, PublicationBlock, PublicationTableBlock } from '../types'
+import type {
+  Publication,
+  PublicationBlock,
+  PublicationPageTemplate,
+  PublicationTableBlock,
+} from '../types'
 
 export const PDF_POINTS_PER_INCH = 72
 export const US_LETTER_WIDTH_POINTS = 612
@@ -73,6 +78,7 @@ export type PublicationPdfPagePlan = {
   sequence: number
   pageNumber?: number
   kind: 'cover' | 'content'
+  pageTemplate?: PublicationPageTemplate
   width: number
   height: number
   margin: number
@@ -447,6 +453,7 @@ export function createPublicationPdfPlan(publication: Publication): PublicationP
       sequence: page.sequence,
       pageNumber,
       kind: page.kind,
+      pageTemplate: page.pageTemplate,
       width: US_LETTER_WIDTH_POINTS,
       height: US_LETTER_HEIGHT_POINTS,
       margin: PUBLICATION_MARGIN_POINTS,
