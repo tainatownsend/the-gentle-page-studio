@@ -7,7 +7,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 
-import type { Publication, PublicationBlock } from '../types'
+import type { Publication, PublicationBlock, PublicationPageTemplate } from '../types'
 import {
   createPublicationPdfPlan,
   createPublicationPdfTableGeometry,
@@ -131,16 +131,46 @@ function drawPageFoundation(page: PDFPage): void {
   })
 }
 
-function drawContentPageDecoration(page: PDFPage, blocks: readonly PublicationBlock[]): void {
-  if (!blocks.some((block) => block.type === 'table')) return
+function drawContentPageDecoration(
+  page: PDFPage,
+  blocks: readonly PublicationBlock[],
+  pageTemplate?: PublicationPageTemplate,
+): void {
+  if (pageTemplate === 'section-opener' || pageTemplate === 'closing') {
+    page.drawRectangle({
+      x: page.getWidth() / 2 - 30,
+      y: page.getHeight() - 64,
+      width: 60,
+      height: 2,
+      color: SAGE,
+    })
+    return
+  }
 
-  page.drawRectangle({
-    x: PUBLICATION_MARGIN_POINTS,
-    y: page.getHeight() - 48,
-    width: page.getWidth() - PUBLICATION_MARGIN_POINTS * 2,
-    height: 1,
-    color: SAGE_SOFT,
-  })
+  if (pageTemplate === 'emergency-tool') {
+    page.drawRectangle({
+      x: PUBLICATION_MARGIN_POINTS,
+      y: page.getHeight() - 52,
+      width: 84,
+      height: 3,
+      color: SAGE,
+    })
+    return
+  }
+
+  if (
+    pageTemplate === 'planner-tracker' ||
+    pageTemplate === 'matrix-framework' ||
+    blocks.some((block) => block.type === 'table')
+  ) {
+    page.drawRectangle({
+      x: PUBLICATION_MARGIN_POINTS,
+      y: page.getHeight() - 48,
+      width: page.getWidth() - PUBLICATION_MARGIN_POINTS * 2,
+      height: 1,
+      color: SAGE_SOFT,
+    })
+  }
 }
 
 function drawCover(
@@ -241,6 +271,7 @@ function drawTableBlock(
   placement: PublicationPdfBlockPlacement,
   bodyFont: PDFFont,
   bodyBoldFont: PDFFont,
+  pageTemplate?: PublicationPageTemplate,
 ): void {
   const geometry = createPublicationPdfTableGeometry(block, placement)
   const columnWidth = geometry.columnWidth
@@ -270,7 +301,14 @@ function drawTableBlock(
 
     block.columns.forEach((_, columnIndex) => {
       const x = placement.rect.x + columnIndex * columnWidth
-      const fill = rowIndex === 0 ? SAGE_SOFT : rowIndex % 2 === 0 ? SAND_SOFT : PAPER_STRONG
+      const fill =
+        rowIndex === 0
+          ? SAGE_SOFT
+          : pageTemplate === 'matrix-framework' && columnIndex === 0
+            ? SAGE_SOFT
+            : rowIndex % 2 === 0
+              ? SAND_SOFT
+              : PAPER_STRONG
 
       page.drawRectangle({
         x,
@@ -307,6 +345,8 @@ function drawStaticBlock(
   displayFont: PDFFont,
   bodyFont: PDFFont,
   bodyBoldFont: PDFFont,
+  pageTemplate?: PublicationPageTemplate,
+  templateStepNumber?: number,
 ): void {
   const top = placement.rect.y + placement.rect.height
 
@@ -359,6 +399,39 @@ function drawStaticBlock(
         placement.rect.width - 38,
         19,
         placement.rect.height,
+      )
+      return
+    }
+
+    if (pageTemplate === 'emergency-tool' && templateStepNumber) {
+      const circleX = placement.rect.x + 9
+      const circleY = top - 11
+      page.drawCircle({
+        x: circleX,
+        y: circleY,
+        size: 9,
+        color: SAGE,
+      })
+      const stepText = String(templateStepNumber)
+      const stepWidth = bodyBoldFont.widthOfTextAtSize(stepText, 8)
+      page.drawText(stepText, {
+        x: circleX - stepWidth / 2,
+        y: circleY - 2.8,
+        size: 8,
+        font: bodyBoldFont,
+        color: PAPER,
+      })
+      drawWrappedText(
+        page,
+        block.text || 'Untitled heading',
+        bodyBoldFont,
+        10.5,
+        placement.rect.x + 28,
+        top,
+        placement.rect.width - 28,
+        13,
+        placement.rect.height,
+        INK,
       )
       return
     }
@@ -419,6 +492,25 @@ function drawStaticBlock(
   }
 
   if (block.type === 'checkbox-field') {
+    if (pageTemplate === 'guided-framework') {
+      page.drawRectangle({
+        x: placement.rect.x,
+        y: placement.rect.y,
+        width: placement.rect.width,
+        height: placement.rect.height,
+        color: PAPER,
+        borderColor: RULE,
+        borderWidth: 0.6,
+      })
+      page.drawRectangle({
+        x: placement.rect.x,
+        y: placement.rect.y,
+        width: 3,
+        height: placement.rect.height,
+        color: SAGE,
+      })
+    }
+
     drawWrappedText(
       page,
       block.text || 'Checkbox',
@@ -439,7 +531,7 @@ function drawStaticBlock(
       y: placement.rect.y,
       width: placement.rect.width,
       height: placement.rect.height,
-      color: SAGE_SOFT,
+      color: pageTemplate === 'daily-check-in' ? PAPER : SAGE_SOFT,
       borderColor: RULE,
       borderWidth: 0.5,
     })
@@ -458,7 +550,7 @@ function drawStaticBlock(
     return
   }
 
-  drawTableBlock(page, block, placement, bodyFont, bodyBoldFont)
+  drawTableBlock(page, block, placement, bodyFont, bodyBoldFont, pageTemplate)
 }
 
 function addInteractiveField(
@@ -534,13 +626,34 @@ export async function generateFillablePublicationPdf(
       continue
     }
 
-    drawContentPageDecoration(page, pagePlan.blocks)
+    drawContentPageDecoration(page, pagePlan.blocks, pagePlan.pageTemplate)
 
     pagePlan.blocks.forEach((block, index) => {
       const placement = pagePlan.blockPlacements[index]
 
       if (placement) {
-        drawStaticBlock(page, block, placement, displayFont, bodyFont, bodyBoldFont)
+        const templateStepNumber =
+          pagePlan.pageTemplate === 'emergency-tool' &&
+          block.type === 'heading' &&
+          block.level === 3
+            ? pagePlan.blocks
+                .slice(0, index + 1)
+                .filter(
+                  (candidate) =>
+                    candidate.type === 'heading' && candidate.level === 3,
+                ).length
+            : undefined
+
+        drawStaticBlock(
+          page,
+          block,
+          placement,
+          displayFont,
+          bodyFont,
+          bodyBoldFont,
+          pagePlan.pageTemplate,
+          templateStepNumber,
+        )
       }
     })
 

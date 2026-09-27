@@ -1,4 +1,4 @@
-import type { PublicationBlock } from '../types'
+import type { PublicationBlock, PublicationPageTemplate } from '../types'
 import { inferPublicationCompoundComponents } from './publicationCompoundComponents'
 import { inferPublicationPageArchetype } from './publicationPageArchetypes'
 
@@ -19,6 +19,7 @@ export type PublicationVisualQaIssue = {
 export type PublicationVisualQaPage = {
   pageNumber?: number
   kind: 'cover' | 'content'
+  pageTemplate?: PublicationPageTemplate
   blocks: PublicationBlock[]
   remainingUnits: number
 }
@@ -79,6 +80,11 @@ export function auditPublicationVisualQuality(
     const archetype = inferPublicationPageArchetype(page.blocks)
     const first = page.blocks[0]
     const isIntentionalSectionOpener = archetype === 'section-opener'
+    const isIntentionalWhitespaceTemplate =
+      page.pageTemplate === 'section-opener' ||
+      page.pageTemplate === 'closing' ||
+      page.pageTemplate === 'prompt-writing' ||
+      page.pageTemplate === 'navigation'
     const hasAuthoredBreak = first?.layout?.pageBreakBefore !== undefined
     const nextPageStartsRepeatable = pageStartsRepeatableGroup(contentPages[pageIndex + 1])
     const currentPageIsRepeatable = isRepeatablePage(page)
@@ -88,6 +94,7 @@ export function auditPublicationVisualQuality(
       first?.type === 'heading' &&
       first.level !== 1 &&
       !hasAuthoredBreak &&
+      !isIntentionalWhitespaceTemplate &&
       !currentPageIsRepeatable
     ) {
       issues.push({
@@ -103,6 +110,7 @@ export function auditPublicationVisualQuality(
     if (
       !isFinalPage &&
       !isIntentionalSectionOpener &&
+      !isIntentionalWhitespaceTemplate &&
       !hasAuthoredBreak &&
       !currentPageIsRepeatable &&
       !nextPageStartsRepeatable &&

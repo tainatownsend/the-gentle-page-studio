@@ -51,4 +51,32 @@ describe('recomposePublicationPages', () => {
     expect(recomposed[0]).toHaveLength(3)
     expect(recomposed[1]?.[0]?.id).toBe('forced-8')
   })
+
+  it('does not rebalance content across explicit template boundaries', () => {
+    const templateStart: PublicationBlock = {
+      id: 'heading-10',
+      type: 'heading',
+      level: 2,
+      text: 'Emergency Unfreeze Protocol',
+      layout: { pageTemplate: 'emergency-tool' },
+    }
+    const pages: PublicationBlock[][] = [
+      [
+        { id: 'paragraph-20', type: 'paragraph', text: 'A' },
+        { id: 'paragraph-12', type: 'paragraph', text: 'B' },
+        { id: 'paragraph-8', type: 'paragraph', text: 'C' },
+      ],
+      [templateStart],
+    ]
+
+    const recomposed = recomposePublicationPages(pages, {
+      capacityUnits: 48,
+      minimumBalancedPageUnits: 18,
+      estimateUnits,
+    })
+
+    expect(recomposed[0]).toHaveLength(3)
+    expect(recomposed[1]?.[0]?.layout?.pageTemplate).toBe('emergency-tool')
+  })
+
 })

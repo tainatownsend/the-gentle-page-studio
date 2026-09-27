@@ -339,4 +339,29 @@ Start small.`)
     ])
   })
 
+
+  it('accepts the guided framework template used by the 4-State Self-Scan', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="guided-framework"]]
+
+## The 4-State Self-Scan
+
+- [ ] Hyperarousal
+- [ ] Hypoarousal
+- [ ] Underaroused
+- [ ] Regulated Window`)
+
+    expect(result.content.blocks[0]).toEqual(
+      expect.objectContaining({
+        type: 'heading',
+        text: 'The 4-State Self-Scan',
+        layout: expect.objectContaining({
+          pageTemplate: 'guided-framework',
+        }),
+      }),
+    )
+    expect(result.diagnostics).toEqual([])
+  })
+
 })
