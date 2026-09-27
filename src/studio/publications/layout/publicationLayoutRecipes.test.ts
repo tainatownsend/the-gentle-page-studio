@@ -33,6 +33,7 @@ describe('getPublicationPageLayoutRecipe', () => {
       archetype: 'worksheet',
       density: 'comfortable',
       preferWholePageTool: true,
+      preferBalancedWhitespace: true,
     })
   })
 })
