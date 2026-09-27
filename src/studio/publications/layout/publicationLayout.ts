@@ -164,7 +164,7 @@ function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | unde
     case 'daily-check-in':
       return 0.4
     case 'guided-framework':
-      return 0.55
+      return 0.5
     case 'weekly-reset':
       return 0.65
     case 'planner-tracker':
