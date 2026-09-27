@@ -16,5 +16,5 @@ const LABEL_BY_TEMPLATE: Record<PublicationPageTemplate, string> = {
 export function getPublicationPageTemplateLabel(
   pageTemplate: PublicationPageTemplate | undefined,
 ): string {
-  return pageTemplate ? LABEL_BY_TEMPLATE[pageTemplate] : 'The Gentle Page'
+  return pageTemplate ? LABEL_BY_TEMPLATE[pageTemplate] : 'Journal Page'
 }
