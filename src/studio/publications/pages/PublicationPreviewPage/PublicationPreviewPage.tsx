@@ -796,7 +796,6 @@ function NervousSystemSchematic(): ReactElement {
           d="M111 102 C139 111 159 111 178 105 C174 127 155 141 137 142 L126 169 L105 169 L111 132 C101 124 103 112 111 102 Z"
         />
       </svg>
-      <span className={styles.schematicCaption}>Illustration slot</span>
     </div>
   )
 }
