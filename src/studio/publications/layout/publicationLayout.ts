@@ -175,6 +175,12 @@ function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | unde
       return 0.16
     case 'regulation-menu':
       return 0.42
+    case 'nervous-system-basics':
+      return 0.45
+    case 'deep-dive':
+      return 0.34
+    case 'goal-planner':
+      return 0.42
     case 'weekly-reset':
       return 0.65
     case 'planner-tracker':
