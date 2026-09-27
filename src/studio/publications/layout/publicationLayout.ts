@@ -381,6 +381,15 @@ function pageStartsRepeatableGroup(page: PublicationLayoutPage | undefined): boo
   return page?.blocks[0]?.semanticGroup?.kind === 'repeatable-page'
 }
 
+function isIntentionalWhitespaceTemplate(page: PublicationLayoutPage): boolean {
+  return (
+    page.pageTemplate === 'section-opener' ||
+    page.pageTemplate === 'closing' ||
+    page.pageTemplate === 'prompt-writing' ||
+    page.pageTemplate === 'navigation'
+  )
+}
+
 function createDiagnostics(pages: readonly PublicationLayoutPage[]): PublicationLayoutDiagnostic[] {
   const diagnostics: PublicationLayoutDiagnostic[] = []
   const contentPages = pages.filter((page) => page.kind === 'content')
@@ -405,6 +414,7 @@ function createDiagnostics(pages: readonly PublicationLayoutPage[]): Publication
       !startsWithForcedBreak &&
       !nextPageStartsRepeatable &&
       !isRepeatablePage(page) &&
+      !isIntentionalWhitespaceTemplate(page) &&
       page.blocks.length > 0 &&
       page.remainingUnits >= SPARSE_PAGE_REMAINING_UNITS
     ) {
