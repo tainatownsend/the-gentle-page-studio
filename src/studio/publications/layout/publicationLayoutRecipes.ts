@@ -101,6 +101,21 @@ const RECIPE_BY_TEMPLATE: Record<
     preferWholePageTool: true,
     preferBalancedWhitespace: true,
   },
+  'nervous-system-basics': {
+    density: 'comfortable',
+    preferWholePageTool: true,
+    preferBalancedWhitespace: true,
+  },
+  'deep-dive': {
+    density: 'comfortable',
+    preferWholePageTool: true,
+    preferBalancedWhitespace: true,
+  },
+  'goal-planner': {
+    density: 'comfortable',
+    preferWholePageTool: true,
+    preferBalancedWhitespace: true,
+  },
   'emergency-tool': {
     density: 'comfortable',
     preferWholePageTool: true,

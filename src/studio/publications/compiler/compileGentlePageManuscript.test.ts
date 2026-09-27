@@ -431,4 +431,38 @@ Look at something calming.`)
     expect(result.diagnostics).toEqual([])
   })
 
+
+  it('accepts the final Steady State page families', () => {
+    const result = compileGentlePageManuscript(`# Journal
+
+[[GP:PAGE_TEMPLATE type="nervous-system-basics"]]
+
+## Nervous System 101
+
+[[GP:PAGE_TEMPLATE type="deep-dive"]]
+
+## Deep Dive
+
+[[GP:PAGE_TEMPLATE type="goal-planner"]]
+
+## Goal Planner`)
+
+    expect(
+      result.content.blocks.find(
+        (block) => block.type === 'heading' && block.text === 'Nervous System 101',
+      )?.layout?.pageTemplate,
+    ).toBe('nervous-system-basics')
+    expect(
+      result.content.blocks.find(
+        (block) => block.type === 'heading' && block.text === 'Deep Dive',
+      )?.layout?.pageTemplate,
+    ).toBe('deep-dive')
+    expect(
+      result.content.blocks.find(
+        (block) => block.type === 'heading' && block.text === 'Goal Planner',
+      )?.layout?.pageTemplate,
+    ).toBe('goal-planner')
+    expect(result.diagnostics).toEqual([])
+  })
+
 })

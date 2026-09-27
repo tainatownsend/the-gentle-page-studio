@@ -718,4 +718,97 @@ describe('PublicationPreviewPage', () => {
     expect(screen.getByText('Quality sleep')).toBeInTheDocument()
   })
 
+
+  it('renders the final Steady State page families as dedicated editorial compositions', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          content: {
+            blocks: [
+              {
+                id: 'nervous-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Nervous System 101',
+                layout: { pageTemplate: 'nervous-system-basics' },
+              },
+              { id: 'prefrontal', type: 'heading', level: 3, text: 'Prefrontal Cortex' },
+              { id: 'prefrontal-copy', type: 'paragraph', text: 'Planning and attention.' },
+              { id: 'limbic', type: 'heading', level: 3, text: 'Limbic System' },
+              { id: 'limbic-copy', type: 'paragraph', text: 'Emotion and threat detection.' },
+              { id: 'brainstem', type: 'heading', level: 3, text: 'Brainstem' },
+              { id: 'brainstem-copy', type: 'paragraph', text: 'Automatic survival responses.' },
+              {
+                id: 'deep-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Deep Dive: Sleep',
+                layout: { pageTemplate: 'deep-dive' },
+              },
+              { id: 'current-sleep', type: 'heading', level: 3, text: 'My Current Sleep' },
+              { id: 'current-sleep-field', type: 'multiline-text-field', text: 'What I notice', responseSize: 'medium' },
+              { id: 'sleep-helps', type: 'heading', level: 3, text: 'What Helps Me' },
+              { id: 'sleep-helps-field', type: 'multiline-text-field', text: 'Helpful supports', responseSize: 'medium' },
+              { id: 'sleep-friction', type: 'heading', level: 3, text: 'What Gets In The Way' },
+              { id: 'sleep-friction-field', type: 'multiline-text-field', text: 'Friction', responseSize: 'medium' },
+              {
+                id: 'goal-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Goal Planner',
+                layout: { pageTemplate: 'goal-planner' },
+              },
+              { id: 'goal', type: 'multiline-text-field', text: 'My Goal', responseSize: 'medium' },
+              { id: 'why', type: 'multiline-text-field', text: 'Why It Matters', responseSize: 'medium' },
+              { id: 'actions-heading', type: 'heading', level: 3, text: 'Action Steps' },
+              { id: 'action-1', type: 'checkbox-field', text: 'First small step' },
+              { id: 'action-2', type: 'checkbox-field', text: 'Second small step' },
+              { id: 'target-heading', type: 'heading', level: 3, text: 'Target Date' },
+              { id: 'target', type: 'multiline-text-field', text: 'Target Date', responseSize: 'short' },
+              {
+                id: 'closing-heading',
+                type: 'heading',
+                level: 2,
+                text: 'You’ve Got This',
+                layout: { pageTemplate: 'closing' },
+              },
+              { id: 'reminder-1', type: 'heading', level: 3, text: 'Pause before pushing' },
+              { id: 'reminder-1-copy', type: 'paragraph', text: 'Notice what you need.' },
+              { id: 'reminder-2', type: 'heading', level: 3, text: 'Small counts' },
+              { id: 'reminder-2-copy', type: 'paragraph', text: 'Tiny progress is still progress.' },
+              { id: 'reminder-3', type: 'heading', level: 3, text: 'Return gently' },
+              { id: 'reminder-3-copy', type: 'paragraph', text: 'You can begin again.' },
+              { id: 'reminder-4', type: 'heading', level: 3, text: 'Keep what works' },
+              { id: 'reminder-4-copy', type: 'paragraph', text: 'Make the tools yours.' },
+              { id: 'reminder-5', type: 'heading', level: 3, text: 'Rest is useful' },
+              { id: 'reminder-5-copy', type: 'paragraph', text: 'Recovery supports progress.' },
+              { id: 'reminder-6', type: 'heading', level: 3, text: 'You can return' },
+              { id: 'reminder-6-copy', type: 'paragraph', text: 'The page will still be here.' },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="nervous-system-basics"] [data-nervous-system-region]',
+      ),
+    ).toHaveLength(3)
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="deep-dive-grid"] [data-deep-dive-panel]',
+      ),
+    ).toHaveLength(3)
+    expect(document.querySelector('[data-template-region="goal-action-steps"]')).not.toBeNull()
+    expect(
+      document.querySelectorAll(
+        '[data-template-region="closing-reminders"] [data-closing-reminder]',
+      ),
+    ).toHaveLength(6)
+  })
+
 })
