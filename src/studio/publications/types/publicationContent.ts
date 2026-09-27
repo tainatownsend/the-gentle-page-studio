@@ -9,6 +9,7 @@ export type PublicationPageTemplate =
   | 'section-opener'
   | 'prompt-writing'
   | 'daily-check-in'
+  | 'guided-framework'
   | 'emergency-tool'
   | 'weekly-reset'
   | 'planner-tracker'
