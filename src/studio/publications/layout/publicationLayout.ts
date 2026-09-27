@@ -181,6 +181,8 @@ function getTemplatePaginationScale(pageTemplate: PublicationPageTemplate | unde
       return 0.34
     case 'goal-planner':
       return 0.42
+    case 'closing':
+      return 0.4
     case 'weekly-reset':
       return 0.65
     case 'planner-tracker':
