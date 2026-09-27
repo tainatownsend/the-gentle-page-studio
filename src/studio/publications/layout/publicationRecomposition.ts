@@ -18,6 +18,10 @@ function hasRepeatableBoundary(blocks: readonly PublicationBlock[]): boolean {
   return blocks.some((block) => block.semanticGroup?.kind === 'repeatable-page')
 }
 
+function hasTemplateBoundary(blocks: readonly PublicationBlock[]): boolean {
+  return blocks.some((block) => block.layout?.pageTemplate !== undefined)
+}
+
 function getMovableSuffixStart(page: readonly PublicationBlock[]): number {
   if (page.length === 0) return 0
 
@@ -62,6 +66,7 @@ function balancePair(
 ): boolean {
   if (current.length === 0 || next.length === 0) return false
   if (hasRepeatableBoundary(current) || hasRepeatableBoundary(next)) return false
+  if (hasTemplateBoundary(current) || hasTemplateBoundary(next)) return false
 
   const nextFirst = next[0]
   if (nextFirst?.layout?.pageBreakBefore) return false
