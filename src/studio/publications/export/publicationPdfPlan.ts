@@ -210,9 +210,14 @@ function createGuidedFrameworkPlacements(
     .map((block, index) => (block.type === 'checkbox-field' ? index : -1))
     .filter((index) => index >= 0)
 
+  const firstCheckboxIndex = checkboxIndexes[0]
+  const lastCheckboxIndex = checkboxIndexes[3]
+
   if (
     checkboxIndexes.length !== 4 ||
-    checkboxIndexes[3] - checkboxIndexes[0] !== 3
+    firstCheckboxIndex === undefined ||
+    lastCheckboxIndex === undefined ||
+    lastCheckboxIndex - firstCheckboxIndex !== 3
   ) {
     return undefined
   }
@@ -220,8 +225,6 @@ function createGuidedFrameworkPlacements(
   const allocationByBlockId = new Map(
     allocations.map((allocation) => [allocation.blockId, allocation]),
   )
-  const firstCheckboxIndex = checkboxIndexes[0]
-  const lastCheckboxIndex = checkboxIndexes[3]
   const placements: Array<PublicationPdfBlockPlacement | undefined> = Array.from({
     length: blocks.length,
   })
