@@ -7,6 +7,7 @@ import {
   type RGB,
 } from 'pdf-lib'
 
+import { getPublicationPageTemplateLabel } from '../layout'
 import type { Publication, PublicationBlock, PublicationPageTemplate } from '../types'
 import {
   createPublicationPdfPlan,
@@ -258,6 +259,42 @@ function drawTemplateZones(page: PDFPage, pagePlan: PublicationPdfPagePlan): voi
       borderWidth: 0.55,
     })
   }
+}
+
+function drawRunningHeader(
+  page: PDFPage,
+  pagePlan: PublicationPdfPagePlan,
+  bodyFont: PDFFont,
+  bodyBoldFont: PDFFont,
+): void {
+  const brand = 'THE GENTLE PAGE'
+  const section = getPublicationPageTemplateLabel(pagePlan.pageTemplate).toUpperCase()
+  const sectionWidth = bodyBoldFont.widthOfTextAtSize(section, 7.5)
+  const rightEdge = page.getWidth() - PUBLICATION_MARGIN_POINTS
+
+  page.drawText(brand, {
+    x: PUBLICATION_MARGIN_POINTS,
+    y: 754,
+    size: 7.5,
+    font: bodyBoldFont,
+    color: MUTED_INK,
+  })
+
+  page.drawText(section, {
+    x: rightEdge - sectionWidth,
+    y: 754,
+    size: 7.5,
+    font: bodyBoldFont,
+    color: SAGE_DEEP,
+  })
+
+  page.drawRectangle({
+    x: PUBLICATION_MARGIN_POINTS,
+    y: 744,
+    width: page.getWidth() - PUBLICATION_MARGIN_POINTS * 2,
+    height: 0.6,
+    color: RULE,
+  })
 }
 
 function drawContentPageDecoration(
@@ -760,6 +797,7 @@ export async function generateFillablePublicationPdf(
       continue
     }
 
+    drawRunningHeader(page, pagePlan, bodyFont, bodyBoldFont)
     drawContentPageDecoration(page, pagePlan.blocks, pagePlan.pageTemplate)
     drawTemplateZones(page, pagePlan)
 
