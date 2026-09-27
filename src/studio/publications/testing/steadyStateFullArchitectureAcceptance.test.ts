@@ -46,7 +46,7 @@ Use your senses to come back to the present.
 ## Thought Download
 Get it out of your head.
 
-[[GP:PAGE_TEMPLATE type="guided-framework"]]
+[[GP:PAGE_TEMPLATE type="nervous-system-basics"]]
 ## Nervous System Basics / 101
 A simple overview.
 
@@ -66,7 +66,7 @@ Reflect, realign, plan with kindness.
 ## Weekly Plan
 A realistic plan for a kinder week.
 
-[[GP:PAGE_TEMPLATE type="guided-framework"]]
+[[GP:PAGE_TEMPLATE type="deep-dive"]]
 ## Deep Dive Example
 Understand, improve, feel better.
 
@@ -74,7 +74,7 @@ Understand, improve, feel better.
 ## Reflection
 Slow down, look with kindness, grow.
 
-[[GP:PAGE_TEMPLATE type="planner-tracker"]]
+[[GP:PAGE_TEMPLATE type="goal-planner"]]
 ## Goal Planner
 Small steps, meaningful progress.
 
@@ -108,14 +108,14 @@ describe('The Steady State full architecture acceptance', () => {
       'tool-overview',
       'sensory-reset',
       'prompt-writing',
-      'guided-framework',
+      'nervous-system-basics',
       'trigger-scan',
       'regulation-menu',
       'weekly-reset',
       'planner-tracker',
-      'guided-framework',
+      'deep-dive',
       'prompt-writing',
-      'planner-tracker',
+      'goal-planner',
       'closing',
     ])
     expect(
