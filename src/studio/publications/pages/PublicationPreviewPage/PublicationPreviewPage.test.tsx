@@ -298,4 +298,86 @@ describe('PublicationPreviewPage', () => {
     ).toHaveAttribute('data-page-template', 'weekly-reset')
   })
 
+
+  it('renders Gate A page families with canonical grouped regions', () => {
+    render(
+      <PublicationPreviewPage
+        publication={createPublicationFixture({
+          title: 'The Steady State',
+          description: 'An ADHD Regulation Journal & Toolkit',
+          content: {
+            blocks: [
+              {
+                id: 'states-heading',
+                type: 'heading',
+                level: 2,
+                text: 'The 4-State Self-Scan',
+                layout: { pageTemplate: 'guided-framework' },
+              },
+              { id: 'state-1', type: 'checkbox-field', text: 'Hyperarousal' },
+              { id: 'state-2', type: 'checkbox-field', text: 'Hypoarousal' },
+              { id: 'state-3', type: 'checkbox-field', text: 'Underaroused' },
+              { id: 'state-4', type: 'checkbox-field', text: 'Regulated Window' },
+              {
+                id: 'emergency-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Emergency Unfreeze Protocol',
+                layout: { pageTemplate: 'emergency-tool' },
+              },
+              { id: 'step-1', type: 'heading', level: 3, text: 'Step 1' },
+              { id: 'step-1-body', type: 'paragraph', text: 'Physiological interrupt.' },
+              { id: 'step-2', type: 'heading', level: 3, text: 'Step 2' },
+              { id: 'step-2-body', type: 'paragraph', text: 'Friction reduction.' },
+              { id: 'step-3', type: 'heading', level: 3, text: 'Step 3' },
+              {
+                id: 'micro-slice',
+                type: 'multiline-text-field',
+                text: 'The micro-slice',
+                responseSize: 'medium',
+              },
+              {
+                id: 'daily-heading',
+                type: 'heading',
+                level: 2,
+                text: 'Daily Nervous System Check-in',
+                layout: { pageTemplate: 'daily-check-in' },
+              },
+              {
+                id: 'date',
+                type: 'multiline-text-field',
+                text: 'Date & Time',
+                responseSize: 'short',
+              },
+              { id: 'energy', type: 'rating-field', text: 'Baseline Energy', min: 0, max: 10 },
+              {
+                id: 'capacity',
+                type: 'rating-field',
+                text: 'Executive Function Capacity',
+                min: 0,
+                max: 10,
+              },
+              { id: 'inventory-heading', type: 'heading', level: 3, text: 'Sensory & Body Inventory' },
+              { id: 'inventory-1', type: 'checkbox-field', text: 'High sound sensitivity' },
+              { id: 'inventory-2', type: 'checkbox-field', text: 'Screen fatigue' },
+              {
+                id: 'note',
+                type: 'multiline-text-field',
+                text: 'A note to myself',
+                responseSize: 'long',
+              },
+            ],
+          },
+        })}
+        onBack={() => undefined}
+        onEdit={() => undefined}
+      />,
+    )
+
+    expect(document.querySelectorAll('[data-template-region="state-grid"] [data-publication-block="checkbox"]')).toHaveLength(4)
+    expect(document.querySelectorAll('[data-template-region="emergency-steps"] [data-template-step]')).toHaveLength(3)
+    expect(document.querySelectorAll('[data-template-region="daily-metrics"] [data-publication-block="rating"]')).toHaveLength(2)
+    expect(document.querySelectorAll('[data-template-region="daily-inventory"] [data-publication-block="checkbox"]')).toHaveLength(2)
+  })
+
 })
