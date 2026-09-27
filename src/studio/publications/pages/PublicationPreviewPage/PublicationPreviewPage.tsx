@@ -999,9 +999,11 @@ function renderClosingContent(
           </section>
         ))}
       </div>
-      <div className={styles.closingLandscapeSlot} data-template-region="closing-landscape">
-        <span>A calmer you creates a kinder everything.</span>
-      </div>
+      <div
+        className={styles.closingLandscapeSlot}
+        data-template-region="closing-landscape"
+        aria-hidden="true"
+      />
     </div>
   )
 }
