@@ -64,4 +64,31 @@ describe('getPublicationPageLayoutRecipe', () => {
     })
   })
 
+
+  it('supports the guided framework family used by state education pages', () => {
+    const blocks: PublicationBlock[] = [
+      {
+        id: 'states',
+        type: 'heading',
+        level: 2,
+        text: 'The 4-State Self-Scan',
+        layout: {
+          pageTemplate: 'guided-framework',
+        },
+      },
+      {
+        id: 'state-option',
+        type: 'checkbox-field',
+        text: 'Hyperarousal',
+      },
+    ]
+
+    expect(getPublicationPageLayoutRecipe(blocks)).toMatchObject({
+      pageTemplate: 'guided-framework',
+      density: 'comfortable',
+      preferWholePageTool: true,
+      preferBalancedWhitespace: true,
+    })
+  })
+
 })
